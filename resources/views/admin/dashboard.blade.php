@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard Gérant') }}
+            {{ __('Dashboard') }}
         </h2>
     </x-slot>
 
@@ -98,7 +98,7 @@
                         <h3 class="text-xl font-bold">Vendeurs</h3>
                     </div>
                     <p class="text-gray-600 mb-4">Gérer les comptes vendeurs</p>
-                    <a href="#" class="text-red-600 hover:text-red-800 font-semibold">Accéder →</a>
+                    <a href="{{ route('admin.sellers.index') }}" class="text-red-600 hover:text-red-800 font-semibold">Accéder →</a>
                 </div>
             </div>
         </div>

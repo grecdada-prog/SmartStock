@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('welcome');
@@ -13,9 +14,8 @@ Route::middleware([
     'verified',
 ])->group(function () {
     
-    // Redirection automatique selon le rôle
     Route::get('/dashboard', function () {
-        if (auth()->user()->isGerant()) {
+        if (Auth::user()->isGerant()) {
             return redirect()->route('admin.dashboard');
         }
         return redirect()->route('pos.dashboard');
@@ -27,7 +27,10 @@ Route::middleware([
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // Les autres routes admin seront ajoutées ici
+        // Gestion des vendeurs
+        Route::resource('sellers', \App\Http\Controllers\Admin\SellerController::class);
+        Route::post('sellers/{seller}/toggle-status', [\App\Http\Controllers\Admin\SellerController::class, 'toggleStatus'])
+            ->name('sellers.toggle-status');
     });
 
     // Routes pour le VENDEUR
