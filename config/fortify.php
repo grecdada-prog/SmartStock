@@ -12,7 +12,7 @@ return [
 
     'email' => 'email',
 
-    'views' => true,
+    'views' => false,
 
     'home' => '/dashboard',
 

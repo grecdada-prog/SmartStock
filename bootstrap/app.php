@@ -7,20 +7,23 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $middleware) {
+        // Middleware globaux pour la sécurité
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckUserRole::class,
+            // SessionTimeout désactivé temporairement pour debug
+            // \App\Http\Middleware\SessionTimeout::class,
+        ]);
 
-        // 🔥 Ajout de tes alias de middleware ici
+        // Alias pour les middleware de rôles
         $middleware->alias([
             'gerant' => \App\Http\Middleware\GerantMiddleware::class,
             'vendeur' => \App\Http\Middleware\VendeurMiddleware::class,
         ]);
-
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         //
-    })
-    ->create();
+    })->create();

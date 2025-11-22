@@ -18,6 +18,11 @@ class User extends Authenticatable
     use Notifiable;
     use TwoFactorAuthenticatable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'email',
@@ -26,6 +31,11 @@ class User extends Authenticatable
         'is_active',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -33,10 +43,20 @@ class User extends Authenticatable
         'two_factor_secret',
     ];
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
     protected $appends = [
         'profile_photo_url',
     ];
 
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -63,10 +83,30 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is active
+     * Check if user can access admin area
      */
-    public function isActive(): bool
+    public function canAccessAdmin(): bool
     {
-        return $this->is_active;
+        return $this->isGerant() && $this->isActive();
+    }
+
+    /**
+     * Check if user can access POS area
+     */
+    public function canAccessPos(): bool
+    {
+        return $this->isVendeur() && $this->isActive();
+    }
+
+    /**
+     * Get user's dashboard route
+     */
+    public function getDashboardRoute(): string
+    {
+        if ($this->isGerant()) {
+            return route('admin.dashboard');
+        }
+        
+        return route('pos.dashboard');
     }
 }

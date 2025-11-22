@@ -1,13 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
+            {{ __('Dashboard Gérant') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Statistiques -->
+            @livewire('admin.dashboard')
+            <!-- Statistiques (commenté car maintenant dans Livewire) <!--
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                     <div class="text-gray-500 text-sm">Produits Total</div>
@@ -38,7 +39,7 @@
                         <h3 class="text-xl font-bold">Produits</h3>
                     </div>
                     <p class="text-gray-600 mb-4">Gérer les produits et catégories</p>
-                    <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold">Accéder →</a>
+                    <a href="{{ route('admin.products') }}" class="text-blue-600 hover:text-blue-800 font-semibold">Accéder →</a>
                 </div>
 
                 <!-- Gestion des Stocks -->
@@ -100,7 +101,6 @@
                     <p class="text-gray-600 mb-4">Gérer les comptes vendeurs</p>
                     <a href="{{ route('admin.sellers.index') }}" class="text-red-600 hover:text-red-800 font-semibold">Accéder →</a>
                 </div>
-            </div>
         </div>
     </div>
 </x-app-layout>

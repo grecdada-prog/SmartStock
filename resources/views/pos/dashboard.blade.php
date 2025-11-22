@@ -7,7 +7,8 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Statistiques du vendeur -->
+            @livewire('pos.dashboard')
+            <!-- Statistiques (commenté car maintenant dans Livewire) <!--
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                     <div class="text-gray-500 text-sm">Mes Ventes Aujourd'hui</div>
@@ -93,7 +94,6 @@
                         <p class="text-blue-700 text-sm">Vous pouvez créer des ventes et consulter les stocks. Pour modifier les produits ou les prix, contactez le gérant.</p>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 </x-app-layout>
