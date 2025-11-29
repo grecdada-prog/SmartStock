@@ -49,4 +49,60 @@ class ManagerDashboardController extends Controller
 
         return view('manager.dashboard', compact('stats', 'onlineSellers', 'topSellers', 'lowStockProducts'));
     }
+
+    /**
+     * Liste des ventes réalisées par les vendeurs du manager
+     */
+    public function sales(Request $request)
+    {
+        // Récupérer les IDs des vendeurs créés par ce manager
+        $sellerIds = User::role('seller')
+            ->where('created_by', auth()->id())
+            ->pluck('id');
+
+        $query = Sale::with(['seller', 'items.product'])
+            ->whereIn('seller_id', $sellerIds);
+
+        // Filtres
+        if ($request->filled('seller_id')) {
+            $query->where('seller_id', $request->seller_id);
+        }
+
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('search')) {
+            $query->where('invoice_number', 'like', '%' . $request->search . '%');
+        }
+
+        $sales = $query->latest()->paginate(20);
+
+        // Statistiques des ventes
+        $stats = [
+            'total_sales' => Sale::whereIn('seller_id', $sellerIds)->count(),
+            'total_revenue' => Sale::whereIn('seller_id', $sellerIds)->sum('total'),
+            'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
+            'today_revenue' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->sum('total'),
+            'this_month_sales' => Sale::whereIn('seller_id', $sellerIds)->whereMonth('created_at', now()->month)->count(),
+            'this_month_revenue' => Sale::whereIn('seller_id', $sellerIds)->whereMonth('created_at', now()->month)->sum('total'),
+        ];
+
+        // Liste des vendeurs pour le filtre
+        $sellers = User::role('seller')
+            ->where('created_by', auth()->id())
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('manager.sales.index', compact('sales', 'stats', 'sellers'));
+    }
 }

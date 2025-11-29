@@ -144,7 +144,9 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
     Route::get('/stock/low-stock', [StockController::class, 'lowStock'])->name('stock.low-stock');
     Route::get('/stock/restock', [StockController::class, 'showRestockForm'])->name('stock.restock');
-    Route::post('/stock/restock', [StockController::class, 'restock'])->name('stock.restock.store');
+    Route::post('/stock/restock', [StockController::class, 'restock'])->middleware('throttle:20,60')->name('stock.restock.store');
+    Route::post('/stock/adjust', [StockController::class, 'adjust'])->middleware('throttle:20,60')->name('stock.adjust');
+    Route::post('/stock/remove', [StockController::class, 'remove'])->middleware('throttle:20,60')->name('stock.remove');
     Route::get('/stock/movements', [StockController::class, 'movements'])->name('stock.movements');
     
     // Ventes

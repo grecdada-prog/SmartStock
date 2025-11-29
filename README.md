@@ -1,59 +1,204 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 📦 SmartStock - Système de Gestion de Stock Intelligent
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SmartStock est une application Laravel moderne de gestion de stock multi-utilisateurs avec des rôles (SuperAdmin, Manager, Vendeur).
 
-## About Laravel
+## 🚀 Déploiement Rapide
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Pour déployer sur Render en 10 minutes** → Voir [DEPLOYMENT.md](DEPLOYMENT.md)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Fonctionnalités
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Module SuperAdmin
+- ✅ Gestion complète des utilisateurs (Managers, Vendeurs)
+- ✅ Gestion des rôles et permissions (Spatie)
+- ✅ Tableau de bord avec statistiques en temps réel
+- ✅ Exports Excel/PDF (utilisateurs, ventes, logs)
+- ✅ Journaux d'activité (audit trail)
+- ✅ Gestion des sessions actives
+- ✅ Notifications email automatiques
 
-## Learning Laravel
+### Module Manager
+- ✅ Gestion des vendeurs (scope par created_by)
+- ✅ Gestion des produits (CRUD complet)
+- ✅ Gestion des catégories
+- ✅ Gestion du stock (réapprovisionnement, mouvements)
+- ✅ Vue des ventes de ses vendeurs
+- ✅ Auto-refresh toutes les 5 secondes
+- ✅ Alertes stock faible/rupture
+- ✅ Indicateurs visuels en temps réel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Sécurité
+- ✅ Rate limiting sur routes critiques
+- ✅ CSRF Protection
+- ✅ Strong Password Policies
+- ✅ 2FA Ready (hooks)
+- ✅ Activity Logging complet
+- ✅ Session Management
+- ✅ Authorization scopes
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Stack Technique
 
-## Laravel Sponsors
+- **Backend**: Laravel 12.40.2
+- **Frontend**: Blade + Alpine.js + Tailwind CSS
+- **Base de données**: MySQL (local) / PostgreSQL (production)
+- **Email**: SendGrid
+- **Exports**: Maatwebsite/Excel, Barryvdh/DomPDF
+- **Permissions**: Spatie Laravel Permission
+- **CI/CD**: GitHub Actions
+- **Hosting**: Render (ou autre plateforme)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 📋 Installation Locale
 
-### Premium Partners
+### Prérequis
+- PHP 8.2+
+- Composer
+- MySQL 8.0+
+- Node.js 20+
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Étapes
 
-## Contributing
+```bash
+# 1. Cloner le repository
+git clone https://github.com/votre-username/SmartStock.git
+cd SmartStock
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 2. Installer les dépendances PHP
+composer install
 
-## Code of Conduct
+# 3. Installer les dépendances NPM
+npm install
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# 4. Copier le fichier .env
+cp .env.example .env
 
-## Security Vulnerabilities
+# 5. Générer la clé d'application
+php artisan key:generate
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 6. Configurer la base de données dans .env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=smartstock
+DB_USERNAME=root
+DB_PASSWORD=
 
-## License
+# 7. Créer la base de données
+mysql -u root -p -e "CREATE DATABASE smartstock;"
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# 8. Exécuter les migrations
+php artisan migrate
+
+# 9. Seed les rôles et permissions
+php artisan db:seed --class=RolesAndPermissionsSeeder
+
+# 10. Créer le lien symbolique pour le stockage
+php artisan storage:link
+
+# 11. Compiler les assets
+npm run dev
+
+# 12. Lancer le serveur
+php artisan serve
+```
+
+Accéder à l'application : [http://localhost:8000](http://localhost:8000)
+
+## 👥 Credentials par Défaut
+
+Voir votre seeder `RolesAndPermissionsSeeder.php` pour les credentials initiaux.
+
+## 📚 Documentation
+
+- [Guide de Déploiement](DEPLOYMENT.md) - Déploiement sur Render avec CI/CD
+- [Architecture](docs/ARCHITECTURE.md) - (À créer) Structure du projet
+- [API](docs/API.md) - (À créer) Documentation API si applicable
+
+## 🧪 Tests
+
+```bash
+# Exécuter tous les tests
+php artisan test
+
+# Avec coverage
+php artisan test --coverage
+
+# Tests spécifiques
+php artisan test --filter=ManagerSellerControllerTest
+```
+
+## 🔄 Workflow de Développement
+
+```bash
+# 1. Créer une branche
+git checkout -b feature/ma-fonctionnalite
+
+# 2. Développer et tester
+php artisan test
+
+# 3. Commit
+git add .
+git commit -m "feat: Description de la fonctionnalité"
+
+# 4. Push
+git push origin feature/ma-fonctionnalite
+
+# 5. Créer une Pull Request sur GitHub
+
+# 6. Après merge dans main, le CI/CD déploie automatiquement
+```
+
+## 📊 Structure du Projet
+
+```
+SmartStock/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── SuperAdmin/      # Contrôleurs SuperAdmin
+│   │   ├── Manager/          # Contrôleurs Manager
+│   │   └── Seller/           # Contrôleurs Vendeur
+│   ├── Models/               # Modèles Eloquent
+│   ├── Helpers/              # Helpers (PasswordHelper, etc.)
+│   ├── Services/             # Services (SessionManager, etc.)
+│   └── Exports/              # Classes d'export Excel/PDF
+├── resources/
+│   └── views/
+│       ├── superadmin/       # Vues SuperAdmin
+│       ├── manager/          # Vues Manager
+│       ├── seller/           # Vues Vendeur
+│       └── components/       # Composants Blade réutilisables
+├── database/
+│   ├── migrations/           # Migrations
+│   └── seeders/              # Seeders
+├── routes/
+│   └── web.php               # Routes de l'application
+├── tests/                    # Tests automatisés
+├── .github/
+│   └── workflows/
+│       └── deploy.yml        # Pipeline CI/CD
+├── render.yaml               # Configuration Render
+├── render-build.sh           # Script de build Render
+└── DEPLOYMENT.md             # Guide de déploiement
+```
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Veuillez :
+1. Fork le projet
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add some AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+## 📝 License
+
+Ce projet est sous licence privée. Tous droits réservés.
+
+## 📞 Support
+
+Pour toute question ou problème :
+- Ouvrir une issue sur GitHub
+- Contacter l'équipe de développement
+
+---
+
+**Développé avec ❤️ par votre équipe**
