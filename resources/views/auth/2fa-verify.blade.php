@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification 2FA - SmartStock</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Logo et titre -->
+            <div>
+                <div class="flex justify-center">
+                    <div class="bg-green-600 text-white rounded-full p-4">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    Authentification à deux facteurs
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-600">
+                    Entrez le code à 6 chiffres de votre application d'authentification
+                </p>
+            </div>
+
+            <!-- Formulaire 2FA -->
+            <div class="bg-white py-8 px-4 shadow-lg rounded-lg sm:px-10">
+                @if ($errors->any())
+                    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
+                <form class="space-y-6" action="{{ route('2fa.verify.post') }}" method="POST">
+                    @csrf
+
+                    <!-- Code 2FA -->
+                    <div>
+                        <label for="one_time_password" class="block text-sm font-medium text-gray-700">
+                            Code de vérification
+                        </label>
+                        <div class="mt-1">
+                            <input id="one_time_password" name="one_time_password" type="text" 
+                                pattern="[0-9]{6}" maxlength="6" required autofocus
+                                placeholder="000000"
+                                class="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm text-center text-2xl tracking-widest placeholder-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 text-center">
+                            Le code change toutes les 30 secondes
+                        </p>
+                    </div>
+
+                    <!-- Submit button -->
+                    <div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150">
+                            Vérifier
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">
+                                Sécurité renforcée
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aide -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">
+                            Besoin d'aide ?
+                        </h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>Ouvrez votre application d'authentification (Google Authenticator, Authy, etc.) et entrez le code affiché.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-focus sur le champ et validation en temps réel
+        const input = document.getElementById('one_time_password');
+        
+        input.addEventListener('input', function(e) {
+            // Permet uniquement les chiffres
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Soumet automatiquement si 6 chiffres sont entrés
+            if (this.value.length === 6) {
+                this.form.submit();
+            }
+        });
+    </script>
+</body>
+</html>

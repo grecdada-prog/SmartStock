@@ -1,0 +1,312 @@
+<?php
+
+namespace App\Http\Controllers\Manager;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Category;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+
+class ProductController extends Controller
+{
+    /**
+     * Liste des produits créés par le manager authentifié
+     */
+    public function index(Request $request)
+    {
+        $query = Product::with(['category', 'creator'])
+            ->where('created_by', auth()->id())
+            ->withCount('saleItems');
+
+        // Filtres
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        if ($request->filled('stock_status')) {
+            switch ($request->stock_status) {
+                case 'low':
+                    $query->lowStock();
+                    break;
+                case 'out':
+                    $query->where('quantity', '<=', 0);
+                    break;
+                case 'in':
+                    $query->inStock();
+                    break;
+            }
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('sku', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $products = $query->latest()->paginate(20);
+
+        // Catégories pour le filtre
+        $categories = Category::where('created_by', auth()->id())
+            ->active()
+            ->orderBy('name')
+            ->get();
+
+        return view('manager.products.index', compact('products', 'categories'));
+    }
+
+    /**
+     * Afficher le formulaire de création de produit
+     */
+    public function create()
+    {
+        $categories = Category::where('created_by', auth()->id())
+            ->active()
+            ->orderBy('name')
+            ->get();
+
+        if ($categories->isEmpty()) {
+            return redirect()->route('manager.categories.create')
+                ->with('error', 'Vous devez créer au moins une catégorie avant de créer un produit.');
+        }
+
+        return view('manager.products.create', compact('categories'));
+    }
+
+    /**
+     * Créer un nouveau produit
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'sku' => ['required', 'string', 'max:100', 'unique:products,sku'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'purchase_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'alert_quantity' => ['required', 'integer', 'min:0'],
+            'unit' => ['required', 'string', 'max:50'],
+            'is_active' => ['boolean'],
+        ], [
+            'sku.unique' => 'Ce code SKU existe déjà.',
+            'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
+        ]);
+
+        // Vérifier que la catégorie appartient au manager
+        $category = Category::where('id', $validated['category_id'])
+            ->where('created_by', auth()->id())
+            ->first();
+
+        if (!$category) {
+            return back()->withErrors(['category_id' => 'Catégorie invalide.'])->withInput();
+        }
+
+        $product = Product::create([
+            'name' => $validated['name'],
+            'sku' => $validated['sku'],
+            'description' => $validated['description'] ?? null,
+            'category_id' => $validated['category_id'],
+            'purchase_price' => $validated['purchase_price'],
+            'selling_price' => $validated['selling_price'],
+            'quantity' => $validated['quantity'],
+            'alert_quantity' => $validated['alert_quantity'],
+            'unit' => $validated['unit'],
+            'is_active' => $validated['is_active'] ?? true,
+            'created_by' => auth()->id(),
+        ]);
+
+        ActivityLog::log(
+            'product_created',
+            "Produit créé : {$product->name} (SKU: {$product->sku})",
+            'Product',
+            $product->id
+        );
+
+        return redirect()->route('manager.products.index')
+            ->with('success', 'Produit créé avec succès !');
+    }
+
+    /**
+     * Afficher les détails d'un produit
+     */
+    public function show(Product $product)
+    {
+        // Vérifier que le produit appartient bien au manager
+        if ($product->created_by !== auth()->id()) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de voir ce produit.');
+        }
+
+        $product->load(['category', 'creator', 'stockMovements' => function($query) {
+            $query->latest()->limit(10);
+        }, 'saleItems.sale']);
+
+        return view('manager.products.show', compact('product'));
+    }
+
+    /**
+     * Afficher le formulaire d'édition d'un produit
+     */
+    public function edit(Product $product)
+    {
+        // Vérifier que le produit appartient bien au manager
+        if ($product->created_by !== auth()->id()) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
+        }
+
+        $categories = Category::where('created_by', auth()->id())
+            ->active()
+            ->orderBy('name')
+            ->get();
+
+        return view('manager.products.edit', compact('product', 'categories'));
+    }
+
+    /**
+     * Mettre à jour un produit
+     */
+    public function update(Request $request, Product $product)
+    {
+        // Vérifier que le produit appartient bien au manager
+        if ($product->created_by !== auth()->id()) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'sku' => ['required', 'string', 'max:100', Rule::unique('products')->ignore($product->id)],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'purchase_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
+            'alert_quantity' => ['required', 'integer', 'min:0'],
+            'unit' => ['required', 'string', 'max:50'],
+            'is_active' => ['boolean'],
+        ], [
+            'sku.unique' => 'Ce code SKU existe déjà.',
+            'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
+        ]);
+
+        // Vérifier que la catégorie appartient au manager
+        $category = Category::where('id', $validated['category_id'])
+            ->where('created_by', auth()->id())
+            ->first();
+
+        if (!$category) {
+            return back()->withErrors(['category_id' => 'Catégorie invalide.'])->withInput();
+        }
+
+        $oldValues = $product->only(['name', 'sku', 'selling_price', 'purchase_price']);
+
+        $product->update([
+            'name' => $validated['name'],
+            'sku' => $validated['sku'],
+            'description' => $validated['description'] ?? null,
+            'category_id' => $validated['category_id'],
+            'purchase_price' => $validated['purchase_price'],
+            'selling_price' => $validated['selling_price'],
+            'alert_quantity' => $validated['alert_quantity'],
+            'unit' => $validated['unit'],
+            'is_active' => $validated['is_active'] ?? $product->is_active,
+        ]);
+
+        // Log les changements importants
+        $changes = [];
+        if ($oldValues['name'] !== $product->name) {
+            $changes[] = "nom: {$oldValues['name']} → {$product->name}";
+        }
+        if ($oldValues['selling_price'] != $product->selling_price) {
+            $changes[] = "prix vente: {$oldValues['selling_price']} → {$product->selling_price}";
+        }
+
+        $changeDescription = empty($changes) ? '' : ' (' . implode(', ', $changes) . ')';
+
+        ActivityLog::log(
+            'product_updated',
+            "Produit mis à jour : {$product->name}{$changeDescription}",
+            'Product',
+            $product->id
+        );
+
+        return redirect()->route('manager.products.index')
+            ->with('success', 'Produit mis à jour avec succès.');
+    }
+
+    /**
+     * Supprimer un produit (soft delete)
+     */
+    public function destroy(Product $product)
+    {
+        // Vérifier que le produit appartient bien au manager
+        if ($product->created_by !== auth()->id()) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de supprimer ce produit.');
+        }
+
+        // Vérifier si le produit a des ventes
+        if ($product->saleItems()->count() > 0) {
+            return back()->with('error', 'Impossible de supprimer ce produit car il a des ventes associées.');
+        }
+
+        $productName = $product->name;
+        $productSku = $product->sku;
+
+        ActivityLog::log(
+            'product_deleted',
+            "Produit supprimé : {$productName} (SKU: {$productSku})",
+            'Product',
+            $product->id
+        );
+
+        $product->delete();
+
+        return redirect()->route('manager.products.index')
+            ->with('success', "Produit {$productName} supprimé avec succès.");
+    }
+
+    /**
+     * Activer/désactiver un produit
+     */
+    public function toggleStatus(Product $product)
+    {
+        // Vérifier que le produit appartient bien au manager
+        if ($product->created_by !== auth()->id()) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
+        }
+
+        $newStatus = !$product->is_active;
+        $product->update(['is_active' => $newStatus]);
+
+        ActivityLog::log(
+            'product_status_changed',
+            "Statut changé pour {$product->name} : " . ($newStatus ? 'activé' : 'désactivé'),
+            'Product',
+            $product->id
+        );
+
+        return back()->with('success', "Produit " . ($newStatus ? 'activé' : 'désactivé') . " avec succès.");
+    }
+
+    /**
+     * Afficher les produits en stock faible
+     */
+    public function lowStock()
+    {
+        $products = Product::where('created_by', auth()->id())
+            ->with(['category', 'creator'])
+            ->lowStock()
+            ->active()
+            ->orderBy('quantity', 'asc')
+            ->paginate(20);
+
+        return view('manager.products.low-stock', compact('products'));
+    }
+}
