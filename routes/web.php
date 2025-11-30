@@ -11,6 +11,7 @@ use App\Http\Controllers\Manager\ManagerSellerController;
 use App\Http\Controllers\Manager\CategoryController;
 use App\Http\Controllers\Manager\ProductController;
 use App\Http\Controllers\Manager\StockController;
+use App\Http\Controllers\Manager\ReportController;
 use App\Http\Controllers\Seller\SellerDashboardController;
 use App\Http\Controllers\Seller\POSController;
 use App\Http\Controllers\ProfileController;
@@ -124,6 +125,7 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::get('/sellers/create', [ManagerSellerController::class, 'create'])->name('sellers.create');
     Route::post('/sellers', [ManagerSellerController::class, 'store'])->middleware('throttle:10,60')->name('sellers.store');
     Route::get('/sellers/online', [ManagerSellerController::class, 'onlineSellers'])->name('sellers.online');
+    Route::get('/sellers/{user}', [ManagerSellerController::class, 'show'])->name('sellers.show');
     Route::get('/sellers/{user}/edit', [ManagerSellerController::class, 'edit'])->name('sellers.edit');
     Route::put('/sellers/{user}', [ManagerSellerController::class, 'update'])->name('sellers.update');
     Route::delete('/sellers/{user}', [ManagerSellerController::class, 'destroy'])->middleware('throttle:10,60')->name('sellers.destroy');
@@ -151,9 +153,15 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     
     // Ventes
     Route::get('/sales', [ManagerDashboardController::class, 'sales'])->name('sales');
-    
+    Route::get('/sales/export/excel', [ManagerDashboardController::class, 'exportSalesExcel'])->name('sales.export.excel');
+    Route::get('/sales/export/pdf', [ManagerDashboardController::class, 'exportSalesPdf'])->name('sales.export.pdf');
+
     // Rapports
-    Route::get('/reports/sales', [ManagerDashboardController::class, 'salesReport'])->name('reports.sales');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/sales', [ReportController::class, 'salesReport'])->name('reports.sales');
+    Route::get('/reports/activity', [ReportController::class, 'activityReport'])->name('reports.activity');
+    Route::get('/reports/stock', [ReportController::class, 'stockReport'])->name('reports.stock');
+    Route::get('/reports/sales/export/pdf', [ReportController::class, 'exportSalesReportPdf'])->name('reports.sales.export.pdf');
 });
 
 /*

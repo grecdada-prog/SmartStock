@@ -44,6 +44,40 @@ class ManagerSellerController extends Controller
     }
 
     /**
+     * Afficher les détails d'un vendeur
+     */
+    public function show(User $user)
+    {
+        // Vérifier que le vendeur appartient bien au manager et a le rôle seller
+        if ($user->created_by !== auth()->id() || !$user->hasRole('seller')) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de voir ce vendeur.');
+        }
+
+        // Charger les relations nécessaires
+        $user->load([
+            'sales' => function($query) {
+                $query->latest()->limit(10);
+            },
+            'activityLogs' => function($query) {
+                $query->latest()->limit(10);
+            },
+            'creator'
+        ]);
+
+        // Statistiques du vendeur
+        $stats = [
+            'total_sales' => $user->sales()->count(),
+            'total_revenue' => $user->sales()->sum('total'),
+            'today_sales' => $user->sales()->whereDate('created_at', today())->count(),
+            'today_revenue' => $user->sales()->whereDate('created_at', today())->sum('total'),
+            'this_month_sales' => $user->sales()->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->count(),
+            'this_month_revenue' => $user->sales()->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->sum('total'),
+        ];
+
+        return view('manager.sellers.show', compact('user', 'stats'));
+    }
+
+    /**
      * Afficher le formulaire de création de vendeur
      */
     public function create()

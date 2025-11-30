@@ -8,8 +8,12 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Category;
+use App\Models\ActivityLog;
 use App\Services\SessionManager;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ManagerSalesExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ManagerDashboardController extends Controller
 {
@@ -104,5 +108,82 @@ class ManagerDashboardController extends Controller
             ->get();
 
         return view('manager.sales.index', compact('sales', 'stats', 'sellers'));
+    }
+
+    /**
+     * Exporter les ventes en Excel
+     */
+    public function exportSalesExcel(Request $request)
+    {
+        ActivityLog::log(
+            'export_manager_sales_excel',
+            'Export des ventes du Manager en Excel',
+            'Sale',
+            null
+        );
+
+        return Excel::download(
+            new ManagerSalesExport(
+                auth()->id(),
+                $request->seller_id,
+                $request->date_from,
+                $request->date_to
+            ),
+            'ventes_manager_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
+    }
+
+    /**
+     * Exporter les ventes en PDF
+     */
+    public function exportSalesPdf(Request $request)
+    {
+        ActivityLog::log(
+            'export_manager_sales_pdf',
+            'Export des ventes du Manager en PDF',
+            'Sale',
+            null
+        );
+
+        // Récupérer les IDs des vendeurs créés par ce manager
+        $sellerIds = User::role('seller')
+            ->where('created_by', auth()->id())
+            ->pluck('id');
+
+        $query = Sale::with(['seller', 'items.product'])
+            ->whereIn('seller_id', $sellerIds);
+
+        // Appliquer les mêmes filtres que l'export Excel
+        if ($request->filled('seller_id')) {
+            $query->where('seller_id', $request->seller_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $sales = $query->latest()->get();
+
+        // Statistiques
+        $stats = [
+            'total_sales' => $sales->count(),
+            'total_revenue' => $sales->sum('total'),
+            'total_items' => $sales->sum(function($sale) {
+                return $sale->items->count();
+            }),
+        ];
+
+        $pdf = Pdf::loadView('manager.sales.pdf', [
+            'sales' => $sales,
+            'stats' => $stats,
+            'filters' => $request->all(),
+            'manager' => auth()->user(),
+        ]);
+
+        return $pdf->download('ventes_manager_' . now()->format('Y-m-d_H-i-s') . '.pdf');
     }
 }

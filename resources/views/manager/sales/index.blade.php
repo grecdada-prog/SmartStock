@@ -17,6 +17,12 @@
             <p class="mt-2 text-sm text-gray-700">Toutes les ventes réalisées par vos vendeurs</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
+            <!-- Export Buttons -->
+            <x-export-buttons
+                :excelRoute="route('manager.sales.export.excel', request()->query())"
+                :pdfRoute="route('manager.sales.export.pdf', request()->query())"
+            />
+
             <!-- Toggle Auto-refresh -->
             <label class="flex items-center space-x-2 text-sm text-gray-700">
                 <input type="checkbox" x-model="autoRefresh" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
