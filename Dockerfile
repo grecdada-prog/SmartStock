@@ -1,26 +1,62 @@
-# Utilise une image avec Nginx et PHP-FPM
-FROM richarvey/nginx-php-fpm:3.1.6
+# ============================
+# 1) Build des assets (Vite)
+# ============================
+FROM node:20 AS node_builder
 
-# Copie les fichiers de votre projet
-COPY . /var/www/html
+WORKDIR /app
 
-# Définit le répertoire web public
-ENV WEBROOT=/var/www/html/public
-ENV APP_ENV=production
-ENV PHP_ERRORS_STDERR=1
-ENV RUN_SCRIPTS=1
-ENV REAL_IP_HEADER=1
+# Copie des fichiers nécessaires au build front
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* .npmrc* ./
+RUN npm install || yarn install || pnpm install || echo "No lockfile matched, npm install done"
 
-# Scripts à exécuter au démarrage
-RUN echo '#!/bin/bash\n\
-cd /var/www/html\n\
-php artisan config:cache\n\
-php artisan route:cache\n\
-php artisan view:cache\n\
-php artisan migrate --force\n\
-php artisan storage:link || true' > /var/www/html/scripts/run.sh && chmod +x /var/www/html/scripts/run.sh
+COPY vite.config.* postcss.config.* tailwind.config.* ./
+COPY resources ./resources
+COPY public ./public
 
-# Expose le port (Render utilise PORT env var)
-EXPOSE 80
+RUN npm run build || yarn build || pnpm build
 
-CMD ["/start.sh"]
+# ============================
+# 2) Image PHP/Laravel finale
+# ============================
+FROM php:8.2-fpm
+
+# Extensions nécessaires pour Laravel + PostgreSQL
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    zip \
+    unzip \
+    libpq-dev \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && rm -rf /var/lib/apt/lists/*
+
+# Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Copier uniquement composer.* d'abord pour profiter du cache Docker
+COPY composer.json composer.lock* ./
+
+RUN composer install --no-dev --prefer-dist --optimize-autoloader
+
+# Copier tout le projet
+COPY . .
+
+# Copier les assets buildés
+COPY --from=node_builder /app/public/build ./public/build
+
+# Donner les bons droits sur storage et cache
+RUN mkdir -p storage/framework/{cache,sessions,views} \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+# Caches Laravel (config, routes, vues)
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache || echo "Artisan cache failed (probably no .env yet), continuing"
+
+# Commande de démarrage :
+# - migrations
+# - serveur Laravel
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
