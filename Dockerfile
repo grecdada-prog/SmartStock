@@ -28,35 +28,34 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libpq-dev \
     libzip-dev \
-    && docker-php-ext-install pdo pdo_pgsql \
+    libonig-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Composer
+# Composer (autoriser l'usage en root)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /var/www/html
 
-# Copier uniquement composer.* d'abord pour profiter du cache Docker
+# 1. Installer les dépendances à partir de composer.json/lock
 COPY composer.json composer.lock* ./
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
 
-RUN composer install --no-dev --prefer-dist --optimize-autoloader
-
-# Copier tout le projet
+# 2. Copier le reste du projet
 COPY . .
 
-# Copier les assets buildés
-COPY --from=node_builder /app/public/build ./public/build
+# 3. Copier les assets buildés (si tu as une étape Node avant)
+# COPY --from=node_builder /app/public/build ./public/build
 
-# Donner les bons droits sur storage et cache
+# 4. Préparer les répertoires Laravel
 RUN mkdir -p storage/framework/{cache,sessions,views} \
     && chown -R www-data:www-data storage bootstrap/cache
 
-# Caches Laravel (config, routes, vues)
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache || echo "Artisan cache failed (probably no .env yet), continuing"
+# 5. Caches Laravel (tolérer les erreurs si APP_KEY/DB non définis au build)
+RUN php artisan config:cache || true \
+    && php artisan route:cache || true \
+    && php artisan view:cache || true
 
-# Commande de démarrage :
-# - migrations
-# - serveur Laravel
+# Commande de démarrage : migrations + serveur Laravel
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
