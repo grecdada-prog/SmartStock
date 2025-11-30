@@ -1,7 +1,7 @@
-# ⚡ Guide de Démarrage Rapide - Déploiement Railway
+# ⚡ Guide de Démarrage Rapide - Déploiement Render
 
 ## 🎯 Objectif
-Déployer SmartStock sur Railway en **moins de 10 minutes** (plus simple que Render !).
+Déployer SmartStock sur Render en **moins de 15 minutes**.
 
 ---
 
@@ -9,7 +9,7 @@ Déployer SmartStock sur Railway en **moins de 10 minutes** (plus simple que Ren
 
 - [ ] Compte GitHub créé
 - [ ] Code poussé sur GitHub
-- [ ] Compte Railway créé ([railway.app](https://railway.app))
+- [ ] Compte Render créé ([render.com](https://render.com))
 - [ ] Compte SendGrid créé ([sendgrid.com](https://sendgrid.com))
 
 ---
@@ -24,7 +24,7 @@ git status
 
 # Si besoin, ajouter et commiter
 git add .
-git commit -m "chore: Prepare for Railway deployment"
+git commit -m "chore: Prepare for Render deployment"
 
 # Créer le repository sur GitHub (via l'interface web)
 # Puis lier et pousser:
@@ -35,78 +35,65 @@ git push -u origin main
 
 ---
 
-## 🚂 Étape 2 : Déployer sur Railway (5 min)
+## 🎨 Étape 2 : Déployer sur Render (8 min)
 
-### 2.1 Créer un Compte Railway
+### 2.1 Créer un Compte Render
 
-1. Aller sur [railway.app](https://railway.app)
-2. Cliquer **Login with GitHub**
-3. Autoriser Railway à accéder à vos repositories
+1. Aller sur [render.com](https://render.com)
+2. Cliquer **Get Started**
+3. Choisir **Sign up with GitHub**
+4. Autoriser Render à accéder à vos repositories
 
-### 2.2 Créer un Nouveau Projet
+### 2.2 Créer un Nouveau Blueprint
 
-1. **Dashboard Railway** → **New Project**
-2. Choisir **Deploy from GitHub repo**
-3. Sélectionner votre repository `SmartStock`
-4. Railway détecte automatiquement que c'est un projet Laravel ! ✨
+1. **Dashboard Render** → **New** → **Blueprint**
+2. Connecter votre repository **SmartStock**
+3. Render détecte automatiquement le fichier `render.yaml` ! ✨
+4. Cliquer **Apply**
 
-### 2.3 Ajouter une Base de Données PostgreSQL
+### 2.3 Render Crée Automatiquement
 
-1. Dans votre projet → Cliquer **New** → **Database** → **Add PostgreSQL**
-2. Railway crée automatiquement la DB et configure toutes les variables ! 🎉
-3. **Pas besoin de configurer manuellement les variables DB_***
+Render va créer automatiquement :
+- ✅ Service Web Laravel
+- ✅ Base de données PostgreSQL
+- ✅ Variables d'environnement de base
+- ✅ Connexion entre le service et la DB
 
-### 2.4 Configurer les Variables d'Environnement
+**⏳ Le déploiement initial prend 5-8 minutes.**
 
-1. Cliquer sur votre service **SmartStock**
-2. Aller dans **Variables**
-3. Ajouter les variables suivantes :
+### 2.4 Configurer les Variables Manquantes
+
+Pendant le déploiement, ajouter les variables manquantes :
+
+1. **Dashboard** → Votre service **smartstock** → **Environment**
+2. Ajouter ces variables :
 
 ```bash
-# Application
-APP_NAME=SmartStock
-APP_ENV=production
-APP_DEBUG=false
-
-# Railway génère automatiquement APP_KEY au premier déploiement
+# URL de votre application (sera générée par Render)
+APP_URL=https://smartstock.onrender.com
 
 # Email SendGrid (voir étape 3)
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.sendgrid.net
-MAIL_PORT=587
-MAIL_ENCRYPTION=tls
+MAIL_PASSWORD=VOTRE_CLE_API_SENDGRID
 MAIL_FROM_ADDRESS=noreply@votre-domaine.com
-MAIL_FROM_NAME=SmartStock
-SENDGRID_API_KEY=[À ajouter après étape 3]
-
-# Cache & Session
-CACHE_DRIVER=database
-SESSION_DRIVER=database
-QUEUE_CONNECTION=database
-
-# Logs
-LOG_CHANNEL=stack
-LOG_LEVEL=error
 ```
 
-**Important** : Railway configure automatiquement `DATABASE_URL` et toutes les variables de base de données. Pas besoin de les ajouter !
+3. Cliquer **Save Changes**
 
-### 2.5 Générer un Domaine Public
+**Important** : Render configure automatiquement toutes les variables de base de données (`DB_HOST`, `DB_PORT`, etc.) grâce au fichier `render.yaml`.
 
-1. Dans votre service → **Settings** → **Networking**
-2. Cliquer **Generate Domain**
-3. Copier l'URL : `https://smartstock-production.up.railway.app`
-4. Retourner dans **Variables** et ajouter :
+### 2.5 Vérifier le Build
+
+1. Aller dans **Logs** pour suivre le déploiement
+2. Vous devriez voir :
    ```
-   APP_URL=https://votre-domaine.up.railway.app
+   🚀 Starting SmartStock build process...
+   📦 Installing Composer dependencies...
+   🗄️  Running database migrations...
+   👤 Seeding Super Admin...
+   ✅ Build completed successfully!
    ```
 
-### 2.6 Déployer
-
-1. Railway commence automatiquement le déploiement !
-2. Suivre les logs en temps réel : **View Logs**
-3. ⏳ **Le premier déploiement prend 3-5 minutes**
-4. Quand vous voyez "Application ready", c'est prêt ! ✅
+3. Quand vous voyez **"Live"** en vert, c'est prêt ! ✅
 
 ---
 
@@ -117,96 +104,67 @@ LOG_LEVEL=error
 3. Nom: `SmartStock Production`
 4. Permissions: **Full Access** (ou juste "Mail Send")
 5. **Créer** et **copier la clé** (commence par `SG.`)
-6. **Railway** → Votre service → **Variables** → Ajouter:
+6. **Render** → Votre service → **Environment** → Modifier:
    ```
-   SENDGRID_API_KEY=SG.votre_cle_ici
+   MAIL_PASSWORD=SG.votre_cle_ici
    ```
-7. Railway redéploie automatiquement
+7. **Save Changes** → Render redéploie automatiquement
 
 ---
 
-## 🎉 Étape 4 : Vérifier le Déploiement (1 min)
+## 🎉 Étape 4 : Vérifier le Déploiement (2 min)
 
 ### 4.1 Accéder à l'application
 
-Aller sur l'URL générée : `https://votre-domaine.up.railway.app`
+1. Sur votre Dashboard Render, copier l'URL du service
+2. Ouvrir dans le navigateur : `https://smartstock.onrender.com`
+3. Vous devriez voir la page de login SmartStock ✅
 
-### 4.2 Créer le SuperAdmin
+### 4.2 Se connecter en tant que SuperAdmin
 
-**Option A : Via Railway CLI** (Recommandé)
+Le SuperAdmin a été créé automatiquement pendant le build !
 
-```bash
-# Installer Railway CLI
-npm i -g @railway/cli
+**Credentials par défaut** (définis dans `SuperAdminSeeder.php`) :
 
-# Login
-railway login
-
-# Link au projet
-railway link
-
-# Exécuter le seeder
-railway run php artisan db:seed --class=RolesAndPermissionsSeeder
+```
+Email: admin@smartstock.com
+Password: Admin@2024
 ```
 
-**Option B : Via code (temporaire)**
+**⚠️ IMPORTANT** : Changez ce mot de passe immédiatement après la première connexion !
 
-Créer un fichier `routes/temp.php` :
+### 4.3 Tester l'envoi d'email
 
-```php
-<?php
-// TEMPORAIRE - Supprimer après usage
-Route::get('/setup-admin', function() {
-    Artisan::call('db:seed', ['--class' => 'RolesAndPermissionsSeeder']);
-    return 'SuperAdmin créé! Supprimez ce fichier routes/temp.php';
-});
-```
-
-Puis :
-1. Git push vers GitHub
-2. Attendre le redéploiement (2-3 min)
-3. Visiter `https://votre-app.up.railway.app/setup-admin`
-4. **IMPORTANT** : Supprimer `routes/temp.php` et re-push immédiatement
-
-### 4.3 Se connecter
-
-1. Aller sur `https://votre-app.up.railway.app/login`
-2. Utiliser les credentials de votre seeder
-3. ✅ **Bravo, c'est en ligne !**
+1. Connectez-vous en tant que SuperAdmin
+2. Allez dans **Utilisateurs** → **Créer un utilisateur**
+3. Créez un Manager ou Vendeur
+4. Vérifiez que l'email de bienvenue est reçu ✅
 
 ---
 
-## 🤖 Étape 5 : Activer le CI/CD (Optionnel - 3 min)
+## 🤖 Étape 5 : Activer le CI/CD avec GitHub Actions (Optionnel - 3 min)
 
-Railway déploie **automatiquement** à chaque push sur `main`. Mais pour avoir des tests automatiques avant :
+Le repository contient déjà les workflows GitHub Actions configurés dans `.github/workflows/`.
 
-### 5.1 Obtenir le Token Railway
+### 5.1 Obtenir le Render Deploy Hook
 
-1. **Railway** → **Account Settings** → **Tokens**
-2. Créer un nouveau token : **Create Token**
-3. Copier le token
+1. **Dashboard Render** → Votre service **smartstock**
+2. **Settings** → **Deploy Hook**
+3. Copier l'URL du hook (ex: `https://api.render.com/deploy/srv-xxx?key=yyy`)
 
-### 5.2 Trouver votre Project ID
+### 5.2 Ajouter dans GitHub Secrets
 
-```bash
-railway login
-railway status
-```
+1. **GitHub** → **Votre repo SmartStock** → **Settings** → **Secrets and variables** → **Actions**
+2. Cliquer **New repository secret**
+3. Ajouter :
+   - Name: `RENDER_DEPLOY_HOOK`
+   - Value: `https://api.render.com/deploy/srv-xxx?key=yyy`
 
-Ou dans l'URL du projet : `https://railway.app/project/[PROJECT_ID]`
-
-### 5.3 Ajouter dans GitHub
-
-1. **GitHub** → **Votre repo** → **Settings** → **Secrets and variables** → **Actions**
-2. Ajouter 2 secrets :
-   - `RAILWAY_TOKEN` = `votre_token`
-   - `RAILWAY_PROJECT_ID` = `votre_project_id`
-
-### 5.4 Tester le pipeline
+### 5.3 Tester le Pipeline
 
 ```bash
 # Faire une petite modification
-echo "# SmartStock - Déployé sur Railway" >> README.md
+echo "# SmartStock - Déployé sur Render" >> README.md
 
 git add README.md
 git commit -m "test: Trigger CI/CD pipeline"
@@ -214,16 +172,17 @@ git push origin main
 ```
 
 **Vérifier** :
-- **GitHub** → **Actions** → Voir le workflow
-- Tests automatiques avant déploiement ✅
+- **GitHub** → **Actions** → Voir le workflow `deploy.yml` s'exécuter
+- Tests automatiques → Build → Déploiement sur Render ✅
 
 ---
 
 ## ✅ Checklist Finale
 
-- [ ] Application accessible en ligne
+- [ ] Application accessible en ligne sur Render
 - [ ] SuperAdmin créé et login fonctionne
-- [ ] Email de test envoyé et reçu
+- [ ] Email de bienvenue envoyé et reçu
+- [ ] Mot de passe SuperAdmin changé
 - [ ] GitHub Actions activées (optionnel)
 - [ ] Pipeline CI/CD fonctionne (optionnel)
 
@@ -231,108 +190,210 @@ git push origin main
 
 ## 🎊 Bravo !
 
-Votre application est maintenant :
-- ✅ **Déployée en production** sur Railway
+Votre application SmartStock est maintenant :
+- ✅ **Déployée en production** sur Render
 - ✅ **Base de données PostgreSQL** configurée automatiquement
-- ✅ **Déploiement automatique** à chaque push
+- ✅ **Déploiement automatique** via `render.yaml`
 - ✅ **Emails** opérationnels via SendGrid
-- ✅ **Logs** en temps réel sur Railway
+- ✅ **Logs** en temps réel sur Render
 - ✅ **SSL/HTTPS** gratuit et automatique
-
----
-
-## 💡 Avantages de Railway vs Render
-
-| Fonctionnalité | Railway | Render |
-|----------------|---------|--------|
-| Setup initial | ⚡ 5 min | 10 min |
-| Config DB auto | ✅ Oui | ❌ Manuel |
-| Variables auto | ✅ Oui | ❌ Manuel |
-| Détection Laravel | ✅ Auto | ❌ Manuel |
-| CLI intégré | ✅ Oui | ❌ Non |
-| Logs temps réel | ✅ Excellent | ✅ Bon |
-| Gratuit | ✅ $5 offerts | ✅ Limité |
+- ✅ **SuperAdmin** créé automatiquement
 
 ---
 
 ## 📌 Prochaines Étapes (Optionnel)
 
-1. **Domaine personnalisé** :
-   - Railway → Settings → Custom Domain
-   - Ajouter votre domaine
+### 1. Domaine Personnalisé
 
-2. **Monitoring** :
-   - Railway → Metrics → CPU/RAM/Disk
+1. **Render** → Votre service → **Settings** → **Custom Domain**
+2. Ajouter votre domaine (ex: `smartstock.votredomaine.com`)
+3. Configurer les DNS chez votre registrar :
+   ```
+   Type: CNAME
+   Name: smartstock
+   Value: smartstock.onrender.com
+   ```
 
-3. **Scaling** :
-   - Railway détecte la charge et scale automatiquement
+### 2. Monitoring et Logs
 
-4. **Redis Cache** :
-   - Railway → New → Database → Redis
+1. **Metrics** : Render → Votre service → **Metrics**
+   - CPU, RAM, Requêtes/sec
+2. **Logs** : Render → Votre service → **Logs**
+   - Logs en temps réel
+   - Filtres par niveau (error, warning, info)
 
-5. **Backups** :
-   - Railway fait des snapshots automatiques
+### 3. Backups Automatiques
+
+1. **Render** → Base de données **smartstock-db** → **Backups**
+2. Activer les backups automatiques quotidiens
+3. Définir la rétention (7, 14, 30 jours)
+
+### 4. Scaling (Plan Payant)
+
+1. **Settings** → **Instance Type**
+2. Passer à un plan supérieur pour :
+   - Plus de RAM/CPU
+   - Auto-scaling
+   - Replicas multiples
+
+### 5. Cache Redis (Optionnel)
+
+1. **Dashboard** → **New** → **Redis**
+2. Modifier les variables d'environnement :
+   ```
+   CACHE_DRIVER=redis
+   SESSION_DRIVER=redis
+   REDIS_HOST=${REDIS_HOST}
+   REDIS_PORT=${REDIS_PORT}
+   ```
 
 ---
 
 ## 🆘 Problèmes Courants
 
-### "Application Error"
-```bash
-# Vérifier les logs
-railway logs
-```
+### ❌ "Application Error" ou "502 Bad Gateway"
 
-### "Database connection failed"
-```bash
-# Railway configure automatiquement, mais vérifier :
-railway variables
-```
+**Cause** : Build échoué ou migrations ratées
 
-### "502 Bad Gateway"
-```bash
-# Souvent causé par migrations qui échouent
-railway logs --filter="error"
-```
+**Solution** :
+1. Vérifier les logs : **Logs** → Chercher les erreurs rouges
+2. Vérifier les variables d'environnement : **Environment**
+3. Redéployer manuellement : **Manual Deploy** → **Deploy latest commit**
 
-### "Emails ne partent pas"
-```bash
-# Vérifier la variable
-railway variables | grep SENDGRID
-```
+### ❌ "Database connection failed"
+
+**Cause** : Variables de base de données mal configurées
+
+**Solution** :
+1. Vérifier que `render.yaml` est correctement configuré
+2. Vérifier que la base de données **smartstock-db** existe
+3. Vérifier les variables : `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+
+### ❌ "Emails ne partent pas"
+
+**Cause** : SendGrid mal configuré
+
+**Solution** :
+1. Vérifier la variable `MAIL_PASSWORD` (doit contenir la clé API SendGrid)
+2. Vérifier `MAIL_FROM_ADDRESS` (doit être un email valide)
+3. Vérifier sur SendGrid que la clé API a les permissions "Mail Send"
+4. Regarder les logs SendGrid : [https://app.sendgrid.com/email_activity](https://app.sendgrid.com/email_activity)
+
+### ❌ "APP_KEY not set"
+
+**Cause** : Variable `APP_KEY` manquante
+
+**Solution** :
+1. Render génère automatiquement `APP_KEY` si `generateValue: true` dans `render.yaml`
+2. Ou générer manuellement :
+   ```bash
+   php artisan key:generate --show
+   ```
+3. Ajouter dans **Environment** :
+   ```
+   APP_KEY=base64:la_clé_générée
+   ```
+
+### ❌ "Storage link not found"
+
+**Cause** : Lien symbolique `storage` non créé
+
+**Solution** : C'est automatique dans `render-build.sh`, mais si besoin :
+1. **Render Shell** (plan payant) → Exécuter :
+   ```bash
+   php artisan storage:link
+   ```
+
+### ❌ Build lent (> 10 minutes)
+
+**Cause** : Dépendances Composer volumineuses
+
+**Solution** :
+1. C'est normal pour le premier build (5-8 min)
+2. Les builds suivants sont plus rapides (cache)
+3. Si trop lent, vérifier `composer.json` pour des dépendances inutiles
 
 ---
 
-## 🚀 Commandes Railway Utiles
+## 🚀 Commandes Utiles
+
+### Via Render Dashboard
 
 ```bash
 # Voir les logs en temps réel
-railway logs
+Dashboard → Votre service → Logs
 
-# Exécuter des commandes
-railway run php artisan migrate
-railway run php artisan cache:clear
+# Redéployer manuellement
+Dashboard → Votre service → Manual Deploy → Deploy latest commit
 
-# SSH dans le container
-railway shell
+# Variables d'environnement
+Dashboard → Votre service → Environment
 
-# Voir les variables
-railway variables
+# Métriques
+Dashboard → Votre service → Metrics
+```
 
-# Redéployer
-railway up --detach
+### Via Render Shell (Plan Payant)
+
+```bash
+# Accéder au shell
+Dashboard → Votre service → Shell
+
+# Exécuter des commandes Laravel
+php artisan migrate
+php artisan cache:clear
+php artisan db:seed --class=SuperAdminSeeder
+
+# Voir les logs Laravel
+tail -f storage/logs/laravel.log
 ```
 
 ---
 
 ## 📞 Support
 
-- **Documentation Railway** : [docs.railway.app](https://docs.railway.app)
-- **Discord Railway** : [railway.app/discord](https://railway.app/discord)
-- **GitHub Discussions** : Dans votre repo
+- **Documentation Render** : [docs.render.com](https://docs.render.com)
+- **Community Render** : [community.render.com](https://community.render.com)
+- **Status Page** : [status.render.com](https://status.render.com)
+- **Support Email** : support@render.com
+
+---
+
+## 🔄 Workflow de Développement
+
+### 1. Développement Local
+
+```bash
+# Travailler sur une branche feature
+git checkout -b feature/nouvelle-fonctionnalite
+
+# Développer, tester en local
+php artisan serve
+
+# Commit
+git add .
+git commit -m "feat: Ajouter nouvelle fonctionnalité"
+
+# Push vers GitHub
+git push origin feature/nouvelle-fonctionnalite
+```
+
+### 2. Pull Request et Tests
+
+1. Créer une PR sur GitHub
+2. GitHub Actions exécute automatiquement les tests (`.github/workflows/tests.yml`)
+3. Review du code
+4. Merge vers `main`
+
+### 3. Déploiement Automatique
+
+1. Dès que `main` est mis à jour, Render déploie automatiquement
+2. Ou utiliser GitHub Actions (`.github/workflows/deploy.yml`) avec `RENDER_DEPLOY_HOOK`
+3. Vérifier les logs de déploiement
+4. Tester en production
 
 ---
 
 **Pour plus de détails** → Voir [DEPLOYMENT.md](DEPLOYMENT.md)
 
-**Railway est prêt ! 🎉**
+**Render est prêt ! 🎉**

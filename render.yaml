@@ -1,0 +1,81 @@
+services:
+  # Service Web Laravel
+  - type: web
+    name: smartstock
+    env: php
+    region: frankfurt
+    plan: free
+    buildCommand: bash render-build.sh
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_NAME
+        value: SmartStock
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: smartstock-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: smartstock-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: smartstock-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: smartstock-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: smartstock-db
+          property: password
+      - key: CACHE_DRIVER
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_LIFETIME
+        value: 120
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.sendgrid.net
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USERNAME
+        value: apikey
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: SmartStock
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: error
+      - key: BROADCAST_DRIVER
+        value: log
+      - key: FILESYSTEM_DISK
+        value: local
+
+databases:
+  - name: smartstock-db
+    databaseName: smartstock
+    user: smartstock
+    region: frankfurt
+    plan: free
