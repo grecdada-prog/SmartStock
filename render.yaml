@@ -1,5 +1,6 @@
 services:
-  # Service Web Laravel
+  # Service Web Laravel avec Docker Runtime
+  # Note: Render injecte automatiquement la variable PORT au runtime
   - type: web
     name: smartstock
     runtime: docker
@@ -7,7 +8,10 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    # Health check (optionnel, Render le fait automatiquement)
+    # healthCheckPath: /
     envVars:
+      # Application Configuration
       - key: APP_NAME
         value: SmartStock
       - key: APP_ENV
@@ -18,28 +22,23 @@ services:
         generateValue: true
       - key: APP_URL
         sync: false
+      
+      # Database Configuration (à configurer manuellement depuis votre BD existante)
+      # IMPORTANT: Remplacez ces valeurs par celles de votre base de données Render existante
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: smartstock-db
-          property: host
+        sync: false  # À configurer manuellement dans Render Dashboard
       - key: DB_PORT
-        fromDatabase:
-          name: smartstock-db
-          property: port
+        sync: false  # À configurer manuellement dans Render Dashboard
       - key: DB_DATABASE
-        fromDatabase:
-          name: smartstock-db
-          property: database
+        sync: false  # À configurer manuellement dans Render Dashboard
       - key: DB_USERNAME
-        fromDatabase:
-          name: smartstock-db
-          property: user
+        sync: false  # À configurer manuellement dans Render Dashboard
       - key: DB_PASSWORD
-        fromDatabase:
-          name: smartstock-db
-          property: password
+        sync: false  # À configurer manuellement dans Render Dashboard
+      
+      # Cache & Session Configuration
       - key: CACHE_DRIVER
         value: database
       - key: SESSION_DRIVER
@@ -48,6 +47,8 @@ services:
         value: database
       - key: SESSION_LIFETIME
         value: 120
+      
+      # Mail Configuration (SendGrid)
       - key: MAIL_MAILER
         value: smtp
       - key: MAIL_HOST
@@ -57,13 +58,15 @@ services:
       - key: MAIL_USERNAME
         value: apikey
       - key: MAIL_PASSWORD
-        sync: false
+        sync: false  # Votre clé API SendGrid
       - key: MAIL_ENCRYPTION
         value: tls
       - key: MAIL_FROM_ADDRESS
-        sync: false
+        sync: false  # Votre adresse email vérifiée SendGrid
       - key: MAIL_FROM_NAME
         value: SmartStock
+      
+      # Logging Configuration
       - key: LOG_CHANNEL
         value: stack
       - key: LOG_LEVEL
@@ -72,10 +75,23 @@ services:
         value: log
       - key: FILESYSTEM_DISK
         value: local
+      
+      # Timezone (optionnel)
+      - key: APP_TIMEZONE
+        value: UTC
+      
+      # Locale (optionnel)
+      - key: APP_LOCALE
+        value: fr
 
-databases:
-  - name: smartstock-db
-    databaseName: smartstock
-    user: smartstock
-    region: frankfurt
-    plan: free
+# NOTE: La base de données n'est pas créée ici car elle existe déjà sur Render
+# Configurez manuellement les variables DB_* dans le Dashboard Render :
+# 1. Allez dans votre base de données PostgreSQL sur Render
+# 2. Copiez les valeurs de DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+# 3. Ajoutez-les dans Environment Variables du service web
+#
+# Variables importantes à configurer manuellement :
+# - APP_URL: https://votre-app.onrender.com (sera fourni après le premier déploiement)
+# - DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD: Depuis votre BD Render
+# - MAIL_PASSWORD: Votre clé API SendGrid
+# - MAIL_FROM_ADDRESS: Votre adresse email vérifiée SendGrid
