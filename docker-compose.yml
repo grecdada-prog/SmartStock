@@ -1,46 +1,31 @@
+version: "3.9"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: laravel_app
-    volumes:
-      - ./:/var/www/html
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - DB_CONNECTION=pgsql
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=smartstock
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=Dorab237
+    build: .
+    container_name: smartstock_app
+    ports:
+      - "8000:80"
+    env_file:
+      - .env
     depends_on:
       - db
+    volumes:
+      - .:/var/www/html
+      - ./public/build:/var/www/html/public/build
 
   db:
     image: postgres:15
-    container_name: laravel_db
+    container_name: smartstock_db
+    restart: always
     environment:
-      POSTGRES_DB: smartstock
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Dorab237
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-
-  nginx:
-    image: nginx:alpine
-    container_name: laravel_nginx
-    ports:
-      - "8000:80"
-    volumes:
-      - ./:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - app
 
 volumes:
   pgdata:
