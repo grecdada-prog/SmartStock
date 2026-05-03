@@ -27,7 +27,7 @@ class DemoDataSeeder extends Seeder
         );
 
         $manager = User::updateOrCreate(
-            ['email' => 'manager@smartstock.test'],
+            ['email' => 'bertholfyllias200@gmail.com'],
             [
                 'name' => 'Gerant Demo',
                 'phone' => '690100200',
@@ -40,7 +40,7 @@ class DemoDataSeeder extends Seeder
         $manager->syncRoles(['manager']);
 
         $seller = User::updateOrCreate(
-            ['email' => 'seller@smartstock.test'],
+            ['email' => 'grecdada@gmail.com'],
             [
                 'name' => 'Vendeur Demo',
                 'phone' => '690100201',
@@ -53,7 +53,7 @@ class DemoDataSeeder extends Seeder
         $seller->syncRoles(['seller']);
 
         $inactiveSeller = User::updateOrCreate(
-            ['email' => 'seller.inactif@smartstock.test'],
+            ['email' => 'mk.fyllias2026@gmail.com'],
             [
                 'name' => 'Vendeur Inactif',
                 'phone' => '690100202',
@@ -220,6 +220,6 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $this->command->info('Donnees de demo creees: manager@smartstock.test / seller@smartstock.test / Password@123');
+        $this->command->info('Donnees de demo creees: bertholfyllias200@gmail.com / grecdada@gmail.com / Password@123');
     }
 }
