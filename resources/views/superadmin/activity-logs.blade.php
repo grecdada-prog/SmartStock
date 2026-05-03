@@ -18,7 +18,7 @@
 
     <!-- Filtres -->
     <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('superadmin.activity-logs') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5">
+        <form method="GET" data-auto-filter action="{{ route('superadmin.activity-logs') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5">
             <div>
                 <label for="user_id" class="block text-sm font-medium text-gray-700">Utilisateur</label>
                 <select name="user_id" id="user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -48,11 +48,6 @@
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700">Date fin</label>
                 <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>

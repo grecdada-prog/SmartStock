@@ -51,6 +51,42 @@
         </div>
     </div>
 
+    <div class="mt-6 bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900">Solde Cash</h3>
+                    <p class="mt-2 text-3xl font-semibold text-gray-900">{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA</p>
+                    <p class="mt-2 text-sm text-gray-500">Seul le gerant peut ajouter ou retirer des fonds du Solde Cash.</p>
+                </div>
+
+                <form method="POST" action="{{ route('manager.sellers.cash-balance', $user) }}" class="space-y-3 lg:col-span-2">
+                    @csrf
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div>
+                            <label for="cash_type" class="block text-sm font-medium text-gray-700">Action</label>
+                            <select id="cash_type" name="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                                <option value="add">Ajouter des fonds</option>
+                                <option value="withdraw">Retirer des fonds</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cash_amount" class="block text-sm font-medium text-gray-700">Montant</label>
+                            <input id="cash_amount" name="amount" type="number" min="1" step="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="cash_reason" class="block text-sm font-medium text-gray-700">Motif</label>
+                            <input id="cash_reason" name="reason" type="text" maxlength="255" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        </div>
+                    </div>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md border border-transparent bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800">
+                        Enregistrer le mouvement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistiques -->
     <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Total Ventes -->

@@ -19,7 +19,7 @@
                 </div>
 
                 <div class="mt-5 md:mt-0 md:col-span-2">
-                    <form method="POST" action="{{ route('profile.update') }}">
+                    <form method="POST" action="{{ route('account.profile.update') }}">
                         @csrf
                         @method('PUT')
 
@@ -77,7 +77,7 @@
                 </div>
 
                 <div class="mt-5 md:mt-0 md:col-span-2">
-                    <form method="POST" action="{{ route('profile.password.update') }}">
+                    <form method="POST" action="{{ route('account.profile.password.update') }}">
                         @csrf
                         @method('PUT')
 

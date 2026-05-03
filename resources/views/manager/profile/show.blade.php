@@ -23,7 +23,7 @@
                     Informations Personnelles
                 </h3>
 
-                <form method="POST" action="{{ route('profile.update') }}" class="space-y-6">
+                <form method="POST" action="{{ route('account.profile.update') }}" class="space-y-6">
                     @csrf
                     @method('PUT')
 
@@ -61,8 +61,8 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Rôle</label>
                         <div class="mt-1">
-                            <span class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-purple-100 text-purple-800">
-                                Super Administrateur
+                            <span class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
+                                Gerant
                             </span>
                         </div>
                     </div>
@@ -91,7 +91,7 @@
                     Changer le Mot de Passe
                 </h3>
 
-                <form method="POST" action="{{ route('profile.password.update') }}" class="space-y-6">
+                <form method="POST" action="{{ route('account.profile.password.update') }}" class="space-y-6">
                     @csrf
                     @method('PUT')
 

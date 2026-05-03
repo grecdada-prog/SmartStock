@@ -144,7 +144,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Public registration is disabled: accounts are created by super admins or managers.
         Features::resetPasswords(),
         // Features::emailVerification(),
         Features::updateProfileInformation(),

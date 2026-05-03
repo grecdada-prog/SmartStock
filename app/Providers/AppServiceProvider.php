@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
 use App\Listeners\LogSuccessfulLogin;
@@ -35,8 +36,8 @@ class AppServiceProvider extends ServiceProvider
             LogSuccessfulLogout::class,
         );
 
-        if (env('APP_ENV') === 'production') {
-        URL::forceScheme('https');
-}
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }

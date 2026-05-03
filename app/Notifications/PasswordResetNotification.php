@@ -11,48 +11,32 @@ class PasswordResetNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $temporaryPassword;
-
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct($temporaryPassword)
+    public function __construct(protected string $resetUrl)
     {
-        $this->temporaryPassword = $temporaryPassword;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     */
     public function via($notifiable): array
     {
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Réinitialisation de votre mot de passe')
-            ->greeting('Bonjour ' . $notifiable->name . ',')
-            ->line('Votre mot de passe a été réinitialisé par un administrateur.')
-            ->line('**Nouveau mot de passe temporaire :**')
-            ->line('**' . $this->temporaryPassword . '**')
-            ->line('⚠️ Pour des raisons de sécurité, veuillez modifier ce mot de passe dès votre prochaine connexion.')
-            ->action('Me connecter', url('/login'))
-            ->line('Si vous n\'êtes pas à l\'origine de cette demande, veuillez contacter immédiatement un administrateur.')
-            ->salutation('Cordialement, L\'équipe ' . config('app.name'));
+            ->subject('Reinitialisation de votre mot de passe')
+            ->greeting('Bonjour '.$notifiable->name.',')
+            ->line('Une reinitialisation de mot de passe a ete demandee par un administrateur.')
+            ->line('Pour des raisons de securite, aucun mot de passe temporaire ne vous est envoye par email.')
+            ->line('Utilisez le lien ci-dessous pour choisir un nouveau mot de passe. Ce lien est temporaire.')
+            ->action('Choisir un nouveau mot de passe', $this->resetUrl)
+            ->line('Si vous n etes pas a l origine de cette demande, veuillez contacter immediatement un administrateur.')
+            ->salutation('Cordialement, l equipe '.config('app.name'));
     }
 
-    /**
-     * Get the array representation of the notification.
-     */
     public function toArray($notifiable): array
     {
         return [
-            'message' => 'Votre mot de passe a été réinitialisé.',
+            'message' => 'Un lien de reinitialisation de mot de passe a ete envoye.',
         ];
     }
 }

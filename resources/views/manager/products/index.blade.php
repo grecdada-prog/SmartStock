@@ -3,44 +3,32 @@
 @section('title', 'Gestion des Produits')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="{ autoRefresh: true }" x-init="
-    setInterval(() => {
-        if (autoRefresh) {
-            window.location.reload();
-        }
-    }, 5000);
-">
+<div id="manager-products-page" data-silent-refresh x-data="{ showCreateProduct: {{ $errors->any() ? 'true' : 'false' }} }" class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Produits</h1>
             <p class="mt-2 text-sm text-gray-700">Liste de tous vos produits en stock</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-            <!-- Toggle Auto-refresh -->
-            <label class="flex items-center space-x-2 text-sm text-gray-700">
-                <input type="checkbox" x-model="autoRefresh" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                <span>Auto-refresh 5s</span>
-            </label>
-
-            <a href="{{ route('manager.products.low-stock') }}" class="inline-flex items-center justify-center rounded-md border border-orange-600 bg-white px-4 py-2 text-sm font-medium text-orange-600 shadow-sm hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+<a href="{{ route('manager.products.low-stock') }}" class="inline-flex items-center justify-center rounded-md border border-orange-600 bg-white px-4 py-2 text-sm font-medium text-orange-600 shadow-sm hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 Stock Faible
             </a>
 
-            <a href="{{ route('manager.products.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+            <button type="button" @click="showCreateProduct = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Nouveau Produit
-            </a>
+            </button>
         </div>
     </div>
 
     <!-- Filtres -->
-    <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('manager.products.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    <div class="sticky top-20 z-20 mt-6 bg-white shadow rounded-lg p-4">
+        <form method="GET" data-auto-filter action="{{ route('manager.products.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -70,11 +58,6 @@
                     <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stock faible</option>
                     <option value="out" {{ request('stock_status') == 'out' ? 'selected' : '' }}>Rupture</option>
                 </select>
-            </div>
-            <div class="sm:col-span-4 flex justify-end">
-                <button type="submit" class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>
@@ -208,6 +191,69 @@
     <!-- Pagination -->
     <div class="mt-6">
         {{ $products->links() }}
+    </div>
+
+    <div x-show="showCreateProduct" x-cloak class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" style="display: none;">
+        <div class="fixed inset-0 bg-gray-900/50" @click="showCreateProduct = false"></div>
+        <div class="relative mx-auto max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl">
+            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                <h2 class="text-lg font-semibold text-gray-900">Nouveau produit</h2>
+                <button type="button" @click="showCreateProduct = false" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ route('manager.products.store') }}" class="space-y-5 p-6">
+                @csrf
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label for="modal_name" class="block text-sm font-medium text-gray-700">Nom du produit *</label>
+                        <input type="text" name="name" id="modal_name" required value="{{ old('name') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        @error('name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="modal_sku" class="block text-sm font-medium text-gray-700">Code SKU *</label>
+                        <input type="text" name="sku" id="modal_sku" required value="{{ old('sku') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        @error('sku')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="modal_category_id" class="block text-sm font-medium text-gray-700">Categorie *</label>
+                        <select name="category_id" id="modal_category_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                            <option value="">Selectionner</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('category_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="modal_alert_quantity" class="block text-sm font-medium text-gray-700">Seuil d'alerte *</label>
+                        <input type="number" name="alert_quantity" id="modal_alert_quantity" required min="0" step="1" value="{{ old('alert_quantity', 10) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        @error('alert_quantity')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="modal_unit" class="block text-sm font-medium text-gray-700">Unite *</label>
+                        <input type="text" name="unit" id="modal_unit" required value="{{ old('unit', 'piece') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        @error('unit')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="modal_description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea name="description" id="modal_description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">{{ old('description') }}</textarea>
+                    </div>
+                    <div class="sm:col-span-2 flex items-center">
+                        <input type="checkbox" name="is_active" id="modal_is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <label for="modal_is_active" class="ml-2 block text-sm text-gray-900">Produit actif</label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 border-t border-gray-200 pt-5">
+                    <button type="button" @click="showCreateProduct = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Creer le produit</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

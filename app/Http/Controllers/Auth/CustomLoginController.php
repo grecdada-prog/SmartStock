@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Events\UserLoggedIn;
@@ -106,7 +107,6 @@ class CustomLoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'role' => 'required|in:manager,seller',
         ]);
 
         // Limiter les tentatives de connexion
@@ -120,12 +120,12 @@ class CustomLoginController extends Controller
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $user = Auth::user();
 
-            // Vérifier si le rôle correspond
-            if (!$user->hasRole($request->role)) {
+            // Ce formulaire est réservé aux comptes gérant et vendeur.
+            if (!$user->hasAnyRole(['manager', 'seller'])) {
                 Auth::logout();
                 return back()->withErrors([
-                    'email' => 'Accès non autorisé pour ce rôle.',
-                ]);
+                    'email' => 'Accès non autorisé pour ce compte.',
+                ])->onlyInput('email');
             }
 
             // Vérifier si le compte est actif
@@ -140,7 +140,6 @@ class CustomLoginController extends Controller
             if ($user->google2fa_enabled) {
                 Auth::logout();
                 $request->session()->put('2fa:user:id', $user->id);
-                $request->session()->put('2fa:role', $request->role);
                 return redirect()->route('2fa.verify');
             }
 
@@ -181,7 +180,9 @@ class CustomLoginController extends Controller
         $user = Auth::user();
 
         // Déclencher l'événement de déconnexion
-        event(new UserLoggedOut($user));
+        if ($user) {
+            event(new UserLoggedOut($user));
+        }
 
         Auth::logout();
 
@@ -229,6 +230,7 @@ class CustomLoginController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
             session()->forget('2fa:user:id');
+            session()->forget('2fa:role');
 
             // Marquer que l'utilisateur vient de se connecter
             $request->session()->put('just_logged_in', true);
@@ -322,7 +324,7 @@ class CustomLoginController extends Controller
 
         $user = Auth::user();
 
-        if (!password_verify($request->password, $user->password)) {
+        if (!Hash::check($request->password, $user->password)) {
             return back()->withErrors([
                 'password' => 'Mot de passe incorrect.',
             ]);
@@ -370,7 +372,7 @@ class CustomLoginController extends Controller
 
     protected function throttleKey(Request $request)
     {
-        return strtolower($request->input('email')).'|'.$request->ip();
+        return strtolower((string) $request->input('email')).'|'.$request->ip();
     }
 
     protected function sendLockoutResponse(Request $request)

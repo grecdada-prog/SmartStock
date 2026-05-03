@@ -18,7 +18,7 @@
 
     <!-- Filtres -->
     <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('superadmin.sales') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <form method="GET" data-auto-filter action="{{ route('superadmin.sales') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="seller_id" class="block text-sm font-medium text-gray-700">Vendeur</label>
                 <select name="seller_id" id="seller_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -37,11 +37,6 @@
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700">Date fin</label>
                 <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>
@@ -88,7 +83,7 @@
                             @forelse($sales as $sale)
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                                        <button @click="$dispatch('open-sale-modal', { id: {{ $sale->id }} })" 
+                                        <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-sale-modal', { detail: { id: {{ $sale->id }} } }))" 
                                                 class="text-green-600 hover:text-green-900 font-medium hover:underline">
                                             {{ $sale->invoice_number }}
                                         </button>
@@ -120,14 +115,14 @@
                                                 <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                                 </svg>
-                                                Carte
+                                                Orange Money
                                             </span>
                                         @else
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                                 <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                 </svg>
-                                                Mobile Money
+                                                MTN Momo
                                             </span>
                                         @endif
                                     </td>

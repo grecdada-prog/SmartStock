@@ -25,7 +25,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
     public function collection()
     {
-        $query = Sale::with(['seller', 'saleItems.product']);
+        $query = Sale::with(['seller', 'items.product']);
 
         if ($this->sellerId) {
             $query->where('seller_id', $this->sellerId);
@@ -61,9 +61,9 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         return [
             $sale->id,
             $sale->seller->name ?? 'N/A',
-            $sale->saleItems->count(),
+            $sale->items->count(),
             number_format($sale->total, 0, ',', ' ') . ' FCFA',
-            number_format($sale->payment_method ?? 0, 0, ',', ' ') . ' FCFA',
+            $sale->payment_method_label,
             number_format($sale->amount_received ?? 0, 0, ',', ' ') . ' FCFA',
             number_format($sale->change_given ?? 0, 0, ',', ' ') . ' FCFA',
             $sale->created_at->format('d/m/Y H:i'),

@@ -1,158 +1,98 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Mon Dashboard') }}
+            Dashboard vendeur
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="{ showToday: false, showYesterday: false, showCash: false, showCloseModal: false, closingCash: false, openingCash: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Statistiques personnelles -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                <!-- Ventes aujourd'hui -->
+            <div class="grid grid-cols-1 gap-5 lg:grid-cols-3 mb-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Recette du jour</p>
+                                <p class="mt-1 text-xs text-gray-500">Recette totale encaissee aujourd'hui</p>
+                            </div>
+                            <button type="button" @click="showToday = !showToday; if (showToday) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette du jour">
+                                <svg x-show="!showToday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
                                 </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Aujourd'hui</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900">{{ $stats['today_sales'] }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
+                                <svg x-show="showToday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
+                                </svg>
+                            </button>
                         </div>
-                        <div class="mt-4">
-                            <div class="text-sm text-gray-600">
-                                {{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA
-                            </div>
+                        <div class="mt-6">
+                            <p class="text-3xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                            <p class="mt-2 text-sm text-gray-500">{{ $stats['today_cash_sales'] }} vente(s)</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Ventes ce mois -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Recette d'hier</p>
+                                <p class="mt-1 text-xs text-gray-500">Recette totale encaissee hier</p>
+                            </div>
+                            <button type="button" @click="showYesterday = !showYesterday; if (showYesterday) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette d'hier">
+                                <svg x-show="!showYesterday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
                                 </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Ce Mois</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900">{{ $stats['month_sales'] }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
+                                <svg x-show="showYesterday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
+                                </svg>
+                            </button>
                         </div>
-                        <div class="mt-4">
-                            <div class="text-sm text-gray-600">
-                                {{ number_format($stats['month_revenue'], 0, ',', ' ') }} FCFA
-                            </div>
+                        <div class="mt-6">
+                            <p class="text-3xl font-semibold text-gray-900" x-text="showYesterday ? '{{ number_format($stats['yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                            <p class="mt-2 text-sm text-gray-500">
+                                @if($stats['yesterday_cash_sales'] === null)
+                                    Recette cloturee
+                                @else
+                                    {{ $stats['yesterday_cash_sales'] }} vente(s)
+                                @endif
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Total ventes -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Solde Cash</p>
+                                <p class="mt-1 text-xs text-gray-500">Caisse cumulee apres cloture, ajustee par le gerant</p>
+                            </div>
+                            <button type="button" @click="showCash = !showCash; if (showCash) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer le solde cash">
+                                <svg x-show="!showCash" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
                                 </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Ventes</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900">{{ $stats['total_sales'] }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="text-sm text-gray-600">
-                                {{ number_format($stats['total_revenue'], 0, ',', ' ') }} FCFA
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Produits disponibles -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                <svg x-show="showCash" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
                                 </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Produits Disponibles</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900">{{ $stats['available_products'] }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
+                            </button>
                         </div>
-                        <div class="mt-4">
-                            <div class="text-sm text-gray-600">
-                                En stock
-                            </div>
+                        <div class="mt-6">
+                            <p class="text-3xl font-semibold text-gray-900" x-text="showCash ? '{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                            <p class="mt-2 text-sm text-gray-500">
+                                @if($stats['cash_register_closed_today'])
+                                    Journee de vente terminee. Caisse fermee depuis le {{ $stats['cash_register_closed_at']->format('d/m/Y') }} a {{ $stats['cash_register_closed_at']->format('H:i') }}
+                                @elseif($stats['cash_register_opened_at'])
+                                    Caisse rouverte le {{ $stats['cash_register_opened_at']->format('d/m/Y') }} a {{ $stats['cash_register_opened_at']->format('H:i') }}
+                                @else
+                                    Caisse ouverte aujourd'hui
+                                @endif
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Mes dernières ventes -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-5">
-                        <h3 class="text-lg font-medium text-gray-900">Mes Dernières Ventes</h3>
-                        <a href="{{ route('seller.sales.history') }}" class="text-sm font-medium text-green-600 hover:text-green-500">
-                            Voir tout
-                        </a>
-                    </div>
-                    <div class="flow-root">
-                        <ul role="list" class="-my-5 divide-y divide-gray-200">
-                            @forelse($recentSales as $sale)
-                                <li class="py-4">
-                                    <div class="flex items-center space-x-4">
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-sm font-medium text-gray-900 truncate">
-                                                {{ $sale->invoice_number }}
-                                            </p>
-                                            <p class="text-sm text-gray-500">
-                                                {{ $sale->items->count() }} article(s) - {{ $sale->created_at->format('d/m/Y H:i') }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                {{ number_format($sale->total, 0, ',', ' ') }} FCFA
-                                            </span>
-                                        </div>
-                                    </div>
-                                </li>
-                            @empty
-                                <li class="text-center text-gray-500 py-8">Aucune vente récente</li>
-                            @endforelse
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Actions rapides -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <a href="{{ route('seller.pos.index') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
@@ -162,53 +102,95 @@
                         </span>
                     </div>
                     <div class="mt-8">
-                        <h3 class="text-lg font-medium">
+                        <h3 class="text-lg font-medium text-gray-900">
                             <span class="absolute inset-0" aria-hidden="true"></span>
                             Nouvelle Vente
                         </h3>
                         <p class="mt-2 text-sm text-gray-500">
-                            Accéder au point de vente
+                            Acceder au point de vente
                         </p>
                     </div>
                 </a>
+            </div>
 
-                <a href="{{ route('seller.products') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
-                    <div>
-                        <span class="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                        </span>
+            <div class="mt-5 rounded-lg border border-red-200 bg-white p-5 shadow-sm">
+                @if($stats['cash_register_closed_today'])
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Caisse fermee</h3>
+                            <p class="mt-1 text-sm text-gray-500">La recette du jour est transferee dans le Solde Cash. Les ventes sont bloquees jusqu'a l'ouverture.</p>
+                        </div>
+                        <form x-ref="openForm" method="POST" action="{{ route('seller.dashboard.open-cash-register') }}">
+                            @csrf
+                            <button
+                                type="button"
+                                @click="openingCash = true; setTimeout(() => $refs.openForm.submit(), 1200)"
+                                :disabled="openingCash"
+                                class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-wait disabled:opacity-70 lg:w-auto"
+                            >
+                                <svg x-show="openingCash" class="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                <span x-text="openingCash ? 'Ouverture...' : 'Ouvrir la caisse'"></span>
+                            </button>
+                        </form>
                     </div>
-                    <div class="mt-8">
-                        <h3 class="text-lg font-medium">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Consulter Produits
-                        </h3>
-                        <p class="mt-2 text-sm text-gray-500">
-                            Voir les produits disponibles
-                        </p>
+                @else
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-red-900">Fermeture de caisse</h3>
+                            <p class="mt-1 text-sm text-gray-600">Action importante : elle termine la journee de vente, transfere la recette du jour dans le Solde Cash et remet la recette du jour a zero.</p>
+                        </div>
+                        <button
+                            type="button"
+                            @click="showCloseModal = true"
+                            class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-700 lg:w-auto"
+                        >
+                            Fermer la caisse
+                        </button>
                     </div>
-                </a>
 
-                <a href="{{ route('seller.my-stats') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
-                    <div>
-                        <span class="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="mt-8">
-                        <h3 class="text-lg font-medium">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Mes Statistiques
-                        </h3>
-                        <p class="mt-2 text-sm text-gray-500">
-                            Voir mes performances
-                        </p>
-                    </div>
-                </a>
+                    <form x-ref="closeForm" method="POST" action="{{ route('seller.dashboard.close-cash-register') }}" class="hidden">
+                        @csrf
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        <div
+            x-show="showCloseModal"
+            x-transition.opacity
+            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 px-4"
+            style="display: none;"
+        >
+            <div @click.away="!closingCash && (showCloseModal = false)" class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <h3 class="text-lg font-semibold text-gray-900">Confirmer la fermeture</h3>
+                <p class="mt-3 text-sm text-gray-600">
+                    Cette action ferme la journee de vente. La recette du jour sera transferee dans le Solde Cash, puis la recette du jour sera remise a zero.
+                </p>
+                <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        @click="showCloseModal = false"
+                        :disabled="closingCash"
+                        class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="button"
+                        @click="closingCash = true; setTimeout(() => $refs.closeForm.submit(), 4000)"
+                        :disabled="closingCash"
+                        class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-wait disabled:opacity-80"
+                    >
+                        <svg x-show="closingCash" class="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span x-text="closingCash ? 'Fermeture en cours...' : 'Confirmer la fermeture'"></span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

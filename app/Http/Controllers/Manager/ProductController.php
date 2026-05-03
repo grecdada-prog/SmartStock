@@ -91,9 +91,6 @@ class ProductController extends Controller
             'sku' => ['required', 'string', 'max:100', 'unique:products,sku'],
             'description' => ['nullable', 'string', 'max:1000'],
             'category_id' => ['required', 'exists:categories,id'],
-            'purchase_price' => ['required', 'numeric', 'min:0'],
-            'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
-            'quantity' => ['required', 'integer', 'min:0'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
@@ -116,9 +113,9 @@ class ProductController extends Controller
             'sku' => $validated['sku'],
             'description' => $validated['description'] ?? null,
             'category_id' => $validated['category_id'],
-            'purchase_price' => $validated['purchase_price'],
-            'selling_price' => $validated['selling_price'],
-            'quantity' => $validated['quantity'],
+            'purchase_price' => 0,
+            'selling_price' => 0,
+            'quantity' => 0,
             'alert_quantity' => $validated['alert_quantity'],
             'unit' => $validated['unit'],
             'is_active' => $validated['is_active'] ?? true,
@@ -142,9 +139,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         // Vérifier que le produit appartient bien au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de voir ce produit.');
-        }
+        $this->authorize('view', $product);
 
         $product->load(['category', 'creator', 'stockMovements' => function($query) {
             $query->latest()->limit(10);
@@ -159,9 +154,7 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         // Vérifier que le produit appartient bien au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
-        }
+        $this->authorize('update', $product);
 
         $categories = Category::where('created_by', auth()->id())
             ->active()
@@ -177,17 +170,13 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         // Vérifier que le produit appartient bien au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
-        }
+        $this->authorize('update', $product);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:100', Rule::unique('products')->ignore($product->id)],
             'description' => ['nullable', 'string', 'max:1000'],
             'category_id' => ['required', 'exists:categories,id'],
-            'purchase_price' => ['required', 'numeric', 'min:0'],
-            'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
@@ -205,15 +194,13 @@ class ProductController extends Controller
             return back()->withErrors(['category_id' => 'Catégorie invalide.'])->withInput();
         }
 
-        $oldValues = $product->only(['name', 'sku', 'selling_price', 'purchase_price']);
+        $oldValues = $product->only(['name', 'sku']);
 
         $product->update([
             'name' => $validated['name'],
             'sku' => $validated['sku'],
             'description' => $validated['description'] ?? null,
             'category_id' => $validated['category_id'],
-            'purchase_price' => $validated['purchase_price'],
-            'selling_price' => $validated['selling_price'],
             'alert_quantity' => $validated['alert_quantity'],
             'unit' => $validated['unit'],
             'is_active' => $validated['is_active'] ?? $product->is_active,
@@ -224,10 +211,6 @@ class ProductController extends Controller
         if ($oldValues['name'] !== $product->name) {
             $changes[] = "nom: {$oldValues['name']} → {$product->name}";
         }
-        if ($oldValues['selling_price'] != $product->selling_price) {
-            $changes[] = "prix vente: {$oldValues['selling_price']} → {$product->selling_price}";
-        }
-
         $changeDescription = empty($changes) ? '' : ' (' . implode(', ', $changes) . ')';
 
         ActivityLog::log(
@@ -247,9 +230,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         // Vérifier que le produit appartient bien au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de supprimer ce produit.');
-        }
+        $this->authorize('delete', $product);
 
         // Vérifier si le produit a des ventes
         if ($product->saleItems()->count() > 0) {
@@ -278,9 +259,7 @@ class ProductController extends Controller
     public function toggleStatus(Product $product)
     {
         // Vérifier que le produit appartient bien au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
-        }
+        $this->authorize('toggleStatus', $product);
 
         $newStatus = !$product->is_active;
         $product->update(['is_active' => $newStatus]);

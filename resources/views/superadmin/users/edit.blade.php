@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div class="bg-white shadow rounded-lg">
+        <div class="bg-white shadow rounded-lg" x-data="{ selectedRole: @js(old('role', $user->roles->first()->name ?? '')) }">
             <form method="POST" action="{{ route('superadmin.users.update', $user) }}" class="space-y-6 p-6">
                 @csrf
                 @method('PUT')
@@ -56,7 +56,7 @@
                 <!-- Rôle -->
                 <div>
                     <label for="role" class="block text-sm font-medium text-gray-700">Rôle *</label>
-                    <select name="role" id="role" required
+                    <select name="role" id="role" required x-model="selectedRole"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('role') border-red-300 @enderror">
                         <option value="">Sélectionner un rôle</option>
                         <option value="super_admin" {{ old('role', $user->roles->first()->name ?? '') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
@@ -67,6 +67,23 @@
                     @error('role')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
+                </div>
+
+                <div x-show="selectedRole === 'seller'" x-cloak>
+                    <label for="manager_id" class="block text-sm font-medium text-gray-700">Gerant responsable *</label>
+                    <select name="manager_id" id="manager_id"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('manager_id') border-red-300 @enderror">
+                        <option value="">Selectionner un gerant</option>
+                        @foreach($managers as $manager)
+                            <option value="{{ $manager->id }}" {{ old('manager_id', $user->created_by) == $manager->id ? 'selected' : '' }}>
+                                {{ $manager->name }} - {{ $manager->email }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('manager_id')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-gray-500">Un vendeur doit etre rattache a un gerant actif.</p>
                 </div>
 
                 <!-- Mot de passe -->
@@ -85,6 +102,17 @@
                     <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmer le nouveau mot de passe</label>
                     <input type="password" name="password_confirmation" id="password_confirmation"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                </div>
+
+                <!-- Statut -->
+                <div class="flex items-center">
+                    <input type="hidden" name="is_active" value="0">
+                    <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }}
+                        class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    <label for="is_active" class="ml-2 block text-sm text-gray-700">Compte actif</label>
+                    @error('is_active')
+                        <p class="ml-3 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Boutons -->

@@ -19,6 +19,15 @@
             </div>
 
             <div class="bg-white shadow-md rounded-lg px-8 py-8">
+                @if (request()->boolean('inactive'))
+                    <div class="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded relative" data-auto-dismiss>
+                        <span class="block sm:inline">Vous avez ete deconnecte automatiquement pour inactivite.</span>
+                        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.remove()">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endif
+
                 @if (session('message'))
                     <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded relative" data-auto-dismiss>
                         <span class="block sm:inline">{{ session('message') }}</span>

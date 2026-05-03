@@ -21,7 +21,7 @@
 
     <!-- Filtres -->
     <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('superadmin.managers.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <form method="GET" data-auto-filter action="{{ route('superadmin.managers.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou email..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -33,11 +33,6 @@
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actif</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactif</option>
                 </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>

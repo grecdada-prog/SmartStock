@@ -253,7 +253,7 @@
                                 {{ $item->quantity }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ number_format($item->price, 0, ',', ' ') }} FCFA
+                                {{ number_format($item->unit_price, 0, ',', ' ') }} FCFA
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                 {{ number_format($item->subtotal, 0, ',', ' ') }} FCFA

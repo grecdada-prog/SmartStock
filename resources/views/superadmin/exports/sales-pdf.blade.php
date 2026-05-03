@@ -85,9 +85,9 @@
                 <tr>
                     <td>{{ $sale->id }}</td>
                     <td>{{ $sale->seller->name ?? 'N/A' }}</td>
-                    <td>{{ $sale->saleItems->count() }}</td>
+                    <td>{{ $sale->items->count() }}</td>
                     <td>{{ number_format($sale->total, 0, ',', ' ') }} FCFA</td>
-                    <td>{{ number_format($sale->payment_method ?? 0, 0, ',', ' ') }} FCFA</td>
+                    <td>{{ $sale->payment_method_label }}</td>
                     <td>{{ $sale->created_at->format('d/m/Y H:i') }}</td>
                 </tr>
             @endforeach

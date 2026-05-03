@@ -3,13 +3,7 @@
 @section('title', 'Vendeurs En Ligne')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="{ autoRefresh: true }" x-init="
-    setInterval(() => {
-        if (autoRefresh) {
-            window.location.reload();
-        }
-    }, 5000);
-">
+<div id="manager-online-sellers-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Vendeurs En Ligne</h1>
@@ -21,13 +15,7 @@
             </p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-            <!-- Toggle Auto-refresh -->
-            <label class="flex items-center space-x-2 text-sm text-gray-700">
-                <input type="checkbox" x-model="autoRefresh" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                <span>Auto-refresh 5s</span>
-            </label>
-
-            <a href="{{ route('manager.sellers.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+<a href="{{ route('manager.sellers.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>

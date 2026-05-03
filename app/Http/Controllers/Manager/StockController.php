@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class StockController extends Controller
 {
@@ -61,7 +62,13 @@ class StockController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('manager.stock.index', compact('products', 'stats', 'categories'));
+        $restockProducts = Product::where('created_by', auth()->id())
+            ->with('category')
+            ->active()
+            ->orderBy('name')
+            ->get();
+
+        return view('manager.stock.index', compact('products', 'stats', 'categories', 'restockProducts'));
     }
 
     /**
@@ -101,36 +108,48 @@ class StockController extends Controller
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
             'quantity' => ['required', 'integer', 'min:1'],
+            'purchase_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
             'reference' => ['nullable', 'string', 'max:255'],
             'reason' => ['nullable', 'string', 'max:500'],
+        ], [
+            'selling_price.gte' => 'Le prix de vente doit etre superieur ou egal au prix d achat.',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
 
         // Vérifier que le produit appartient au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
-        }
+        $this->authorize('update', $product);
 
         DB::transaction(function () use ($product, $validated) {
+            $product = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
             $quantityBefore = $product->quantity;
             $quantityAfter = $quantityBefore + $validated['quantity'];
 
             // Créer le mouvement de stock
-            StockMovement::create([
+            $movement = StockMovement::create([
                 'product_id' => $product->id,
                 'type' => 'in',
                 'quantity' => $validated['quantity'],
                 'quantity_before' => $quantityBefore,
                 'quantity_after' => $quantityAfter,
+                'purchase_price' => $validated['purchase_price'],
+                'selling_price' => $validated['selling_price'],
+                'remaining_quantity' => $validated['quantity'],
                 'reference' => $validated['reference'] ?? null,
                 'reason' => $validated['reason'] ?? 'Réapprovisionnement',
                 'user_id' => auth()->id(),
             ]);
 
+            $movement->update([
+                'batch_code' => 'LOT-' . str_pad((string) $movement->id, 6, '0', STR_PAD_LEFT),
+            ]);
+
             // Mettre à jour la quantité du produit
             $product->update([
                 'quantity' => $quantityAfter,
+                'purchase_price' => $validated['purchase_price'],
+                'selling_price' => $validated['selling_price'],
             ]);
 
             ActivityLog::log(
@@ -159,11 +178,10 @@ class StockController extends Controller
         $product = Product::findOrFail($validated['product_id']);
 
         // Vérifier que le produit appartient au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
-        }
+        $this->authorize('update', $product);
 
         DB::transaction(function () use ($product, $validated) {
+            $product = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
             $quantityBefore = $product->quantity;
             $quantityAfter = $validated['new_quantity'];
             $difference = $quantityAfter - $quantityBefore;
@@ -247,16 +265,18 @@ class StockController extends Controller
         $product = Product::findOrFail($validated['product_id']);
 
         // Vérifier que le produit appartient au manager
-        if ($product->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce produit.');
-        }
+        $this->authorize('update', $product);
 
         // Vérifier qu'il y a assez de stock
-        if ($product->quantity < $validated['quantity']) {
-            return back()->with('error', "Stock insuffisant pour {$product->name}. Stock actuel : {$product->quantity} {$product->unit}");
-        }
-
         DB::transaction(function () use ($product, $validated) {
+            $product = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+
+            if ($product->quantity < $validated['quantity']) {
+                throw ValidationException::withMessages([
+                    'quantity' => "Stock insuffisant pour {$product->name}. Stock actuel : {$product->quantity} {$product->unit}",
+                ]);
+            }
+
             $quantityBefore = $product->quantity;
             $quantityAfter = $quantityBefore - $validated['quantity'];
 

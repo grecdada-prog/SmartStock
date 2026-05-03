@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\SessionManager;
+use App\Services\PasswordSetupLinkService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
@@ -104,7 +105,12 @@ class SuperAdminUserController extends Controller
      */
     public function create()
     {
-        return view('superadmin.users.create');
+        $managers = User::role('manager')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('superadmin.users.create', compact('managers'));
     }
 
     /**
@@ -126,22 +132,32 @@ class SuperAdminUserController extends Controller
         'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
         'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
         'role' => ['required', 'in:super_admin,manager,seller'],
+        'manager_id' => ['required_if:role,seller', 'nullable', 'exists:users,id'],
         'is_active' => ['boolean'],
     ], [
         'email.regex' => 'Le format de l\'email est invalide.',
         'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
     ]);
 
-    // Stocker le mot de passe temporaire avant le hash
-    $temporaryPassword = $validated['password'];
+    $creatorId = auth()->id();
+
+    if ($validated['role'] === 'seller') {
+        $manager = User::role('manager')->find($validated['manager_id']);
+
+        if (!$manager) {
+            return back()->withErrors(['manager_id' => 'Gérant invalide.'])->withInput();
+        }
+
+        $creatorId = $manager->id;
+    }
 
     $user = User::create([
         'name' => $validated['name'],
         'email' => $validated['email'],
-        'phone' => $validated['phone'],
+        'phone' => $validated['phone'] ?? null,
         'password' => Hash::make($validated['password']),
-        'is_active' => $request->has('is_active'),
-        'created_by' => auth()->id(),
+        'is_active' => $request->boolean('is_active'),
+        'created_by' => $creatorId,
     ]);
 
     $user->assignRole($validated['role']);
@@ -154,7 +170,8 @@ class SuperAdminUserController extends Controller
     );
 
     // Envoyer l'email de bienvenue avec le mot de passe
-    $user->notify(new UserCreatedNotification($temporaryPassword, auth()->user()));
+    $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+    $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
 
     // Suggérer l'activation du 2FA pour les rôles sensibles
     if (in_array($validated['role'], ['super_admin', 'manager'])) {
@@ -170,8 +187,15 @@ class SuperAdminUserController extends Controller
      */
     public function edit(User $user)
     {
+        $this->authorize('manageAsSuperAdmin', $user);
+
         $user->load('roles');
-        return view('superadmin.users.edit', compact('user'));
+        $managers = User::role('manager')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('superadmin.users.edit', compact('user', 'managers'));
     }
 
     /**
@@ -179,23 +203,56 @@ class SuperAdminUserController extends Controller
      */
 public function update(Request $request, User $user)
 {
+    $this->authorize('manageAsSuperAdmin', $user);
+
     $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
         'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id, 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
         'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
         'role' => ['required', 'in:super_admin,manager,seller'],
+        'manager_id' => ['required_if:role,seller', 'nullable', 'exists:users,id'],
+        'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
         'is_active' => ['boolean'],
     ], [
         'email.regex' => 'Le format de l\'email est invalide.',
         'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
     ]);
 
-    $user->update([
+    if ($user->id === auth()->id() && $validated['role'] !== $user->getRoleNames()->first()) {
+        return back()->withErrors(['role' => 'Vous ne pouvez pas modifier votre propre role.'])->withInput();
+    }
+
+    if ($user->id === auth()->id() && !$request->boolean('is_active')) {
+        return back()->withErrors(['is_active' => 'Vous ne pouvez pas desactiver votre propre compte.'])->withInput();
+    }
+
+    $creatorId = $user->created_by;
+
+    if ($validated['role'] === 'seller') {
+        $manager = User::role('manager')->find($validated['manager_id']);
+
+        if (!$manager) {
+            return back()->withErrors(['manager_id' => 'Gérant invalide.'])->withInput();
+        }
+
+        $creatorId = $manager->id;
+    } elseif ($user->hasRole('seller')) {
+        $creatorId = auth()->id();
+    }
+
+    $attributes = [
         'name' => $validated['name'],
         'email' => $validated['email'],
-        'phone' => $validated['phone'],
-        'is_active' => $request->has('is_active'),
-    ]);
+        'phone' => $validated['phone'] ?? null,
+        'is_active' => $request->boolean('is_active'),
+        'created_by' => $creatorId,
+    ];
+
+    if (!empty($validated['password'])) {
+        $attributes['password'] = Hash::make($validated['password']);
+    }
+
+    $user->update($attributes);
 
     if ($user->getRoleNames()->first() !== $validated['role']) {
         $user->syncRoles([$validated['role']]);
@@ -217,6 +274,8 @@ public function update(Request $request, User $user)
      */
 public function destroy(User $user)
 {
+    $this->authorize('deleteAsSuperAdmin', $user);
+
     if ($user->id === auth()->id()) {
         return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
     }
@@ -242,6 +301,8 @@ public function destroy(User $user)
      */
 public function toggleStatus(User $user)
 {
+    $this->authorize('toggleStatusAsSuperAdmin', $user);
+
     if ($user->id === auth()->id()) {
         return back()->with('error', 'Vous ne pouvez pas modifier votre propre statut.');
     }
@@ -270,6 +331,8 @@ public function toggleStatus(User $user)
      */
     public function forceLogout(User $user)
     {
+        $this->authorize('forceLogoutAsSuperAdmin', $user);
+
         // Empêcher de se déconnecter soi-même
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Vous ne pouvez pas vous déconnecter vous-même.');
@@ -298,12 +361,9 @@ public function toggleStatus(User $user)
  */
     public function resetPassword(User $user)
     {
-        // Générer un mot de passe temporaire sécurisé
-        $temporaryPassword = \App\Helpers\PasswordHelper::generateReadablePassword();
+        $this->authorize('resetPasswordAsSuperAdmin', $user);
 
-        $user->update([
-            'password' => Hash::make($temporaryPassword),
-        ]);
+        $resetUrl = app(PasswordSetupLinkService::class)->createUrl($user);
 
         ActivityLog::log(
             'password_reset',
@@ -312,10 +372,9 @@ public function toggleStatus(User $user)
             $user->id
         );
 
-        // Envoyer un email avec le mot de passe temporaire
-        $user->notify(new PasswordResetNotification($temporaryPassword));
+        $user->notify(new PasswordResetNotification($resetUrl));
 
-        return back()->with('success', "Mot de passe réinitialisé avec succès. Un email a été envoyé à l'utilisateur avec le nouveau mot de passe.");
+        return back()->with('success', "Un lien de reinitialisation du mot de passe a ete envoye a l'utilisateur.");
     }
 
     /**

@@ -3,26 +3,20 @@
 @section('title', 'Gestion du Stock')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="{ autoRefresh: true }" x-init="
-    setInterval(() => {
-        if (autoRefresh) {
-            window.location.reload();
-        }
-    }, 5000);
-">
+<div id="manager-stock-page" data-silent-refresh x-data="{ showRestockModal: {{ $errors->any() ? 'true' : 'false' }} }" class="px-4 sm:px-6 lg:px-8">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Gestion du Stock</h1>
             <p class="mt-2 text-sm text-gray-700">Vue d'ensemble de votre inventaire</p>
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-            <!-- Toggle Auto-refresh -->
-            <label class="flex items-center space-x-2 text-sm text-gray-700">
-                <input type="checkbox" x-model="autoRefresh" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                <span>Auto-refresh 5s</span>
-            </label>
-
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap items-center gap-3">
+            <button type="button" onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-md border border-green-600 bg-white px-4 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Actualiser
+            </button>
             <a href="{{ route('manager.stock.movements') }}" class="inline-flex items-center justify-center rounded-md border border-purple-600 bg-white px-4 py-2 text-sm font-medium text-purple-600 shadow-sm hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -30,12 +24,12 @@
                 Historique
             </a>
 
-            <a href="{{ route('manager.stock.restock') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+            <button type="button" @click="showRestockModal = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Réapprovisionner
-            </a>
+            </button>
         </div>
     </div>
 
@@ -124,8 +118,8 @@
     </div>
 
     <!-- Filtres -->
-    <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('manager.stock.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    <div class="sticky top-20 z-20 mt-6 bg-white shadow rounded-lg p-4">
+        <form method="GET" data-auto-filter action="{{ route('manager.stock.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -147,11 +141,6 @@
                     <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stock faible</option>
                     <option value="out" {{ request('stock_status') == 'out' ? 'selected' : '' }}>Rupture</option>
                 </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>
@@ -229,6 +218,150 @@
     <div class="mt-6">
         {{ $products->links() }}
     </div>
+
+    <div x-show="showRestockModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" style="display: none;">
+        <div class="fixed inset-0 bg-gray-900/50" @click="showRestockModal = false"></div>
+        <div class="relative mx-auto max-w-4xl overflow-hidden rounded-lg bg-white shadow-xl">
+            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Reapprovisionner le stock</h2>
+                    <p class="mt-1 text-sm text-gray-500">Les prix saisis sont des prix unitaires pour chaque article du lot.</p>
+                </div>
+                <button type="button" @click="showRestockModal = false" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ route('manager.stock.restock.store') }}" class="space-y-6 p-6">
+                @csrf
+
+                <div>
+                    <label for="modal_restock_product_id" class="block text-sm font-medium text-gray-700">Produit *</label>
+                    <select name="product_id" id="modal_restock_product_id" required onchange="updateStockModalProductInfo()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('product_id') border-red-300 @enderror">
+                        <option value="">Selectionner un produit</option>
+                        @foreach($restockProducts as $product)
+                            <option value="{{ $product->id }}"
+                                data-current-stock="{{ $product->quantity }}"
+                                data-unit="{{ $product->unit }}"
+                                data-alert="{{ $product->alert_quantity }}"
+                                data-purchase-price="{{ $product->purchase_price }}"
+                                data-selling-price="{{ $product->selling_price }}"
+                                {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                {{ $product->name }} ({{ $product->sku }}) - {{ $product->quantity }} {{ $product->unit }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('product_id')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                <div id="modal-product-info" class="hidden rounded-md bg-blue-50 p-4 text-sm text-blue-800">
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <p><span class="font-medium">Stock actuel:</span> <span id="modal-current-stock">-</span></p>
+                        <p><span class="font-medium">Seuil d'alerte:</span> <span id="modal-alert-quantity">-</span></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    <div>
+                        <label for="modal_quantity" class="block text-sm font-medium text-gray-700">Quantite *</label>
+                        <input type="number" name="quantity" id="modal_quantity" required value="{{ old('quantity') }}" min="1" step="1" oninput="calculateStockModalNewStock()"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('quantity') border-red-300 @enderror">
+                        @error('quantity')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label for="modal_purchase_price" class="block text-sm font-medium text-gray-700">Prix d'achat unitaire *</label>
+                        <input type="number" name="purchase_price" id="modal_purchase_price" required value="{{ old('purchase_price') }}" min="0" step="0.01"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('purchase_price') border-red-300 @enderror">
+                        @error('purchase_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label for="modal_selling_price" class="block text-sm font-medium text-gray-700">Prix de vente unitaire *</label>
+                        <input type="number" name="selling_price" id="modal_selling_price" required value="{{ old('selling_price') }}" min="0" step="0.01"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('selling_price') border-red-300 @enderror">
+                        @error('selling_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+
+                <div id="modal-new-stock-display" class="hidden rounded-md bg-green-50 p-4 text-sm text-green-800">
+                    <span class="font-medium">Nouveau stock:</span> <span id="modal-new-stock">-</span>
+                </div>
+
+                <div>
+                    <label for="modal_reference" class="block text-sm font-medium text-gray-700">Reference</label>
+                    <input type="text" name="reference" id="modal_reference" value="{{ old('reference') }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('reference') border-red-300 @enderror">
+                    @error('reference')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label for="modal_reason" class="block text-sm font-medium text-gray-700">Raison / Notes</label>
+                    <textarea name="reason" id="modal_reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
+                    @error('reason')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
+                    <button type="button" @click="showRestockModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Reapprovisionner</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<script>
+function updateStockModalProductInfo() {
+    const select = document.getElementById('modal_restock_product_id');
+    const selectedOption = select.options[select.selectedIndex];
+    const productInfo = document.getElementById('modal-product-info');
+
+    if (!selectedOption.value) {
+        productInfo.classList.add('hidden');
+        document.getElementById('modal-new-stock-display').classList.add('hidden');
+        return;
+    }
+
+    const currentStock = selectedOption.getAttribute('data-current-stock');
+    const unit = selectedOption.getAttribute('data-unit');
+    const alertQty = selectedOption.getAttribute('data-alert');
+
+    document.getElementById('modal-current-stock').textContent = currentStock + ' ' + unit;
+    document.getElementById('modal-alert-quantity').textContent = alertQty + ' ' + unit;
+
+    if (!document.getElementById('modal_purchase_price').value) {
+        document.getElementById('modal_purchase_price').value = selectedOption.getAttribute('data-purchase-price') || 0;
+    }
+    if (!document.getElementById('modal_selling_price').value) {
+        document.getElementById('modal_selling_price').value = selectedOption.getAttribute('data-selling-price') || 0;
+    }
+
+    productInfo.classList.remove('hidden');
+    calculateStockModalNewStock();
+}
+
+function calculateStockModalNewStock() {
+    const select = document.getElementById('modal_restock_product_id');
+    const selectedOption = select.options[select.selectedIndex];
+    const quantityInput = document.getElementById('modal_quantity');
+    const newStockDisplay = document.getElementById('modal-new-stock-display');
+
+    if (selectedOption.value && quantityInput.value) {
+        const currentStock = parseInt(selectedOption.getAttribute('data-current-stock'), 10);
+        const quantity = parseInt(quantityInput.value, 10);
+        const unit = selectedOption.getAttribute('data-unit');
+        document.getElementById('modal-new-stock').textContent = (currentStock + quantity) + ' ' + unit;
+        newStockDisplay.classList.remove('hidden');
+    } else {
+        newStockDisplay.classList.add('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateStockModalProductInfo);
+</script>
 
 @endsection

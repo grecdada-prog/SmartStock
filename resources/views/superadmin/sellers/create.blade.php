@@ -52,6 +52,23 @@
                     @enderror
                 </div>
 
+                <!-- Gerant responsable -->
+                <div>
+                    <label for="manager_id" class="block text-sm font-medium text-gray-700">Gerant responsable *</label>
+                    <select name="manager_id" id="manager_id" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('manager_id') border-red-300 @enderror">
+                        <option value="">Selectionner un gerant</option>
+                        @foreach($managers as $manager)
+                            <option value="{{ $manager->id }}" {{ old('manager_id') == $manager->id ? 'selected' : '' }}>
+                                {{ $manager->name }} - {{ $manager->email }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('manager_id')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Mot de passe -->
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe *</label>
@@ -72,7 +89,7 @@
 
                 <!-- Statut actif -->
                 <div class="flex items-center">
-                    <input type="checkbox" name="is_active" id="is_active" checked
+                    <input type="checkbox" name="is_active" id="is_active" value="1" checked
                         class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
                     <label for="is_active" class="ml-2 block text-sm text-gray-900">
                         Compte actif

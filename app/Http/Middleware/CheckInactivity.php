@@ -10,17 +10,21 @@ use App\Models\ActiveSession;
 
 class CheckInactivity
 {
-    // Temps d'inactivité en minutes (configurable)
-    private $inactivityTimeout = 30;
-
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
             $user = Auth::user();
             $lastActivity = $user->last_activity;
+            $inactivityTimeout = (int) config('session.lifetime', 10);
+
+            if ($request->session()->pull('just_logged_in', false)) {
+                $user->updateLastActivity();
+
+                return $next($request);
+            }
 
             // Si l'utilisateur a été inactif trop longtemps
-            if ($lastActivity && $lastActivity->diffInMinutes(now()) > $this->inactivityTimeout) {
+            if ($lastActivity && $lastActivity->diffInMinutes(now()) >= $inactivityTimeout) {
                 // Logger la déconnexion automatique
                 \App\Models\ActivityLog::log(
                     'auto_logout',
@@ -41,6 +45,10 @@ class CheckInactivity
             }
 
             // Mettre à jour la dernière activité
+            ActiveSession::where('user_id', $user->id)
+                ->where('session_id', $request->session()->getId())
+                ->update(['last_activity' => now()]);
+
             $user->updateLastActivity();
         }
 

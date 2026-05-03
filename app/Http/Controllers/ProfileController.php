@@ -25,6 +25,8 @@ class ProfileController extends Controller
         } elseif ($user->hasRole('seller')) {
             return view('seller.profile.show', compact('user'));
         }
+
+        abort(403, 'Acces non autorise');
     }
 
     /**
@@ -43,7 +45,7 @@ class ProfileController extends Controller
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone,
+            'phone' => $request->phone ?: null,
         ]);
 
         ActivityLog::log(
@@ -57,15 +59,14 @@ class ProfileController extends Controller
     }
 
     /**
-     * Mettre à jour le mot de passe (Super Admin et Manager uniquement)
+     * Mettre a jour le mot de passe du compte connecte.
      */
     public function updatePassword(Request $request)
     {
         $user = Auth::user();
 
-        // Vérifier que l'utilisateur a le droit de changer son mot de passe
-        if (!$user->hasRole(['super_admin', 'manager'])) {
-            return back()->with('error', 'Vous n\'avez pas l\'autorisation de modifier votre mot de passe.');
+        if ($user->hasRole('seller')) {
+            abort(403, 'Les vendeurs ne sont pas autorises a modifier leur mot de passe depuis le profil.');
         }
 
         $request->validate([

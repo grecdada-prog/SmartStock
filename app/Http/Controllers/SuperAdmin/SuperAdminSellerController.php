@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Services\PasswordSetupLinkService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
@@ -43,7 +44,12 @@ class SuperAdminSellerController extends Controller
      */
     public function create()
     {
-        return view('superadmin.sellers.create');
+        $managers = User::role('manager')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('superadmin.sellers.create', compact('managers'));
     }
 
     /**
@@ -56,22 +62,26 @@ class SuperAdminSellerController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
             'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'manager_id' => ['required', 'exists:users,id'],
             'is_active' => ['boolean'],
         ], [
             'email.regex' => 'Le format de l\'email est invalide.',
             'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
         ]);
 
-        // Stocker le mot de passe temporaire avant le hash
-        $temporaryPassword = $validated['password'];
+        $manager = User::role('manager')->find($validated['manager_id']);
+
+        if (!$manager) {
+            return back()->withErrors(['manager_id' => 'Gérant invalide.'])->withInput();
+        }
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
             'is_active' => $request->has('is_active'),
-            'created_by' => auth()->id(),
+            'created_by' => $manager->id,
         ]);
 
         $user->assignRole('seller');
@@ -84,7 +94,8 @@ class SuperAdminSellerController extends Controller
         );
 
         // Envoyer l'email de bienvenue
-        $user->notify(new UserCreatedNotification($temporaryPassword, auth()->user()));
+        $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+        $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
 
         return redirect()->route('superadmin.sellers.index')
             ->with('success', 'Vendeur créé avec succès ! Un email de bienvenue a été envoyé.');
@@ -95,6 +106,8 @@ class SuperAdminSellerController extends Controller
      */
     public function edit(User $user)
     {
+        $this->authorize('manageSellerAsSuperAdmin', $user);
+
         // Vérifier que l'utilisateur est bien un vendeur
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
@@ -102,7 +115,12 @@ class SuperAdminSellerController extends Controller
         }
 
         $user->load('roles');
-        return view('superadmin.sellers.edit', compact('user'));
+        $managers = User::role('manager')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('superadmin.sellers.edit', compact('user', 'managers'));
     }
 
     /**
@@ -110,6 +128,8 @@ class SuperAdminSellerController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->authorize('manageSellerAsSuperAdmin', $user);
+
         // Vérifier que l'utilisateur est bien un vendeur
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
@@ -120,17 +140,25 @@ class SuperAdminSellerController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id, 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
             'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'manager_id' => ['required', 'exists:users,id'],
             'is_active' => ['boolean'],
         ], [
             'email.regex' => 'Le format de l\'email est invalide.',
             'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
         ]);
 
+        $manager = User::role('manager')->find($validated['manager_id']);
+
+        if (!$manager) {
+            return back()->withErrors(['manager_id' => 'Gérant invalide.'])->withInput();
+        }
+
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => $validated['phone'] ?? null,
             'is_active' => $request->has('is_active'),
+            'created_by' => $manager->id,
         ]);
 
         ActivityLog::log(
@@ -149,6 +177,9 @@ class SuperAdminSellerController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->authorize('deleteAsSuperAdmin', $user);
+        $this->authorize('manageSellerAsSuperAdmin', $user);
+
         // Vérifier que l'utilisateur est bien un vendeur
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')

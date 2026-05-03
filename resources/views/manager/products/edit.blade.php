@@ -70,28 +70,6 @@
                         @enderror
                     </div>
 
-                    <!-- Prix d'achat -->
-                    <div>
-                        <label for="purchase_price" class="block text-sm font-medium text-gray-700">Prix d'achat (FCFA) *</label>
-                        <input type="number" name="purchase_price" id="purchase_price" required value="{{ old('purchase_price', $product->purchase_price) }}"
-                            min="0" step="0.01"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('purchase_price') border-red-300 @enderror">
-                        @error('purchase_price')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Prix de vente -->
-                    <div>
-                        <label for="selling_price" class="block text-sm font-medium text-gray-700">Prix de vente (FCFA) *</label>
-                        <input type="number" name="selling_price" id="selling_price" required value="{{ old('selling_price', $product->selling_price) }}"
-                            min="0" step="0.01"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('selling_price') border-red-300 @enderror">
-                        @error('selling_price')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <!-- Stock actuel (lecture seule) -->
                     <div>
                         <label for="quantity_display" class="block text-sm font-medium text-gray-700">Stock actuel</label>

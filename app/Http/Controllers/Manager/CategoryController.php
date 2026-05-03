@@ -78,9 +78,7 @@ class CategoryController extends Controller
     public function show(Category $category)
     {
         // Vérifier que la catégorie appartient bien au manager
-        if ($category->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de voir cette catégorie.');
-        }
+        $this->authorize('view', $category);
 
         $category->load(['products' => function($query) {
             $query->latest()->limit(10);
@@ -95,9 +93,7 @@ class CategoryController extends Controller
     public function edit(Category $category)
     {
         // Vérifier que la catégorie appartient bien au manager
-        if ($category->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier cette catégorie.');
-        }
+        $this->authorize('update', $category);
 
         return view('manager.categories.edit', compact('category'));
     }
@@ -108,9 +104,7 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         // Vérifier que la catégorie appartient bien au manager
-        if ($category->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier cette catégorie.');
-        }
+        $this->authorize('update', $category);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -145,9 +139,7 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         // Vérifier que la catégorie appartient bien au manager
-        if ($category->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de supprimer cette catégorie.');
-        }
+        $this->authorize('delete', $category);
 
         // Vérifier si la catégorie a des produits
         if ($category->products()->count() > 0) {
@@ -175,9 +167,7 @@ class CategoryController extends Controller
     public function toggleStatus(Category $category)
     {
         // Vérifier que la catégorie appartient bien au manager
-        if ($category->created_by !== auth()->id()) {
-            abort(403, 'Vous n\'avez pas l\'autorisation de modifier cette catégorie.');
-        }
+        $this->authorize('toggleStatus', $category);
 
         $newStatus = !$category->is_active;
         $category->update(['is_active' => $newStatus]);

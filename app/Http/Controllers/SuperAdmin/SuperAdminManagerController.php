@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Services\PasswordSetupLinkService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
@@ -62,13 +63,10 @@ class SuperAdminManagerController extends Controller
             'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
         ]);
 
-        // Stocker le mot de passe temporaire avant le hash
-        $temporaryPassword = $validated['password'];
-
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
             'is_active' => $request->has('is_active'),
             'created_by' => auth()->id(),
@@ -84,7 +82,8 @@ class SuperAdminManagerController extends Controller
         );
 
         // Envoyer l'email de bienvenue
-        $user->notify(new UserCreatedNotification($temporaryPassword, auth()->user()));
+        $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+        $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
 
         // Suggérer l'activation du 2FA pour les managers
         $user->notify(new Enable2FANotification());
@@ -98,6 +97,8 @@ class SuperAdminManagerController extends Controller
      */
     public function edit(User $user)
     {
+        $this->authorize('manageManagerAsSuperAdmin', $user);
+
         // Vérifier que l'utilisateur est bien un manager
         if (!$user->hasRole('manager')) {
             return redirect()->route('superadmin.managers.index')
@@ -113,6 +114,8 @@ class SuperAdminManagerController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->authorize('manageManagerAsSuperAdmin', $user);
+
         // Vérifier que l'utilisateur est bien un manager
         if (!$user->hasRole('manager')) {
             return redirect()->route('superadmin.managers.index')
@@ -132,7 +135,7 @@ class SuperAdminManagerController extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => $validated['phone'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -152,6 +155,9 @@ class SuperAdminManagerController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->authorize('deleteAsSuperAdmin', $user);
+        $this->authorize('manageManagerAsSuperAdmin', $user);
+
         // Vérifier que l'utilisateur est bien un manager
         if (!$user->hasRole('manager')) {
             return redirect()->route('superadmin.managers.index')

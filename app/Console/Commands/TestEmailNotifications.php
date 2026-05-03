@@ -8,6 +8,7 @@ use App\Notifications\UserCreatedNotification;
 use App\Notifications\Enable2FANotification;
 use App\Notifications\PasswordResetNotification;
 use App\Notifications\AccountStatusChangedNotification;
+use App\Services\PasswordSetupLinkService;
 
 class TestEmailNotifications extends Command
 {
@@ -120,9 +121,9 @@ class TestEmailNotifications extends Command
     private function testUserCreated(User $user)
     {
         $this->line('→ Envoi de UserCreatedNotification...');
-        $temporaryPassword = 'Test1234@';
         $createdBy = User::role('super_admin')->first();
-        $user->notify(new UserCreatedNotification($temporaryPassword, $createdBy));
+        $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+        $user->notify(new UserCreatedNotification($setupUrl, $createdBy));
     }
 
     private function testEnable2FA(User $user)
@@ -134,8 +135,8 @@ class TestEmailNotifications extends Command
     private function testPasswordReset(User $user)
     {
         $this->line('→ Envoi de PasswordResetNotification...');
-        $temporaryPassword = 'Smart' . rand(1000, 9999) . '@';
-        $user->notify(new PasswordResetNotification($temporaryPassword));
+        $resetUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+        $user->notify(new PasswordResetNotification($resetUrl));
     }
 
     private function testAccountStatusChanged(User $user, bool $isActive)

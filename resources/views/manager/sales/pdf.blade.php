@@ -147,8 +147,8 @@
             <div class="stat-value">{{ number_format($stats['total_sales']) }}</div>
         </div>
         <div class="stat-box">
-            <div class="stat-label">Chiffre d'affaires total</div>
-            <div class="stat-value">{{ number_format($stats['total_revenue'], 0, ',', ' ') }} FCFA</div>
+            <div class="stat-label">Recette filtree</div>
+            <div class="stat-value">{{ number_format($stats['filtered_revenue'], 0, ',', ' ') }} FCFA</div>
         </div>
         <div class="stat-box">
             <div class="stat-label">Total articles vendus</div>
@@ -176,7 +176,7 @@
                         <td>{{ $sale->seller->name ?? 'N/A' }}</td>
                         <td class="text-center">{{ $sale->items->count() }}</td>
                         <td class="text-right"><strong>{{ number_format($sale->total, 0, ',', ' ') }} FCFA</strong></td>
-                        <td>{{ ucfirst($sale->payment_method ?? 'N/A') }}</td>
+                        <td>{{ $sale->payment_method_label }}</td>
                         <td>{{ $sale->created_at->format('d/m/Y H:i') }}</td>
                     </tr>
                 @endforeach

@@ -1,80 +1,12 @@
 @extends('seller.layouts.app')
 
-@section('title', 'Point de Vente (POS)')
+@section('title', 'Point de Vente')
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8" x-data="posSystem()">
-    <!-- Header avec statistiques du jour -->
-    <div class="sm:flex sm:items-center sm:justify-between mb-6">
-        <div class="sm:flex-auto">
-            <h1 class="text-2xl font-semibold text-gray-900">Point de Vente (POS)</h1>
-            <p class="mt-2 text-sm text-gray-700">Enregistrez vos ventes rapidement</p>
-        </div>
-        <div class="mt-4 sm:mt-0 flex items-center space-x-3">
-            <a href="{{ route('seller.sales.history') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Historique
-            </a>
-        </div>
-    </div>
-
-    <!-- Statistiques du jour -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Ventes aujourd'hui</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{ $todayStats['sales_count'] }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">CA du jour</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{ number_format($todayStats['sales_total'], 0, ',', ' ') }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Articles vendus</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{ number_format($todayStats['items_sold']) }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="mb-4">
+        <h1 class="text-2xl font-semibold text-gray-900">Point de Vente</h1>
+        <p class="mt-1 text-sm text-gray-700">Enregistrez vos ventes rapidement</p>
     </div>
 
     <!-- Interface POS principale -->
@@ -82,8 +14,8 @@
         <!-- Panel gauche : Produits -->
         <div class="lg:col-span-2">
             <div class="bg-white shadow rounded-lg">
-                <div class="p-4 border-b border-gray-200">
-                    <div class="flex items-center space-x-3">
+                <div class="p-3 border-b border-gray-200">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <!-- Recherche produits -->
                         <div class="flex-1">
                             <input
@@ -91,11 +23,11 @@
                                 x-model="searchQuery"
                                 @input="searchProducts()"
                                 placeholder="Rechercher un produit (nom ou code SKU)..."
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                                class="block w-full rounded-md border-gray-300 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                             >
                         </div>
                         <!-- Filtre catégorie -->
-                        <select x-model="selectedCategory" class="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <select x-model="selectedCategory" class="rounded-md border-gray-300 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 sm:w-52 sm:text-sm">
                             <option value="">Toutes catégories</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -105,21 +37,31 @@
                 </div>
 
                 <!-- Grille de produits -->
-                <div class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[600px] overflow-y-auto">
+                <div class="grid max-h-[calc(100vh-220px)] min-h-[420px] grid-cols-2 gap-2 overflow-y-auto p-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                     <template x-for="product in filteredProducts" :key="product.id">
                         <div
-                            @click="addToCart(product)"
-                            class="bg-white border-2 border-gray-200 rounded-lg p-3 cursor-pointer hover:border-green-500 hover:shadow-md transition-all duration-200"
-                            :class="{'border-green-500': isInCart(product.id)}"
+                            @click="product.quantity > 0 && addToCart(product)"
+                            class="cursor-pointer rounded-md border border-gray-200 bg-white p-2 transition-all duration-200 hover:border-green-500 hover:shadow-sm"
+                            :class="{
+                                'border-green-500': isInCart(product.id),
+                                'opacity-50 cursor-not-allowed hover:border-gray-200 hover:shadow-none': product.quantity <= 0
+                            }"
                         >
-                            <div class="text-center">
-                                <div class="h-12 w-12 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
-                                    <span class="text-green-600 font-bold text-lg" x-text="product.name.charAt(0)"></span>
+                            <div>
+                                <div class="mb-1 flex items-start gap-2">
+                                    <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-green-100">
+                                        <span class="text-xs font-bold text-green-600" x-text="product.name.charAt(0)"></span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h3 class="truncate text-xs font-semibold leading-4 text-gray-900" x-text="product.name" :title="product.name"></h3>
+                                        <p class="truncate text-[11px] leading-4 text-gray-500" x-text="product.sku"></p>
+                                    </div>
                                 </div>
-                                <h3 class="text-sm font-medium text-gray-900 truncate" x-text="product.name"></h3>
-                                <p class="text-xs text-gray-500" x-text="product.sku"></p>
-                                <p class="mt-1 text-lg font-semibold text-green-600" x-text="formatPrice(product.selling_price)"></p>
-                                <p class="text-xs text-gray-500">Stock: <span x-text="product.quantity"></span></p>
+                                <p class="text-sm font-bold leading-5 text-green-600" x-text="formatPrice(product.selling_price)"></p>
+                                <p class="text-[11px] leading-4" :class="product.quantity <= 0 ? 'text-red-600 font-medium' : 'text-gray-500'">
+                                    Stock: <span x-text="product.quantity"></span>
+                                </p>
+                                <p x-show="product.quantity <= 0" class="text-[11px] font-medium text-red-600">Indisponible</p>
                             </div>
                         </div>
                     </template>
@@ -138,17 +80,17 @@
 
         <!-- Panel droit : Panier et paiement -->
         <div class="lg:col-span-1">
-            <div class="bg-white shadow rounded-lg sticky top-4">
-                <div class="p-4 bg-green-600 text-white rounded-t-lg">
-                    <h2 class="text-lg font-semibold">Panier</h2>
+            <div class="sticky flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-lg bg-white shadow" style="top: 5rem;">
+                <div class="shrink-0 bg-green-600 px-3 py-2 text-white">
+                    <h2 class="text-base font-semibold">Panier</h2>
                     <p class="text-sm opacity-90"><span x-text="cart.length"></span> article(s)</p>
                 </div>
 
                 <!-- Items du panier -->
-                <div class="p-4 max-h-[300px] overflow-y-auto">
+                <div class="min-h-0 flex-1 overflow-y-auto p-3">
                     <template x-if="cart.length === 0">
-                        <div class="text-center py-8 text-gray-500">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="py-5 text-center text-gray-500">
+                            <svg class="mx-auto h-9 w-9 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             <p class="mt-2 text-sm">Panier vide</p>
@@ -156,22 +98,22 @@
                     </template>
 
                     <template x-for="(item, index) in cart" :key="index">
-                        <div class="flex items-center space-x-3 mb-3 pb-3 border-b border-gray-200">
-                            <div class="flex-1">
-                                <h4 class="text-sm font-medium text-gray-900" x-text="item.name"></h4>
+                        <div class="mb-2 flex items-center gap-2 border-b border-gray-200 pb-2">
+                            <div class="min-w-0 flex-1">
+                                <h4 class="truncate text-xs font-semibold text-gray-900" x-text="item.name" :title="item.name"></h4>
                                 <p class="text-xs text-gray-500" x-text="formatPrice(item.price) + ' × ' + item.quantity"></p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <button @click="updateQuantity(index, -1)" class="h-6 w-6 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center">
+                            <div class="flex items-center gap-1">
+                                <button @click="updateQuantity(index, -1)" class="flex h-6 w-6 items-center justify-center rounded bg-gray-200 hover:bg-gray-300">
                                     <span class="text-sm font-bold">-</span>
                                 </button>
-                                <span class="text-sm font-semibold w-8 text-center" x-text="item.quantity"></span>
-                                <button @click="updateQuantity(index, 1)" class="h-6 w-6 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center">
+                                <span class="w-6 text-center text-sm font-semibold" x-text="item.quantity"></span>
+                                <button @click="updateQuantity(index, 1)" class="flex h-6 w-6 items-center justify-center rounded bg-gray-200 hover:bg-gray-300">
                                     <span class="text-sm font-bold">+</span>
                                 </button>
                             </div>
                             <button @click="removeFromCart(index)" class="text-red-600 hover:text-red-800">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </button>
@@ -190,14 +132,14 @@
                 </div>
 
                 <!-- Formulaire de paiement -->
-                <div class="p-4 space-y-3" x-show="cart.length > 0">
+                <div class="p-4 space-y-3" x-show="cart.length > 0 || saleCompleted">
                     <!-- Méthode de paiement -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement</label>
-                        <select x-model="paymentMethod" class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <select x-model="paymentMethod" @change="handlePaymentMethodChange()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
                             <option value="cash">Espèces</option>
-                            <option value="card">Carte</option>
-                            <option value="mobile_money">Mobile Money</option>
+                            <option value="card">Orange Money</option>
+                            <option value="mobile_money">MTN Momo</option>
                         </select>
                     </div>
 
@@ -223,15 +165,15 @@
                         </div>
                     </div>
 
-                    <!-- Informations client (optionnel) -->
-                    <div>
+                    <!-- Informations client -->
+                    <div x-show="paymentMethod === 'cash'">
                         <button @click="showCustomerInfo = !showCustomerInfo" type="button" class="text-sm text-green-600 hover:text-green-700">
                             <span x-show="!showCustomerInfo">+ Ajouter infos client</span>
                             <span x-show="showCustomerInfo">- Masquer infos client</span>
                         </button>
                     </div>
 
-                    <div x-show="showCustomerInfo" class="space-y-2">
+                    <div x-show="showCustomerInfo || paymentMethod !== 'cash'" class="space-y-2">
                         <input
                             type="text"
                             x-model="customerName"
@@ -241,16 +183,21 @@
                         <input
                             type="text"
                             x-model="customerPhone"
+                            :placeholder="paymentMethod === 'cash' ? 'Telephone (optionnel)' : 'Numero telephone obligatoire'"
+                            :required="paymentMethod !== 'cash'"
                             placeholder="Téléphone (optionnel)"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
                         >
+                        <p x-show="paymentMethod !== 'cash'" class="text-xs text-gray-500">
+                            Le numero est obligatoire pour Orange Money et MTN Momo.
+                        </p>
                     </div>
 
                     <!-- Boutons d'action -->
                     <div class="space-y-2 pt-2">
                         <button
                             @click="processSale()"
-                            :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0)"
+                            :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0) || (paymentMethod !== 'cash' && !customerPhone.trim())"
                             class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg x-show="!processing" class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,6 +209,12 @@
                             </svg>
                             <span x-text="processing ? 'Traitement...' : 'Enregistrer la vente'"></span>
                         </button>
+                        <p x-show="paymentMethod === 'cash' && cart.length > 0 && change < 0" class="text-sm text-red-600 text-center">
+                            Montant recu insuffisant.
+                        </p>
+                        <p x-show="paymentMethod !== 'cash' && cart.length > 0 && !customerPhone.trim()" class="text-sm text-red-600 text-center">
+                            Renseignez le numero de telephone pour ce paiement.
+                        </p>
 
                         <button
                             @click="clearCart()"
@@ -276,11 +229,66 @@
         </div>
     </div>
 
+    <!-- Modal de vente terminee -->
+    <div
+        x-show="saleCompleted"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/45 px-4 py-6"
+        role="dialog"
+        aria-modal="true"
+    >
+        <div
+            x-show="saleCompleted"
+            x-transition
+            @click.outside.stop
+            class="w-full max-w-md rounded-lg border border-green-200 bg-green-50 p-5 shadow-2xl"
+        >
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-green-900">Vente enregistree</h3>
+                    <p class="mt-1 text-sm font-medium text-green-800">
+                        Vente <span x-text="lastInvoiceNumber"></span> enregistree.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <button
+                    type="button"
+                    @click="openReceipt()"
+                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-green-600 bg-white px-3 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                    Imprimer
+                </button>
+                <button
+                    type="button"
+                    @click="openReceipt()"
+                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                    PDF
+                </button>
+                <button
+                    type="button"
+                    @click="startNewSale()"
+                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                    Nouvelle vente
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast de notification -->
     <div
         x-show="showToast"
         x-transition
-        class="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-md z-50"
+        class="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-white p-4 shadow-xl ring-1 ring-gray-200"
         style="display: none;"
     >
         <div class="flex items-center">
@@ -313,7 +321,7 @@ function posSystem() {
 
         // Paiement
         paymentMethod: 'cash',
-        amountReceived: 0,
+        amountReceived: '',
         change: 0,
         customerName: '',
         customerPhone: '',
@@ -324,6 +332,9 @@ function posSystem() {
         showToast: false,
         toastMessage: '',
         toastType: 'success',
+        saleCompleted: false,
+        lastReceiptUrl: '',
+        lastInvoiceNumber: '',
 
         init() {
             this.$watch('selectedCategory', () => this.filterProducts());
@@ -353,6 +364,29 @@ function posSystem() {
             this.filteredProducts = products;
         },
 
+        async refreshProducts() {
+            try {
+                const response = await fetch('{{ route("seller.pos.products") }}', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Refresh failed');
+                }
+
+                this.allProducts = data.products;
+                this.filterProducts();
+            } catch (error) {
+                this.showNotification('Impossible de rafraichir le stock', 'error');
+                console.error('Stock refresh error:', error);
+            }
+        },
+
         addToCart(product) {
             const existingItem = this.cart.find(item => item.id === product.id);
 
@@ -363,6 +397,11 @@ function posSystem() {
                     this.showNotification('Stock insuffisant', 'error');
                 }
             } else {
+                if (product.quantity <= 0) {
+                    this.showNotification('Produit indisponible', 'error');
+                    return;
+                }
+
                 this.cart.push({
                     id: product.id,
                     name: product.name,
@@ -405,10 +444,19 @@ function posSystem() {
 
         calculateChange() {
             if (this.paymentMethod === 'cash') {
-                this.change = this.amountReceived - this.cartTotal;
+                this.change = Number(this.amountReceived || 0) - this.cartTotal;
             } else {
                 this.change = 0;
-                this.amountReceived = this.cartTotal;
+            }
+        },
+
+        handlePaymentMethodChange() {
+            if (this.paymentMethod === 'cash') {
+                this.amountReceived = '';
+                this.change = -this.cartTotal;
+            } else {
+                this.change = 0;
+                this.showCustomerInfo = true;
             }
         },
 
@@ -417,14 +465,15 @@ function posSystem() {
         },
 
         clearCart() {
-            if (confirm('Êtes-vous sûr de vouloir vider le panier ?')) {
-                this.cart = [];
-                this.amountReceived = 0;
-                this.change = 0;
-                this.customerName = '';
-                this.customerPhone = '';
-                this.showCustomerInfo = false;
-            }
+            this.cart = [];
+            this.amountReceived = '';
+            this.change = 0;
+            this.customerName = '';
+            this.customerPhone = '';
+            this.showCustomerInfo = false;
+            this.saleCompleted = false;
+            this.lastReceiptUrl = '';
+            this.lastInvoiceNumber = '';
         },
 
         async processSale() {
@@ -435,6 +484,17 @@ function posSystem() {
 
             if (this.paymentMethod === 'cash' && this.change < 0) {
                 this.showNotification('Montant reçu insuffisant', 'error');
+                return;
+            }
+
+            if (this.paymentMethod === 'cash' && this.amountReceived === '') {
+                this.showNotification('Renseignez le montant recu', 'error');
+                return;
+            }
+
+            if (this.paymentMethod !== 'cash' && !this.customerPhone.trim()) {
+                this.showCustomerInfo = true;
+                this.showNotification('Renseignez le numero de telephone', 'error');
                 return;
             }
 
@@ -471,13 +531,13 @@ function posSystem() {
 
                     // Ouvrir le reçu dans un nouvel onglet
                     const receiptUrl = '{{ route("seller.pos.receipt", ":id") }}'.replace(':id', data.sale_id);
-                    window.open(receiptUrl, '_blank');
+                    this.lastReceiptUrl = receiptUrl;
+                    this.lastInvoiceNumber = data.invoice_number || '';
+                    this.saleCompleted = true;
 
                     // Réinitialiser le panier
                     this.clearCartAfterSale();
-
-                    // Recharger la page après 2 secondes pour mettre à jour les stats
-                    setTimeout(() => window.location.reload(), 2000);
+                    window.dispatchEvent(new CustomEvent('smartstock:refresh-now'));
                 } else {
                     this.showNotification(data.message || 'Erreur lors de l\'enregistrement', 'error');
                 }
@@ -491,12 +551,30 @@ function posSystem() {
 
         clearCartAfterSale() {
             this.cart = [];
-            this.amountReceived = 0;
+            this.amountReceived = '';
             this.change = 0;
             this.customerName = '';
             this.customerPhone = '';
             this.showCustomerInfo = false;
             this.paymentMethod = 'cash';
+        },
+
+        openReceipt() {
+            if (this.lastReceiptUrl) {
+                if (window.SmartStockModalLinks?.open) {
+                    window.SmartStockModalLinks.open(this.lastReceiptUrl, 'Facture');
+                } else {
+                    window.location.assign(this.lastReceiptUrl);
+                }
+            }
+        },
+
+        async startNewSale() {
+            this.saleCompleted = false;
+            this.lastReceiptUrl = '';
+            this.lastInvoiceNumber = '';
+            this.clearCart();
+            await this.refreshProducts();
         },
 
         showNotification(message, type = 'success') {

@@ -24,51 +24,51 @@ class RolePermissionSeeder extends Seeder
             'delete users',
             'activate users',
             'deactivate users',
-            
+
             // Product management
             'view products',
             'create products',
             'edit products',
             'delete products',
-            
+
             // Category management
             'view categories',
             'create categories',
             'edit categories',
             'delete categories',
-            
+
             // Stock management
             'view stock',
             'manage stock',
             'view stock movements',
-            
+
             // Sales management
             'view sales',
             'create sales',
             'view own sales',
             'delete sales',
-            
+
             // Reports and analytics
             'view reports',
             'view analytics',
             'export data',
-            
+
             // Activity logs
             'view activity logs',
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::findOrCreate($permission);
         }
 
         // Créer les rôles et assigner les permissions
 
         // Super Admin - Accès total
-        $superAdmin = Role::create(['name' => 'super_admin']);
+        $superAdmin = Role::findOrCreate('super_admin');
         $superAdmin->givePermissionTo(Permission::all());
 
         // Manager - Gestion complète sauf super admin
-        $manager = Role::create(['name' => 'manager']);
+        $manager = Role::findOrCreate('manager');
         $manager->givePermissionTo([
             'view users',
             'create users',
@@ -94,7 +94,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Seller - Ventes uniquement
-        $seller = Role::create(['name' => 'seller']);
+        $seller = Role::findOrCreate('seller');
         $seller->givePermissionTo([
             'view products',
             'view stock',
@@ -103,13 +103,15 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Créer un Super Admin par défaut
-        $superAdminUser = User::create([
-            'name' => 'Admin',
-            'email' => 'nanguefyllias@gmail.com',
-            'password' => Hash::make('Dorab237@'),
-            'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+        $superAdminUser = User::updateOrCreate(
+            ['email' => 'nanguefyllias@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('Dorab237@'),
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]
+        );
         $superAdminUser->assignRole('super_admin');
 
         $this->command->info('Super Admin créé avec succès!');

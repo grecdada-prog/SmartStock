@@ -7,84 +7,112 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100">
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8">
+    <div class="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md space-y-8">
             <div>
-                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-green-600">
                     SmartStock
                 </h2>
                 <p class="mt-2 text-center text-sm text-gray-600">
-                    Connexion à votre compte
+                    Connexion Manager / Vendeur
                 </p>
             </div>
 
-            <div class="bg-white shadow-md rounded-lg px-8 py-8">
+            <div class="rounded-lg bg-white px-8 py-8 shadow-md">
+                @if (request()->boolean('inactive'))
+                    <div class="mb-4 rounded border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-800" data-auto-dismiss>
+                        <div class="flex items-start justify-between gap-3">
+                            <span class="block text-sm">Vous avez ete deconnecte automatiquement pour inactivite.</span>
+                            <button type="button" class="text-yellow-600 hover:text-yellow-800" aria-label="Fermer" onclick="this.closest('[data-auto-dismiss]').remove()">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
                 @if (session('message'))
-                    <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded relative" data-auto-dismiss>
-                        <span class="block sm:inline">{{ session('message') }}</span>
-                        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.remove()">
-                            <svg class="fill-current h-6 w-6 text-green-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-                            </svg>
-                        </button>
+                    <div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-800" data-auto-dismiss>
+                        <div class="flex items-start justify-between gap-3">
+                            <span class="block text-sm">{{ session('message') }}</span>
+                            <button type="button" class="text-green-500 hover:text-green-700" aria-label="Fermer" onclick="this.closest('[data-auto-dismiss]').remove()">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded relative" data-auto-dismiss>
-                        <span class="block sm:inline">{{ session('error') }}</span>
-                        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.remove()">
-                            <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-                            </svg>
-                        </button>
+                    <div class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-red-800" data-auto-dismiss>
+                        <div class="flex items-start justify-between gap-3">
+                            <span class="block text-sm">{{ session('error') }}</span>
+                            <button type="button" class="text-red-500 hover:text-red-700" aria-label="Fermer" onclick="this.closest('[data-auto-dismiss]').remove()">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <form method="POST" action="{{ route('login') }}" id="loginForm" class="space-y-6">
                     @csrf
 
                     <div>
-                        <label for="role" class="block text-sm font-medium text-gray-700">Vous êtes</label>
-                        <select name="role" id="role" required
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                            <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Gérant</option>
-                            <option value="seller" {{ old('role') == 'seller' ? 'selected' : '' }}>Vendeur</option>
-                        </select>
-                        @error('role')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" id="email" required autofocus
+                        <input type="email"
+                               name="email"
+                               id="email"
+                               required
+                               autofocus
+                               autocomplete="email"
                                value="{{ old('email') }}"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 @error('email') border-red-500 @enderror">
+                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 @error('email') border-red-500 @enderror">
                         @error('email')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="error-text mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                        <input type="password" name="password" id="password" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 @error('password') border-red-500 @enderror">
+                        <div class="relative mt-1" style="position: relative;">
+                            <input type="password"
+                                   name="password"
+                                   id="password"
+                                   required
+                                   autocomplete="current-password"
+                                   class="block w-full rounded-md border border-gray-300 px-3 py-2 pr-12 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 @error('password') border-red-500 @enderror">
+                            <button
+                                type="button"
+                                id="togglePasswordVisibility"
+                                class="flex items-center justify-center text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
+                                style="position: absolute; right: 0.5rem; top: 50%; width: 2rem; height: 2rem; transform: translateY(-50%);"
+                                aria-label="Afficher le mot de passe"
+                                aria-pressed="false"
+                            >
+                                <svg id="passwordEyeIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
+                                </svg>
+                                <svg id="passwordEyeOffIcon" class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
+                                </svg>
+                            </button>
+                        </div>
                         @error('password')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input type="checkbox" name="remember" id="remember" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
-                            <label for="remember" class="ml-2 block text-sm text-gray-900">
-                                Se souvenir de moi
-                            </label>
-                        </div>
+                    <div class="flex items-center">
+                        <input type="checkbox"
+                               name="remember"
+                               id="remember"
+                               class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <label for="remember" class="ml-2 block text-sm text-gray-900">
+                            Se souvenir de moi
+                        </label>
                     </div>
 
-                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <button type="submit"
+                            id="submitBtn"
+                            class="flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                         Se connecter
                     </button>
                 </form>
@@ -99,56 +127,68 @@
     </div>
 
     <script>
-        // Script pour gérer la sélection visuelle des rôles
-        document.querySelectorAll('input[name="role"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                document.querySelectorAll('label').forEach(label => {
-                    label.classList.remove('border-green-600', 'bg-green-50');
-                    label.classList.add('border-gray-300');
-                    label.querySelector('svg').classList.remove('text-green-600');
-                    label.querySelector('svg').classList.add('text-gray-400');
-                    label.querySelector('span').classList.remove('text-green-600');
-                    label.querySelector('span').classList.add('text-gray-700');
-                });
-                
-                this.parentElement.classList.add('border-green-600', 'bg-green-50');
-                this.parentElement.classList.remove('border-gray-300');
-                this.parentElement.querySelector('svg').classList.add('text-green-600');
-                this.parentElement.querySelector('svg').classList.remove('text-gray-400');
-                this.parentElement.querySelector('span').classList.add('text-green-600');
-                this.parentElement.querySelector('span').classList.remove('text-gray-700');
-            });
-        });
-
-        // Décompte pour le throttle
         @if(session('lockout_seconds'))
         let seconds = {{ session('lockout_seconds') }};
         const submitBtn = document.getElementById('submitBtn');
         const loginForm = document.getElementById('loginForm');
         const errorMessage = document.querySelector('.error-text');
-        
-        // Désactiver le formulaire
+
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
         loginForm.querySelectorAll('input').forEach(input => input.disabled = true);
-        
+
         const countdown = setInterval(() => {
             seconds--;
             if (errorMessage) {
                 errorMessage.textContent = `Trop de tentatives de connexion. Veuillez réessayer dans ${seconds} secondes.`;
             }
-            
+
             if (seconds <= 0) {
                 clearInterval(countdown);
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 loginForm.querySelectorAll('input').forEach(input => input.disabled = false);
-                document.getElementById('error-message').remove();
             }
         }, 1000);
         @endif
+
+        const rememberedEmailKey = 'smartstock_remembered_email';
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordVisibility = document.getElementById('togglePasswordVisibility');
+        const passwordEyeIcon = document.getElementById('passwordEyeIcon');
+        const passwordEyeOffIcon = document.getElementById('passwordEyeOffIcon');
+        const rememberInput = document.getElementById('remember');
+        const loginFormElement = document.getElementById('loginForm');
+        const rememberedEmail = localStorage.getItem(rememberedEmailKey);
+
+        togglePasswordVisibility?.addEventListener('click', () => {
+            const shouldShowPassword = passwordInput.type === 'password';
+
+            passwordInput.type = shouldShowPassword ? 'text' : 'password';
+            togglePasswordVisibility.setAttribute('aria-label', shouldShowPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+            togglePasswordVisibility.setAttribute('aria-pressed', shouldShowPassword ? 'true' : 'false');
+            passwordEyeIcon.classList.toggle('hidden', shouldShowPassword);
+            passwordEyeOffIcon.classList.toggle('hidden', !shouldShowPassword);
+            if (shouldShowPassword) {
+                window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }));
+            }
+            passwordInput.focus();
+        });
+
+        if (rememberedEmail && emailInput && rememberInput && !emailInput.value) {
+            emailInput.value = rememberedEmail;
+            rememberInput.checked = true;
+        }
+
+        loginFormElement?.addEventListener('submit', () => {
+            if (rememberInput.checked && emailInput.value) {
+                localStorage.setItem(rememberedEmailKey, emailInput.value);
+                return;
+            }
+
+            localStorage.removeItem(rememberedEmailKey);
+        });
     </script>
 </body>
 </html>
-
-

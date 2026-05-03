@@ -3,13 +3,7 @@
 @section('title', 'Ventes')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="{ autoRefresh: true }" x-init="
-    setInterval(() => {
-        if (autoRefresh) {
-            window.location.reload();
-        }
-    }, 5000);
-">
+<div id="manager-sales-page" x-data data-silent-refresh class="px-4 sm:px-6 lg:px-8">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
@@ -22,17 +16,11 @@
                 :excelRoute="route('manager.sales.export.excel', request()->query())"
                 :pdfRoute="route('manager.sales.export.pdf', request()->query())"
             />
-
-            <!-- Toggle Auto-refresh -->
-            <label class="flex items-center space-x-2 text-sm text-gray-700">
-                <input type="checkbox" x-model="autoRefresh" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                <span>Auto-refresh 5s</span>
-            </label>
-        </div>
+</div>
     </div>
 
     <!-- Stats Cards -->
-    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
@@ -43,13 +31,13 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Aujourd'hui</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Ventes filtrees</dt>
                             <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-gray-900">{{ $stats['today_sales'] }}</div>
+                                <div class="text-2xl font-semibold text-gray-900">{{ $stats['filtered_sales'] }}</div>
                                 <div class="ml-2 text-sm text-gray-500">vente(s)</div>
                             </dd>
                             <dd class="mt-1 text-sm text-green-600 font-semibold">
-                                {{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA
+                                {{ number_format($stats['filtered_revenue'], 0, ',', ' ') }} FCFA
                             </dd>
                         </dl>
                     </div>
@@ -67,13 +55,13 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Ce mois</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Recette du jour</dt>
                             <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-gray-900">{{ $stats['this_month_sales'] }}</div>
-                                <div class="ml-2 text-sm text-gray-500">vente(s)</div>
+                                <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_current_day_revenue'], 0, ',', ' ') }}</div>
+                                <div class="ml-2 text-sm text-gray-500">FCFA</div>
                             </dd>
-                            <dd class="mt-1 text-sm text-green-600 font-semibold">
-                                {{ number_format($stats['this_month_revenue'], 0, ',', ' ') }} FCFA
+                            <dd class="mt-1 text-sm text-gray-500">
+                                Selon les caisses ouvertes/fermees
                             </dd>
                         </dl>
                     </div>
@@ -91,13 +79,37 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Total</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Recette d'hier</dt>
                             <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-gray-900">{{ $stats['total_sales'] }}</div>
-                                <div class="ml-2 text-sm text-gray-500">vente(s)</div>
+                                <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_yesterday_revenue'], 0, ',', ' ') }}</div>
+                                <div class="ml-2 text-sm text-gray-500">FCFA</div>
                             </dd>
-                            <dd class="mt-1 text-sm text-green-600 font-semibold">
-                                {{ number_format($stats['total_revenue'], 0, ',', ' ') }} FCFA
+                            <dd class="mt-1 text-sm text-gray-500">
+                                Recettes cloturees ou ventes d'hier
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a5 5 0 00-10 0v2M5 9h14l-1 11H6L5 9zm5 4h4" />
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_cash_balance'], 0, ',', ' ') }}</div>
+                                <div class="ml-2 text-sm text-gray-500">FCFA</div>
+                            </dd>
+                            <dd class="mt-1 text-sm text-gray-500">
+                                Caisse cumulee apres cloture
                             </dd>
                         </dl>
                     </div>
@@ -108,7 +120,7 @@
 
     <!-- Filtres -->
     <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('manager.sales') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5">
+        <form method="GET" data-auto-filter action="{{ route('manager.sales') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">N° Facture</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="INV-..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -127,8 +139,8 @@
                 <select name="payment_method" id="payment_method" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Espèces</option>
-                    <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Carte</option>
-                    <option value="mobile_money" {{ request('payment_method') == 'mobile_money' ? 'selected' : '' }}>Mobile Money</option>
+                    <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Orange Money</option>
+                    <option value="mobile_money" {{ request('payment_method') == 'mobile_money' ? 'selected' : '' }}>MTN Momo</option>
                 </select>
             </div>
             <div>
@@ -138,11 +150,6 @@
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700">Date fin</label>
                 <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
-            </div>
-            <div class="sm:col-span-5 flex justify-end">
-                <button type="submit" class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>
@@ -194,11 +201,11 @@
                                             </span>
                                         @elseif($sale->payment_method === 'card')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                Carte
+                                                Orange Money
                                             </span>
                                         @elseif($sale->payment_method === 'mobile_money')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                Mobile Money
+                                                MTN Momo
                                             </span>
                                         @else
                                             <span class="text-gray-500">{{ $sale->payment_method }}</span>
@@ -206,7 +213,7 @@
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                         <button type="button"
-                                                @click="$dispatch('open-sale-details-{{ $sale->id }}')"
+                                                onclick="window.dispatchEvent(new CustomEvent('open-sale-modal', { detail: { id: {{ $sale->id }} } }))"
                                                 class="text-indigo-600 hover:text-indigo-900">
                                             Détails
                                         </button>
@@ -241,8 +248,8 @@
                                                                         <p class="text-sm text-gray-500">Mode de paiement</p>
                                                                         <p class="font-medium">
                                                                             @if($sale->payment_method === 'cash') Espèces
-                                                                            @elseif($sale->payment_method === 'card') Carte
-                                                                            @elseif($sale->payment_method === 'mobile_money') Mobile Money
+                                                                            @elseif($sale->payment_method === 'card') Orange Money
+                                                                            @elseif($sale->payment_method === 'mobile_money') MTN Momo
                                                                             @else {{ $sale->payment_method }}
                                                                             @endif
                                                                         </p>
@@ -270,7 +277,7 @@
                                                                             <tr>
                                                                                 <td class="px-3 py-2 text-sm text-gray-900">{{ $item->product->name ?? 'N/A' }}</td>
                                                                                 <td class="px-3 py-2 text-sm text-gray-500">{{ $item->quantity }}</td>
-                                                                                <td class="px-3 py-2 text-sm text-gray-500">{{ number_format($item->price, 0, ',', ' ') }} FCFA</td>
+                                                                                <td class="px-3 py-2 text-sm text-gray-500">{{ number_format($item->unit_price, 0, ',', ' ') }} FCFA</td>
                                                                                 <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ number_format($item->subtotal, 0, ',', ' ') }} FCFA</td>
                                                                             </tr>
                                                                             @endforeach
@@ -311,6 +318,10 @@
             </div>
         </div>
     </div>
+
+    @foreach($sales as $sale)
+        <x-sale-details-modal :sale="$sale" />
+    @endforeach
 
     <!-- Pagination -->
     @if($sales->hasPages())

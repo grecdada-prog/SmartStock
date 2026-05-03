@@ -13,8 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Middlewares globaux pour le groupe 'web'
         $middleware->web(append: [
-            \App\Http\Middleware\SingleSessionMiddleware::class,
             \App\Http\Middleware\CheckInactivity::class,
+            \App\Http\Middleware\SingleSessionMiddleware::class,
             \App\Http\Middleware\CheckUserActive::class,
             \App\Http\Middleware\PreventDirectAccess::class,
         ]);

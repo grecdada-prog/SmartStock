@@ -77,7 +77,7 @@ class ManagerSalesExport implements FromCollection, WithHeadings, WithMapping, W
             $sale->seller->email ?? 'N/A',
             $sale->items->count(),
             number_format($sale->total, 0, ',', ' ') . ' FCFA',
-            ucfirst($sale->payment_method ?? 'N/A'),
+            $sale->payment_method_label,
             number_format($sale->amount_received ?? 0, 0, ',', ' ') . ' FCFA',
             number_format($sale->change_given ?? 0, 0, ',', ' ') . ' FCFA',
             $sale->created_at->format('d/m/Y H:i'),

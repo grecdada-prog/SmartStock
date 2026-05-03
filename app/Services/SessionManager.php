@@ -12,8 +12,9 @@ class SessionManager
     /**
      * Vérifier et nettoyer les sessions expirées
      */
-    public static function cleanExpiredSessions($minutes = 120)
+    public static function cleanExpiredSessions($minutes = null)
     {
+        $minutes = $minutes ?? (int) config('session.lifetime', 10);
         $expiredTime = now()->subMinutes($minutes);
 
         $expiredSessions = ActiveSession::where('last_activity', '<', $expiredTime)->get();

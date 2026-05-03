@@ -15,6 +15,10 @@ class StockMovement extends Model
         'quantity',
         'quantity_before',
         'quantity_after',
+        'purchase_price',
+        'selling_price',
+        'remaining_quantity',
+        'batch_code',
         'reference',
         'reason',
         'user_id',
@@ -24,6 +28,9 @@ class StockMovement extends Model
         'quantity' => 'integer',
         'quantity_before' => 'integer',
         'quantity_after' => 'integer',
+        'purchase_price' => 'decimal:2',
+        'selling_price' => 'decimal:2',
+        'remaining_quantity' => 'integer',
     ];
 
     // Relations

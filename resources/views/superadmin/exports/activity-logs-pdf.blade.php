@@ -64,7 +64,7 @@
                 <tr>
                     <td>{{ $log->id }}</td>
                     <td>{{ $log->user->name ?? 'N/A' }}</td>
-                    <td class="action-type">{{ $log->action_type }}</td>
+                    <td class="action-type">{{ $log->action }}</td>
                     <td>{{ Str::limit($log->description, 50) }}</td>
                     <td>{{ $log->ip_address ?? 'N/A' }}</td>
                     <td>{{ $log->created_at->format('d/m/Y H:i') }}</td>

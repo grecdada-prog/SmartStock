@@ -9,6 +9,8 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Category;
 use App\Models\ActivityLog;
+use App\Models\CashRegisterClosure;
+use App\Services\CashRegisterService;
 use App\Services\SessionManager;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -19,29 +21,90 @@ class ManagerDashboardController extends Controller
 {
     public function index()
     {
+        $managerId = auth()->id();
+        $sellerIds = User::role('seller')
+            ->where('created_by', $managerId)
+            ->pluck('id');
+
+        $cashRegisterService = app(CashRegisterService::class);
+        $sellers = User::role('seller')
+            ->where('created_by', $managerId)
+            ->orderBy('name')
+            ->get();
+
+        $sellerFinancials = $sellers->map(function (User $seller) use ($cashRegisterService) {
+            $todayClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                ->whereDate('business_date', today())
+                ->first();
+            $pendingClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                ->whereNull('opened_at')
+                ->latest('closed_at')
+                ->first();
+            $lastOpenedClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                ->whereNotNull('opened_at')
+                ->latest('opened_at')
+                ->first();
+            $currentSessionOpenedAt = $todayClosure?->opened_at;
+
+            if (!$currentSessionOpenedAt && $lastOpenedClosure?->opened_at?->isToday()) {
+                $currentSessionOpenedAt = $lastOpenedClosure->opened_at;
+            }
+
+            $todayRevenueQuery = Sale::where('seller_id', $seller->id)
+                ->whereDate('created_at', today());
+
+            if ($pendingClosure) {
+                $todayRevenueQuery->whereRaw('1 = 0');
+            } elseif ($currentSessionOpenedAt) {
+                $todayRevenueQuery->where('created_at', '>=', $currentSessionOpenedAt);
+            }
+
+            $yesterdayClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                ->whereDate('business_date', today()->subDay())
+                ->first();
+            $yesterdayRevenue = $yesterdayClosure?->amount
+                ?? Sale::where('seller_id', $seller->id)
+                    ->whereDate('created_at', today()->subDay())
+                    ->sum('total');
+
+            return [
+                'seller' => $seller,
+                'cash_balance' => $cashRegisterService->balanceForSeller($seller),
+                'today_revenue' => (float) $todayRevenueQuery->sum('total'),
+                'yesterday_revenue' => (float) $yesterdayRevenue,
+            ];
+        });
+
         // Statistiques
         $stats = [
-            'total_sellers' => User::role('seller')->count(),
-            'active_sellers' => User::role('seller')->where('is_active', true)->count(),
-            'online_sellers' => SessionManager::getOnlineUsers('seller')->count(),
-            'total_products' => Product::count(),
-            'low_stock_products' => Product::lowStock()->count(),
-            'total_categories' => Category::count(),
-            'total_sales' => Sale::count(),
-            'total_revenue' => Sale::sum('total'),
-            'today_sales' => Sale::whereDate('created_at', today())->count(),
-            'today_revenue' => Sale::whereDate('created_at', today())->sum('total'),
+            'total_sellers' => User::role('seller')->where('created_by', $managerId)->count(),
+            'active_sellers' => User::role('seller')->where('created_by', $managerId)->where('is_active', true)->count(),
+            'online_sellers' => SessionManager::getOnlineUsers('seller')->where('created_by', $managerId)->count(),
+            'low_stock_products' => Product::where('created_by', $managerId)->lowStock()->count(),
+            'total_categories' => Category::where('created_by', $managerId)->count(),
+            'total_sales' => Sale::whereIn('seller_id', $sellerIds)->count(),
+            'total_revenue' => Sale::whereIn('seller_id', $sellerIds)->sum('total'),
+            'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
+            'today_revenue' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->sum('total'),
+            'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
+            'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
+            'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
         ];
 
         // Vendeurs en ligne
-        $onlineSellers = SessionManager::getOnlineUsers('seller');
+        $onlineSellers = SessionManager::getOnlineUsers('seller')
+            ->where('created_by', $managerId)
+            ->values();
 
         // Top vendeurs du mois
         $topSellers = User::role('seller')
+            ->where('created_by', $managerId)
             ->withCount(['sales' => function($query) {
+                $query->whereYear('created_at', now()->year);
                 $query->whereMonth('created_at', now()->month);
             }])
             ->withSum(['sales' => function($query) {
+                $query->whereYear('created_at', now()->year);
                 $query->whereMonth('created_at', now()->month);
             }], 'total')
             ->orderBy('sales_sum_total', 'desc')
@@ -49,9 +112,13 @@ class ManagerDashboardController extends Controller
             ->get();
 
         // Produits en stock faible
-        $lowStockProducts = Product::lowStock()->take(5)->get();
+        $lowStockProducts = Product::where('created_by', $managerId)
+            ->active()
+            ->lowStock()
+            ->take(5)
+            ->get();
 
-        return view('manager.dashboard', compact('stats', 'onlineSellers', 'topSellers', 'lowStockProducts'));
+        return view('manager.dashboard', compact('stats', 'onlineSellers', 'topSellers', 'lowStockProducts', 'sellerFinancials'));
     }
 
     /**
@@ -88,16 +155,18 @@ class ManagerDashboardController extends Controller
             $query->where('invoice_number', 'like', '%' . $request->search . '%');
         }
 
+        $filteredSalesQuery = clone $query;
         $sales = $query->latest()->paginate(20);
+        $sellerFinancials = $this->sellerFinancials();
 
         // Statistiques des ventes
         $stats = [
-            'total_sales' => Sale::whereIn('seller_id', $sellerIds)->count(),
-            'total_revenue' => Sale::whereIn('seller_id', $sellerIds)->sum('total'),
-            'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
-            'today_revenue' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->sum('total'),
-            'this_month_sales' => Sale::whereIn('seller_id', $sellerIds)->whereMonth('created_at', now()->month)->count(),
-            'this_month_revenue' => Sale::whereIn('seller_id', $sellerIds)->whereMonth('created_at', now()->month)->sum('total'),
+            'filtered_sales' => (clone $filteredSalesQuery)->count(),
+            'filtered_revenue' => (float) (clone $filteredSalesQuery)->sum('total'),
+            'average_sale' => (float) (clone $filteredSalesQuery)->avg('total'),
+            'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
+            'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
+            'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
         ];
 
         // Liste des vendeurs pour le filtre
@@ -108,6 +177,58 @@ class ManagerDashboardController extends Controller
             ->get();
 
         return view('manager.sales.index', compact('sales', 'stats', 'sellers'));
+    }
+
+    private function sellerFinancials()
+    {
+        $cashRegisterService = app(CashRegisterService::class);
+
+        return User::role('seller')
+            ->where('created_by', auth()->id())
+            ->orderBy('name')
+            ->get()
+            ->map(function (User $seller) use ($cashRegisterService) {
+                $todayClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                    ->whereDate('business_date', today())
+                    ->first();
+                $pendingClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                    ->whereNull('opened_at')
+                    ->latest('closed_at')
+                    ->first();
+                $lastOpenedClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                    ->whereNotNull('opened_at')
+                    ->latest('opened_at')
+                    ->first();
+                $currentSessionOpenedAt = $todayClosure?->opened_at;
+
+                if (!$currentSessionOpenedAt && $lastOpenedClosure?->opened_at?->isToday()) {
+                    $currentSessionOpenedAt = $lastOpenedClosure->opened_at;
+                }
+
+                $todayRevenueQuery = Sale::where('seller_id', $seller->id)
+                    ->whereDate('created_at', today());
+
+                if ($pendingClosure) {
+                    $todayRevenueQuery->whereRaw('1 = 0');
+                } elseif ($currentSessionOpenedAt) {
+                    $todayRevenueQuery->where('created_at', '>=', $currentSessionOpenedAt);
+                }
+
+                $yesterdayClosure = CashRegisterClosure::where('seller_id', $seller->id)
+                    ->whereDate('business_date', today()->subDay())
+                    ->first();
+                $yesterdayRevenue = $yesterdayClosure?->amount
+                    ?? Sale::where('seller_id', $seller->id)
+                        ->whereDate('created_at', today()->subDay())
+                        ->sum('total');
+
+                return [
+                    'seller' => $seller,
+                    'cash_balance' => (float) $cashRegisterService->balanceForSeller($seller),
+                    'today_revenue' => (float) $todayRevenueQuery->sum('total'),
+                    'yesterday_revenue' => (float) $yesterdayRevenue,
+                ];
+            });
     }
 
     /**
@@ -171,7 +292,7 @@ class ManagerDashboardController extends Controller
         // Statistiques
         $stats = [
             'total_sales' => $sales->count(),
-            'total_revenue' => $sales->sum('total'),
+            'filtered_revenue' => $sales->sum('total'),
             'total_items' => $sales->sum(function($sale) {
                 return $sale->items->count();
             }),

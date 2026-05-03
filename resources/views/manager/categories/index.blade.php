@@ -3,26 +3,14 @@
 @section('title', 'Gestion des Catégories')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="{ autoRefresh: true }" x-init="
-    setInterval(() => {
-        if (autoRefresh) {
-            window.location.reload();
-        }
-    }, 5000);
-">
+<div id="manager-categories-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Catégories</h1>
             <p class="mt-2 text-sm text-gray-700">Gérez les catégories de vos produits</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-            <!-- Toggle Auto-refresh -->
-            <label class="flex items-center space-x-2 text-sm text-gray-700">
-                <input type="checkbox" x-model="autoRefresh" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
-                <span>Auto-refresh 5s</span>
-            </label>
-
-            <a href="{{ route('manager.categories.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+<a href="{{ route('manager.categories.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -33,7 +21,7 @@
 
     <!-- Filtres -->
     <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" action="{{ route('manager.categories.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <form method="GET" data-auto-filter action="{{ route('manager.categories.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, description..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
@@ -45,11 +33,6 @@
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actif</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactif</option>
                 </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                    Filtrer
-                </button>
             </div>
         </form>
     </div>

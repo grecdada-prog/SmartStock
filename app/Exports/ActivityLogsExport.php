@@ -13,14 +13,14 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class ActivityLogsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
 {
     protected $userId;
-    protected $actionType;
+    protected $action;
     protected $dateFrom;
     protected $dateTo;
 
-    public function __construct($userId = null, $actionType = null, $dateFrom = null, $dateTo = null)
+    public function __construct($userId = null, $action = null, $dateFrom = null, $dateTo = null)
     {
         $this->userId = $userId;
-        $this->actionType = $actionType;
+        $this->action = $action;
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
     }
@@ -33,8 +33,8 @@ class ActivityLogsExport implements FromCollection, WithHeadings, WithMapping, W
             $query->where('user_id', $this->userId);
         }
 
-        if ($this->actionType) {
-            $query->where('action_type', $this->actionType);
+        if ($this->action) {
+            $query->where('action', $this->action);
         }
 
         if ($this->dateFrom) {
@@ -66,10 +66,10 @@ class ActivityLogsExport implements FromCollection, WithHeadings, WithMapping, W
         return [
             $log->id,
             $log->user->name ?? 'N/A',
-            $log->action_type,
+            $log->action,
             $log->description,
             $log->ip_address ?? 'N/A',
-            $log->user_agent ?? 'N/A',
+            $log->properties['user_agent'] ?? 'N/A',
             $log->created_at->format('d/m/Y H:i:s'),
         ];
     }

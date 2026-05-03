@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Category;
 use App\Models\ActivityLog;
+use App\Models\CashRegisterClosure;
 use App\Services\SessionManager;
 use App\Models\ActiveSession;
 use Illuminate\Support\Facades\DB;
@@ -68,13 +69,20 @@ class SuperAdminDashboardController extends Controller
         // Top vendeurs du mois
         $topSellers = User::role('seller')
             ->withCount(['sales' => function($query) {
-                $query->whereMonth('created_at', now()->month);
+                $query->whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', now()->month);
             }])
             ->withSum(['sales' => function($query) {
-                $query->whereMonth('created_at', now()->month);
+                $query->whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', now()->month);
             }], 'total')
             ->orderBy('sales_sum_total', 'desc')
             ->take(5)
+            ->get();
+
+        $cashRegisterClosures = CashRegisterClosure::with('seller')
+            ->latest('closed_at')
+            ->take(10)
             ->get();
 
         return view('superadmin.dashboard', compact(
@@ -83,7 +91,8 @@ class SuperAdminDashboardController extends Controller
             'recentActivities',
             'recentSales',
             'salesChart',
-            'topSellers'
+            'topSellers',
+            'cashRegisterClosures'
         ));
     }
 
@@ -136,7 +145,8 @@ public function statistics()
     // Top 5 vendeurs du mois
     $topSellers = User::role('seller')
         ->withSum(['sales' => function($query) {
-            $query->whereMonth('created_at', now()->month);
+            $query->whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month);
         }], 'total')
         ->orderBy('sales_sum_total', 'desc')
         ->take(5)
@@ -299,7 +309,7 @@ public function cleanupSessions()
      */
     public function exportSalesPdf(Request $request)
     {
-        $query = Sale::with(['seller', 'saleItems.product']);
+        $query = Sale::with(['seller', 'items.product']);
 
         if ($request->filled('seller_id')) {
             $query->where('seller_id', $request->seller_id);
@@ -342,7 +352,7 @@ public function cleanupSessions()
         );
 
         return Excel::download(
-            new ActivityLogsExport($request->user_id, $request->action_type, $request->date_from, $request->date_to),
+            new ActivityLogsExport($request->user_id, $request->action, $request->date_from, $request->date_to),
             'logs_activite_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
         );
     }
@@ -358,8 +368,8 @@ public function cleanupSessions()
             $query->where('user_id', $request->user_id);
         }
 
-        if ($request->filled('action_type')) {
-            $query->where('action_type', $request->action_type);
+        if ($request->filled('action')) {
+            $query->where('action', $request->action);
         }
 
         if ($request->filled('date_from')) {

@@ -209,12 +209,64 @@
                         </a>
 
                         <!-- Mon Profil -->
-                        <a href="{{ route('profile.show') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <a href="{{ route('account.profile.show') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                             <svg class="h-8 w-8 text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             <span class="text-sm font-medium text-gray-900">Mon Profil</span>
                         </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fermetures de caisse -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
+                <div class="p-6">
+                    <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Fermetures de caisse</h3>
+                            <p class="mt-1 text-sm text-gray-500">Dernieres fermetures et reouvertures des caisses vendeurs</p>
+                        </div>
+                        <span class="inline-flex w-fit items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                            Supervision globale
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Vendeur</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Journee</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Fermeture</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Reouverture</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                @forelse($cashRegisterClosures as $closure)
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{{ $closure->seller->name ?? 'Vendeur supprime' }}</td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-gray-600">{{ $closure->business_date->format('d/m/Y') }}</td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-gray-600">{{ $closure->closed_at->format('d/m/Y H:i') }}</td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-gray-600">
+                                            {{ $closure->opened_at ? $closure->opened_at->format('d/m/Y H:i') : 'En attente' }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-4 py-3">
+                                            @if($closure->opened_at)
+                                                <span class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Rouverte</span>
+                                            @else
+                                                <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Fermee</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">Aucune fermeture de caisse enregistree</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

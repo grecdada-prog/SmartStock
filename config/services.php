@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    'monetbil' => [
+        'service_key' => env('MONETBIL_SERVICE_KEY'),
+        'service_secret' => env('MONETBIL_SERVICE_SECRET'),
+        'currency' => env('MONETBIL_CURRENCY', 'XAF'),
+
+        'number_validation' => [
+            'labels' => [
+                'card' => 'Orange Money',
+                'mobile_money' => 'MTN Momo',
+                'mtn' => 'MTN Momo',
+                'orange' => 'Orange Money',
+            ],
+        ],
+    ],
+
 ];

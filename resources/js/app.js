@@ -1,5 +1,8 @@
 import './bootstrap';
 import './notifications';
+import './silent-refresh';
+import './modal-links';
+import './inactivity-logout';
 
 // Auto-dismiss notifications après 5 secondes
 document.addEventListener('DOMContentLoaded', function() {

@@ -1,21 +1,17 @@
 @props(['sale'])
 
-<div x-data="{ show: false }" 
-     @open-sale-modal.window="if ($event.detail.id === {{ $sale->id }}) { show = true }"
-     x-show="show"
-     x-cloak
-     class="fixed inset-0 z-50 overflow-y-auto"
-     style="display: none;">
+<div id="sale-details-modal-{{ $sale->id }}"
+     class="fixed inset-0 z-50 hidden overflow-y-auto"
+     data-sale-details-modal="{{ $sale->id }}">
     
     <!-- Overlay -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="show = false"></div>
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" data-sale-details-close="{{ $sale->id }}"></div>
 
     <!-- Modal -->
     <div class="flex items-center justify-center min-h-screen px-4">
-        <div @click.away="show = false" 
+        <div
              class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-3xl sm:w-full"
-             x-show="show"
-             x-transition>
+             data-sale-details-panel>
             
             <!-- Header -->
             <div class="bg-green-600 px-6 py-4">
@@ -23,7 +19,7 @@
                     <h3 class="text-lg font-medium text-white">
                         Facture {{ $sale->invoice_number }}
                     </h3>
-                    <button @click="show = false" class="text-white hover:text-gray-200">
+                    <button type="button" data-sale-details-close="{{ $sale->id }}" class="text-white hover:text-gray-200">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -47,8 +43,9 @@
                         <p class="text-sm text-gray-500">Mode de paiement</p>
                         <p class="font-medium">
                             @if($sale->payment_method === 'cash') Espèces
-                            @elseif($sale->payment_method === 'card') Carte bancaire
-                            @else Mobile Money
+                            @elseif($sale->payment_method === 'card') Orange Money
+                            @elseif($sale->payment_method === 'mobile_money') MTN Momo
+                            @else {{ $sale->payment_method }}
                             @endif
                         </p>
                     </div>
@@ -56,6 +53,16 @@
                         <p class="text-sm text-gray-500">Total</p>
                         <p class="text-lg font-bold text-green-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</p>
                     </div>
+                    @if($sale->payment_method === 'cash')
+                        <div>
+                            <p class="text-sm text-gray-500">Montant recu</p>
+                            <p class="font-medium">{{ number_format($sale->amount_received ?? $sale->total, 0, ',', ' ') }} FCFA</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Monnaie rendue</p>
+                            <p class="font-medium">{{ number_format($sale->change_given ?? 0, 0, ',', ' ') }} FCFA</p>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Articles -->
@@ -122,13 +129,51 @@
 
             <!-- Footer -->
             <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                <button @click="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                <button type="button" onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
                     Imprimer
                 </button>
-                <button @click="show = false" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
+                <button type="button" data-sale-details-close="{{ $sale->id }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
                     Fermer
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const saleId = {{ $sale->id }};
+        const modal = document.getElementById(`sale-details-modal-${saleId}`);
+
+        if (!modal || modal.dataset.ready === 'true') {
+            return;
+        }
+
+        modal.dataset.ready = 'true';
+
+        const open = () => {
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+        const close = () => {
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        window.addEventListener('open-sale-modal', (event) => {
+            if (Number(event.detail?.id) === saleId) {
+                open();
+            }
+        });
+
+        modal.querySelectorAll(`[data-sale-details-close="${saleId}"]`).forEach((button) => {
+            button.addEventListener('click', close);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                close();
+            }
+        });
+    });
+</script>
