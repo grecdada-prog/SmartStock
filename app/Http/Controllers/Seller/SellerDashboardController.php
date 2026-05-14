@@ -81,7 +81,17 @@ class SellerDashboardController extends Controller
 
     public function closeCashRegister(CashRegisterService $cashRegisterService)
     {
-        $closure = $cashRegisterService->closeForSeller(Auth::user());
+        $seller = Auth::user();
+        $pendingClosure = $cashRegisterService->pendingClosureForSeller($seller);
+
+        if ($pendingClosure) {
+            return back()->with(
+                'warning',
+                'Caisse deja fermee depuis le '.$pendingClosure->closed_at->format('d/m/Y').' a '.$pendingClosure->closed_at->format('H:i').'. Ouvrez la caisse avant de relancer une cloture.'
+            );
+        }
+
+        $closure = $cashRegisterService->closeForSeller($seller);
 
         return back()->with(
             'success',

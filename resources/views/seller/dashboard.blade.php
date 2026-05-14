@@ -164,12 +164,28 @@
             class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 px-4"
             style="display: none;"
         >
-            <div @click.away="!closingCash && (showCloseModal = false)" class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                <h3 class="text-lg font-semibold text-gray-900">Confirmer la fermeture</h3>
-                <p class="mt-3 text-sm text-gray-600">
-                    Cette action ferme la journee de vente. La recette du jour sera transferee dans le Solde Cash, puis la recette du jour sera remise a zero.
-                </p>
-                <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div @click.away="!closingCash && (showCloseModal = false)" class="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+                <div class="border-b border-rose-100 bg-rose-50 px-6 py-5">
+                    <div class="flex items-start gap-3">
+                        <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M12 9v3m0 4h.01M10.29 3.86 1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Confirmer la cloture</h3>
+                            <p class="mt-1 text-sm text-gray-600">
+                                SmartStock va verifier l etat de la caisse avant de continuer.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-5">
+                    <p class="text-sm text-gray-600">
+                        Si la caisse est ouverte, la recette du jour sera transferee dans le Solde Cash et les ventes seront bloquees. Si elle est deja fermee, vous recevrez simplement son etat actuel.
+                    </p>
+                </div>
+                <div class="border-t border-gray-100 bg-gray-50 px-6 py-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                     <button
                         type="button"
                         @click="showCloseModal = false"

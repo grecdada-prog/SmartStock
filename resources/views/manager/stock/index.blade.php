@@ -109,7 +109,8 @@
                             <dd>
                                 <x-money-toggle
                                     :amount="number_format($stats['total_value'], 0, ',', ' ') . ' FCFA'"
-                                    label="la valeur du stock" />
+                                    label="la valeur du stock"
+                                    value-class="text-xl font-semibold text-gray-900" />
                             </dd>
                         </dl>
                     </div>

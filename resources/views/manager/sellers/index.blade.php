@@ -3,7 +3,7 @@
 @section('title', 'Gestion des Vendeurs')
 
 @section('content')
-<div id="manager-sellers-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8" x-data="{ deleteSellerId: null, resetPasswordId: null }">
+<div id="manager-sellers-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8" x-data="{ deleteSellerId: null, resetPasswordId: null, closeCashRegisterId: null }">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Vendeurs</h1>
@@ -201,9 +201,9 @@
                                                     </button>
                                                 </form>
 
-                                                <form method="POST" action="{{ route('manager.sellers.cash-register.close', $seller) }}">
+                                                <form method="POST" action="{{ route('manager.sellers.cash-register.close', $seller) }}" x-on:modal-confirmed-close-cash-register.window="if(closeCashRegisterId === {{ $seller->id }}) $el.submit()">
                                                     @csrf
-                                                    <button type="submit" onclick="return confirm('Cloturer la caisse de ce vendeur ? La recette du jour sera transferee dans son Solde Cash.')" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none">
+                                                    <button type="button" @click="closeCashRegisterId = {{ $seller->id }}; $dispatch('open-modal-close-cash-register')" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none">
                                                         Cloturer la caisse
                                                     </button>
                                                 </form>
@@ -263,5 +263,13 @@
     confirmText="Oui, reinitialiser"
     cancelText="Annuler"
     type="warning" />
+
+<x-modal-confirm
+    id="close-cash-register"
+    title="Cloturer la caisse"
+    message="SmartStock va verifier l etat actuel de la caisse. Si elle est ouverte, la recette du jour sera transferee dans le Solde Cash; si elle est deja fermee, vous recevrez simplement son etat."
+    confirmText="Verifier et cloturer"
+    cancelText="Annuler"
+    type="success" />
 
 @endsection

@@ -31,7 +31,7 @@
     }"
     class="flex items-center gap-2"
 >
-    <span class="{{ $valueClass }}" x-text="visible ? @js($amount) : '******'"></span>
+    <span class="{{ $valueClass }} whitespace-nowrap" x-text="visible ? @js($amount) : '******'"></span>
     <button
         type="button"
         @click="toggle()"

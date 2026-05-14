@@ -146,7 +146,7 @@ class CashRegisterService
         });
     }
 
-    public function isClosedForSeller(User $seller, ?Carbon $date = null): bool
+    public function pendingClosureForSeller(User $seller, ?Carbon $date = null): ?CashRegisterClosure
     {
         $closureQuery = CashRegisterClosure::where('seller_id', $seller->id)
             ->whereNull('opened_at');
@@ -155,7 +155,14 @@ class CashRegisterService
             $closureQuery->whereDate('business_date', $date->toDateString());
         }
 
-        return $closureQuery->exists();
+        return $closureQuery
+            ->latest('closed_at')
+            ->first();
+    }
+
+    public function isClosedForSeller(User $seller, ?Carbon $date = null): bool
+    {
+        return $this->pendingClosureForSeller($seller, $date) !== null;
     }
 
     public function balanceForSeller(User $seller): float

@@ -269,6 +269,13 @@ class SuperAdminSellerController extends Controller
             'reason' => ['required', 'string', 'min:8', 'max:500'],
         ]);
 
+        $pendingClosure = $cashRegisterService->pendingClosureForSeller($user);
+
+        if ($pendingClosure) {
+            return redirect()->route('superadmin.sellers.edit', $user)
+                ->with('warning', 'La caisse de '.$user->name.' est deja fermee depuis le '.$pendingClosure->closed_at->format('d/m/Y').' a '.$pendingClosure->closed_at->format('H:i').'. Aucune nouvelle cloture n a ete effectuee.');
+        }
+
         $closure = $cashRegisterService->closeForSeller($user, null, 'super_admin', $validated['reason']);
 
         ActivityLog::log(
