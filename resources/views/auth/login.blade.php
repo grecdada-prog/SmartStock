@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - SmartStock</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Connexion - SmartStore</title>
+    <x-favicon />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100">
+    <x-flash-messages />
+
     <div class="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <div class="w-full max-w-md space-y-8">
             <div>
-                <h2 class="mt-6 text-center text-3xl font-extrabold text-green-600">
-                    SmartStock
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-rose-600">
+                    SmartStore
                 </h2>
                 <p class="mt-2 text-center text-sm text-gray-600">
                     Connexion Manager / Vendeur
@@ -19,39 +23,6 @@
             </div>
 
             <div class="rounded-lg bg-white px-8 py-8 shadow-md">
-                @if (request()->boolean('inactive'))
-                    <div class="mb-4 rounded border border-yellow-200 bg-yellow-50 px-4 py-3 text-yellow-800" data-auto-dismiss>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="block text-sm">Vous avez ete deconnecte automatiquement pour inactivite.</span>
-                            <button type="button" class="text-yellow-600 hover:text-yellow-800" aria-label="Fermer" onclick="this.closest('[data-auto-dismiss]').remove()">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if (session('message'))
-                    <div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-800" data-auto-dismiss>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="block text-sm">{{ session('message') }}</span>
-                            <button type="button" class="text-green-500 hover:text-green-700" aria-label="Fermer" onclick="this.closest('[data-auto-dismiss]').remove()">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-red-800" data-auto-dismiss>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="block text-sm">{{ session('error') }}</span>
-                            <button type="button" class="text-red-500 hover:text-red-700" aria-label="Fermer" onclick="this.closest('[data-auto-dismiss]').remove()">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('login') }}" id="loginForm" class="space-y-6">
                     @csrf
 
@@ -64,7 +35,7 @@
                                autofocus
                                autocomplete="email"
                                value="{{ old('email') }}"
-                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 @error('email') border-red-500 @enderror">
+                               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-rose-500 @error('email') border-red-500 @enderror">
                         @error('email')
                             <p class="error-text mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -78,11 +49,11 @@
                                    id="password"
                                    required
                                    autocomplete="current-password"
-                                   class="block w-full rounded-md border border-gray-300 px-3 py-2 pr-12 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 @error('password') border-red-500 @enderror">
+                                   class="block w-full rounded-md border border-gray-300 px-3 py-2 pr-12 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-rose-500 @error('password') border-red-500 @enderror">
                             <button
                                 type="button"
                                 id="togglePasswordVisibility"
-                                class="flex items-center justify-center text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
+                                class="flex items-center justify-center text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-rose-500"
                                 style="position: absolute; right: 0.5rem; top: 50%; width: 2rem; height: 2rem; transform: translateY(-50%);"
                                 aria-label="Afficher le mot de passe"
                                 aria-pressed="false"
@@ -104,7 +75,7 @@
                         <input type="checkbox"
                                name="remember"
                                id="remember"
-                               class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                               class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500">
                         <label for="remember" class="ml-2 block text-sm text-gray-900">
                             Se souvenir de moi
                         </label>
@@ -112,13 +83,13 @@
 
                     <button type="submit"
                             id="submitBtn"
-                            class="flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            class="flex w-full justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
                         Se connecter
                     </button>
                 </form>
 
                 <div class="mt-6 text-center">
-                    <a href="{{ route('superadmin.login') }}" class="text-sm text-green-600 hover:text-green-500">
+                    <a href="{{ route('superadmin.login') }}" class="text-sm text-rose-600 hover:text-rose-500">
                         Connexion Super Admin
                     </a>
                 </div>
@@ -152,7 +123,7 @@
         }, 1000);
         @endif
 
-        const rememberedEmailKey = 'smartstock_remembered_email';
+        const rememberedEmailKey = 'smartstore_remembered_email';
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const togglePasswordVisibility = document.getElementById('togglePasswordVisibility');
@@ -171,7 +142,7 @@
             passwordEyeIcon.classList.toggle('hidden', shouldShowPassword);
             passwordEyeOffIcon.classList.toggle('hidden', !shouldShowPassword);
             if (shouldShowPassword) {
-                window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }));
+                window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }));
             }
             passwordInput.focus();
         });
@@ -181,7 +152,41 @@
             rememberInput.checked = true;
         }
 
-        loginFormElement?.addEventListener('submit', () => {
+        let refreshingCsrf = false;
+
+        loginFormElement?.addEventListener('submit', async (event) => {
+            if (!refreshingCsrf) {
+                event.preventDefault();
+                refreshingCsrf = true;
+
+                try {
+                    const response = await fetch('{{ route('csrf-token') }}', {
+                        credentials: 'same-origin',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        cache: 'no-store',
+                    });
+                    const data = await response.json();
+                    const tokenInput = loginFormElement.querySelector('input[name="_token"]');
+                    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+
+                    if (data.token && tokenInput) {
+                        tokenInput.value = data.token;
+                    }
+
+                    if (data.token && tokenMeta) {
+                        tokenMeta.setAttribute('content', data.token);
+                    }
+                } catch (error) {
+                    // If refresh fails, submit normally so Laravel can show the real error.
+                }
+
+                loginFormElement.requestSubmit();
+                return;
+            }
+
             if (rememberInput.checked && emailInput.value) {
                 localStorage.setItem(rememberedEmailKey, emailInput.value);
                 return;

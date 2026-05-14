@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @unless(request()->boolean('modal'))
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="smartstock-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
-        <meta name="smartstock-logout-url" content="{{ route('logout') }}">
-        <meta name="smartstock-login-url" content="{{ route('login') }}">
+        <meta name="smartstore-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
+        <meta name="smartstore-logout-url" content="{{ route('logout') }}">
+        <meta name="smartstore-login-url" content="{{ route('login') }}">
     @endunless
-    <title>@yield('title', 'Dashboard') - SmartStock</title>
+    <title>@yield('title', 'Dashboard') - SmartStore</title>
+    <x-favicon />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -48,6 +49,9 @@
                             </x-nav-link>
                             <x-nav-link href="{{ route('superadmin.sales') }}" :active="request()->routeIs('superadmin.sales')">
                                 Ventes
+                            </x-nav-link>
+                            <x-nav-link href="{{ route('superadmin.anomalies') }}" :active="request()->routeIs('superadmin.anomalies')">
+                                Anomalies
                             </x-nav-link>
                             <x-nav-link href="{{ route('superadmin.activity-logs') }}" :active="request()->routeIs('superadmin.activity-logs')">
                                 Logs
@@ -106,7 +110,7 @@
 
                     <!-- Hamburger -->
                     <div class="-mr-2 flex items-center sm:hidden">
-                        <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-green-50 focus:outline-none focus:bg-green-50 focus:text-gray-700 transition duration-150 ease-in-out">
+                        <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-rose-50 focus:outline-none focus:bg-rose-50 focus:text-gray-700 transition duration-150 ease-in-out">
                             <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                 <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                                 <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -136,6 +140,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('superadmin.sales') }}" :active="request()->routeIs('superadmin.sales')">
                         Ventes
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link href="{{ route('superadmin.anomalies') }}" :active="request()->routeIs('superadmin.anomalies')">
+                        Anomalies
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('superadmin.activity-logs') }}" :active="request()->routeIs('superadmin.activity-logs')">
                         Logs
@@ -169,54 +176,12 @@
         </nav>
         @endunless
 
-        <!-- Notifications Toast -->
-        <div aria-live="assertive" class="fixed inset-0 flex items-end px-4 py-6 pointer-events-none sm:p-6 sm:items-start z-50">
-            <div class="w-full flex flex-col items-center space-y-4 sm:items-end">
-                @if (session('success'))
-                    <x-toast type="success" :message="session('success')" />
-                @endif
-
-                @if (session('error'))
-                    <x-toast type="error" :message="session('error')" />
-                @endif
-
-                @if (session('warning'))
-                    <x-toast type="warning" :message="session('warning')" />
-                @endif
-
-                @if (session('info'))
-                    <x-toast type="info" :message="session('info')" />
-                @endif
-            </div>
-        </div>
+        @unless($isModalFrame)
+            <x-flash-messages />
+        @endunless
 
         <!-- Page Content -->
         <main class="mx-auto w-full max-w-7xl flex-1 py-6 px-4 sm:px-6 lg:px-8">
-            <!-- Validation Errors -->
-            @if ($errors->any())
-                <div class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">
-                                {{ $errors->count() > 1 ? 'Il y a quelques erreurs avec votre saisie.' : 'Il y a une erreur avec votre saisie.' }}
-                            </h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                <ul class="list-disc pl-5 space-y-1">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
             @yield('content')
         </main>
         @unless($isModalFrame)
@@ -224,7 +189,7 @@
         @endunless
     </div>
     <script>
-        window.SmartStockAutoFilters = window.SmartStockAutoFilters || {
+        window.SmartStoreAutoFilters = window.SmartStoreAutoFilters || {
             debounce(callback, delay = 450) {
                 let timeoutId;
 
@@ -258,8 +223,8 @@
             },
         };
 
-        document.addEventListener('DOMContentLoaded', () => window.SmartStockAutoFilters.init());
-        window.addEventListener('pageshow', () => window.SmartStockAutoFilters.init());
+        document.addEventListener('DOMContentLoaded', () => window.SmartStoreAutoFilters.init());
+        window.addEventListener('pageshow', () => window.SmartStoreAutoFilters.init());
     </script>
 </body>
 </html>

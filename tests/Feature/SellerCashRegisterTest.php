@@ -118,6 +118,45 @@ class SellerCashRegisterTest extends TestCase
         $this->assertSame(6000.0, app(\App\Services\CashRegisterService::class)->balanceForSeller($seller));
     }
 
+    public function test_manager_withdrawal_uses_seller_cash_balance(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $manager = User::findOrFail($seller->created_by);
+
+        CashRegisterClosure::create([
+            'seller_id' => $seller->id,
+            'business_date' => today(),
+            'amount' => 5000,
+            'closed_by' => 'manual',
+            'closed_at' => now(),
+        ]);
+
+        $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
+            'type' => 'withdraw',
+            'amount' => 3000,
+            'reason' => 'Versement banque',
+        ])->assertRedirect();
+
+        $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
+            'type' => 'withdraw',
+            'amount' => 2500,
+            'reason' => 'Deuxieme retrait',
+        ])->assertSessionHas('error');
+
+        $this->assertDatabaseHas('cash_balance_adjustments', [
+            'seller_id' => $seller->id,
+            'manager_id' => $manager->id,
+            'type' => 'withdraw',
+            'amount' => 3000,
+        ]);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $manager->id,
+            'action' => 'cash_balance_withdrawn',
+            'model' => 'CashBalanceAdjustment',
+        ]);
+    }
+
     public function test_seller_dashboard_only_shows_requested_sections(): void
     {
         $seller = $this->createSellerWithManager();

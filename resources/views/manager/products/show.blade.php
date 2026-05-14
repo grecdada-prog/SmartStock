@@ -17,7 +17,7 @@
                     </div>
                     <div class="mt-2 flex items-center text-sm text-gray-500">
                         @if($product->is_active)
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                 Actif
                             </span>
                         @else
@@ -30,14 +30,14 @@
             </div>
             <div class="mt-4 flex space-x-3 md:mt-0 md:ml-4">
                 <a href="{{ route('manager.products.edit', $product) }}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors duration-200">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Modifier
                 </a>
                 <a href="{{ route('manager.products.index') }}"
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors duration-200">
                     Retour
                 </a>
             </div>
@@ -91,14 +91,14 @@
                 <div class="p-5">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-6 w-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Marge</dt>
-                                <dd class="text-2xl font-semibold text-green-600">{{ number_format($product->profitMargin(), 2) }}%</dd>
+                                <dd class="text-2xl font-semibold text-rose-600">{{ number_format($product->profitMargin(), 2) }}%</dd>
                             </dl>
                         </div>
                     </div>
@@ -158,7 +158,7 @@
                     </div>
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Bénéfice unitaire</dt>
-                        <dd class="mt-1 text-sm text-green-600 font-semibold sm:mt-0 sm:col-span-2">{{ number_format($product->profit(), 0, ',', ' ') }} FCFA</dd>
+                        <dd class="mt-1 text-sm text-rose-600 font-semibold sm:mt-0 sm:col-span-2">{{ number_format($product->profit(), 0, ',', ' ') }} FCFA</dd>
                     </div>
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Seuil d'alerte</dt>
@@ -200,7 +200,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 @if($movement->type === 'in')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                         Entrée
                                     </span>
                                 @else

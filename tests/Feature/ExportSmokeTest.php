@@ -9,6 +9,7 @@ use App\Http\Middleware\SingleSessionMiddleware;
 use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
@@ -41,9 +42,10 @@ class ExportSmokeTest extends TestCase
     public function test_super_admin_excel_exports_are_downloaded(): void
     {
         $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
         Excel::fake();
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
 
         $this->actingAs($superAdmin)->get(route('superadmin.users.export.excel'))->assertOk();
         Excel::assertDownloaded('utilisateurs_2026-04-25_10-30-00.xlsx');
@@ -58,9 +60,10 @@ class ExportSmokeTest extends TestCase
     public function test_manager_excel_exports_are_downloaded(): void
     {
         $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
         Excel::fake();
 
-        $manager = User::where('email', 'manager@smartstock.test')->firstOrFail();
+        $manager = User::where('email', 'bertholfyllias200@gmail.com')->firstOrFail();
 
         $this->actingAs($manager)->get(route('manager.sales.export.excel'))->assertOk();
         Excel::assertDownloaded('ventes_manager_2026-04-25_10-30-00.xlsx');
@@ -69,9 +72,10 @@ class ExportSmokeTest extends TestCase
     public function test_pdf_exports_render_for_super_admin_and_manager(): void
     {
         $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
-        $manager = User::where('email', 'manager@smartstock.test')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
+        $manager = User::where('email', 'bertholfyllias200@gmail.com')->firstOrFail();
 
         $superAdminRoutes = [
             'superadmin.users.export.pdf',

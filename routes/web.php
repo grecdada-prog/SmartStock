@@ -26,14 +26,21 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/csrf-token', function () {
+    $response = response()->json(['token' => csrf_token()]);
+    $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+
+    return $response;
+})->name('csrf-token');
+
 // Routes d'authentification
 Route::get('/login', [CustomLoginController::class, 'showLogin'])->name('login');
-Route::post('/login', [CustomLoginController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/login', [CustomLoginController::class, 'login']);
 Route::post('/logout', [CustomLoginController::class, 'logout'])->name('logout');
 
 // Login Super Admin
 Route::get('/superadmin/login', [CustomLoginController::class, 'showSuperAdminLogin'])->name('superadmin.login');
-Route::post('/superadmin/login', [CustomLoginController::class, 'superAdminLogin'])->middleware('throttle:5,1');
+Route::post('/superadmin/login', [CustomLoginController::class, 'superAdminLogin']);
 
 // 2FA Routes
 Route::middleware(['auth'])->group(function () {
@@ -43,8 +50,12 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // 2FA Verification (sans middleware auth car pas encore connecté)
-Route::get('/2fa/verify', [CustomLoginController::class, 'show2FAVerify'])->name('2fa.verify');
-Route::post('/2fa/verify', [CustomLoginController::class, 'verify2FA'])->name('2fa.verify.post');
+Route::get('/2fa/verify', [CustomLoginController::class, 'show2FAVerify'])
+    ->middleware('throttle:10,1')
+    ->name('2fa.verify');
+Route::post('/2fa/verify', [CustomLoginController::class, 'verify2FA'])
+    ->middleware('throttle:5,1')
+    ->name('2fa.verify.post');
 
 // Profile routes (accessible par tous les utilisateurs authentifiés)
 Route::middleware(['auth'])->group(function () {
@@ -78,6 +89,7 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'role:supe
     // Dashboard
     Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [SuperAdminDashboardController::class, 'statistics'])->name('statistics');
+    Route::get('/anomalies', [SuperAdminDashboardController::class, 'anomalies'])->name('anomalies');
 
     // Sessions actives
     Route::get('/sessions/active', [SuperAdminDashboardController::class, 'activeSessions'])->name('sessions.active');
@@ -108,6 +120,9 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'role:supe
     Route::get('/sellers/create', [SuperAdminSellerController::class, 'create'])->name('sellers.create');
     Route::post('/sellers', [SuperAdminSellerController::class, 'store'])->middleware('throttle:10,60')->name('sellers.store');
     Route::get('/sellers/{user}/edit', [SuperAdminSellerController::class, 'edit'])->name('sellers.edit');
+    Route::post('/sellers/{user}/reassign-manager', [SuperAdminSellerController::class, 'reassignManager'])->middleware('throttle:10,60')->name('sellers.reassign-manager');
+    Route::post('/sellers/{user}/cash-register/close', [SuperAdminSellerController::class, 'closeCashRegister'])->middleware('throttle:10,60')->name('sellers.cash-register.close');
+    Route::post('/sellers/{user}/cash-register/open', [SuperAdminSellerController::class, 'openCashRegister'])->middleware('throttle:10,60')->name('sellers.cash-register.open');
     Route::put('/sellers/{user}', [SuperAdminSellerController::class, 'update'])->name('sellers.update');
     Route::delete('/sellers/{user}', [SuperAdminSellerController::class, 'destroy'])->middleware('throttle:10,60')->name('sellers.destroy');
 
@@ -146,6 +161,9 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::post('/sellers/{user}/reset-password', [ManagerSellerController::class, 'resetPassword'])->middleware('throttle:5,60')->name('sellers.reset-password');
     Route::post('/sellers/{user}/toggle-status', [ManagerSellerController::class, 'toggleStatus'])->middleware('throttle:20,60')->name('sellers.toggle-status');
     Route::post('/sellers/{user}/force-logout', [ManagerSellerController::class, 'forceLogout'])->middleware('throttle:20,60')->name('sellers.force-logout');
+    Route::post('/sellers/{user}/cash-register/close', [ManagerSellerController::class, 'closeCashRegister'])
+        ->middleware('throttle:10,60')
+        ->name('sellers.cash-register.close');
     Route::post('/sellers/{user}/cash-balance', [ManagerSellerController::class, 'adjustCashBalance'])
         ->middleware('throttle:10,60')
         ->name('sellers.cash-balance');

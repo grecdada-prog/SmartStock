@@ -15,12 +15,16 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     protected $sellerId;
     protected $dateFrom;
     protected $dateTo;
+    protected $paymentMethod;
+    protected $search;
 
-    public function __construct($sellerId = null, $dateFrom = null, $dateTo = null)
+    public function __construct($sellerId = null, $dateFrom = null, $dateTo = null, $paymentMethod = null, $search = null)
     {
         $this->sellerId = $sellerId;
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
+        $this->paymentMethod = $paymentMethod;
+        $this->search = $search;
     }
 
     public function collection()
@@ -37,6 +41,14 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyl
 
         if ($this->dateTo) {
             $query->whereDate('created_at', '<=', $this->dateTo);
+        }
+
+        if ($this->paymentMethod) {
+            $query->where('payment_method', $this->paymentMethod);
+        }
+
+        if ($this->search) {
+            $query->where('invoice_number', 'like', '%' . $this->search . '%');
         }
 
         return $query->latest()->get();

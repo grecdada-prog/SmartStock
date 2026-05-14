@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\ActivityLog;
 use App\Notifications\UserCreatedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -70,6 +71,46 @@ class SuperAdminSellerOwnershipTest extends TestCase
         $this->assertTrue($seller->hasRole('seller'));
         $this->assertSame($manager->id, $seller->created_by);
         Notification::assertSentTo($seller, UserCreatedNotification::class);
+    }
+
+    public function test_super_admin_can_reassign_seller_with_audit_reason(): void
+    {
+        Notification::fake();
+        [$superAdmin, $manager] = $this->createUsers();
+        $newManager = User::factory()->create([
+            'created_by' => $superAdmin->id,
+            'is_active' => true,
+        ]);
+        $newManager->assignRole('manager');
+
+        $seller = User::factory()->create([
+            'created_by' => $manager->id,
+            'is_active' => true,
+        ]);
+        $seller->assignRole('seller');
+
+        $response = $this->actingAs($superAdmin)->post(route('superadmin.sellers.reassign-manager', $seller), [
+            'manager_id' => $newManager->id,
+            'reason' => 'Changement de secteur commercial.',
+        ]);
+
+        $response->assertRedirect(route('superadmin.sellers.edit', $seller));
+
+        $seller->refresh();
+
+        $this->assertSame($newManager->id, $seller->created_by);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'seller_reassigned',
+            'model' => 'User',
+            'model_id' => $seller->id,
+        ]);
+
+        $log = ActivityLog::where('action', 'seller_reassigned')->latest()->first();
+
+        $this->assertSame($manager->id, data_get($log->properties, 'previous_manager_id'));
+        $this->assertSame($newManager->id, data_get($log->properties, 'new_manager_id'));
+        $this->assertSame('Changement de secteur commercial.', data_get($log->properties, 'reason'));
     }
 
     private function createUsers(): array

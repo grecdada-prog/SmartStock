@@ -9,7 +9,7 @@
             <h1 class="text-2xl font-semibold text-gray-900">Rapport des ventes</h1>
             <p class="mt-1 text-sm text-gray-600">Analyse des ventes realisees par vos vendeurs.</p>
         </div>
-        <a href="{{ route('manager.reports.sales.export.pdf', request()->query()) }}" class="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700">
+        <a href="{{ route('manager.reports.sales.export.pdf', request()->query()) }}" class="px-4 py-2 rounded-md bg-rose-600 text-white text-sm font-medium hover:bg-rose-700">
             Export PDF
         </a>
     </div>
@@ -18,7 +18,7 @@
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Ventes filtrees</p><p class="mt-1 text-2xl font-semibold">{{ $stats['filtered_sales'] }}</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Recette filtree</p><p class="mt-1 text-2xl font-semibold">{{ number_format($stats['filtered_revenue'], 0, ',', ' ') }} FCFA</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Panier moyen</p><p class="mt-1 text-2xl font-semibold">{{ number_format($stats['average_sale'] ?? 0, 0, ',', ' ') }} FCFA</p></div>
-        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Recette du jour</p><p class="mt-1 text-2xl font-semibold">{{ number_format($stats['total_current_day_revenue'], 0, ',', ' ') }} FCFA</p></div>
+        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Recette du jour</p><div class="mt-1"><x-money-toggle :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'" label="la recette du jour" /></div></div>
     </div>
 
     <form method="GET" data-auto-filter class="bg-white p-4 rounded-md shadow-sm border grid grid-cols-1 gap-4 md:grid-cols-5">

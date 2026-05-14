@@ -28,7 +28,7 @@
                                 <!-- Name -->
                                 <div class="col-span-6 sm:col-span-4">
                                     <label for="name" class="block font-medium text-sm text-gray-700">Nom</label>
-                                    <input id="name" type="text" name="name" value="{{ old('name', $user->name) }}" required autocomplete="name" class="border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md shadow-sm mt-1 block w-full">
+                                    <input id="name" type="text" name="name" value="{{ old('name', $user->name) }}" required autocomplete="name" class="border-gray-300 focus:border-rose-500 focus:ring-rose-500 rounded-md shadow-sm mt-1 block w-full">
                                     @error('name')
                                         <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                                     @enderror
@@ -37,7 +37,7 @@
                                 <!-- Email -->
                                 <div class="col-span-6 sm:col-span-4">
                                     <label for="email" class="block font-medium text-sm text-gray-700">Email</label>
-                                    <input id="email" type="email" name="email" value="{{ old('email', $user->email) }}" required class="border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md shadow-sm mt-1 block w-full">
+                                    <input id="email" type="email" name="email" value="{{ old('email', $user->email) }}" required class="border-gray-300 focus:border-rose-500 focus:ring-rose-500 rounded-md shadow-sm mt-1 block w-full">
                                     @error('email')
                                         <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                                     @enderror
@@ -46,7 +46,7 @@
                                 <!-- Phone -->
                                 <div class="col-span-6 sm:col-span-4">
                                     <label for="phone" class="block font-medium text-sm text-gray-700">Téléphone</label>
-                                    <input id="phone" type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md shadow-sm mt-1 block w-full">
+                                    <input id="phone" type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="border-gray-300 focus:border-rose-500 focus:ring-rose-500 rounded-md shadow-sm mt-1 block w-full">
                                     @error('phone')
                                         <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                                     @enderror
@@ -55,7 +55,7 @@
                         </div>
 
                         <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-rose-700 focus:bg-rose-700 active:bg-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 Enregistrer
                             </button>
                         </div>
@@ -86,7 +86,7 @@
                                 <!-- Current Password -->
                                 <div class="col-span-6 sm:col-span-4">
                                     <label for="current_password" class="block font-medium text-sm text-gray-700">Mot de passe actuel</label>
-                                    <input id="current_password" type="password" name="current_password" required autocomplete="current-password" class="border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md shadow-sm mt-1 block w-full">
+                                    <input id="current_password" type="password" name="current_password" required autocomplete="current-password" class="border-gray-300 focus:border-rose-500 focus:ring-rose-500 rounded-md shadow-sm mt-1 block w-full">
                                     @error('current_password')
                                         <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                                     @enderror
@@ -95,7 +95,7 @@
                                 <!-- New Password -->
                                 <div class="col-span-6 sm:col-span-4">
                                     <label for="password" class="block font-medium text-sm text-gray-700">Nouveau mot de passe</label>
-                                    <input id="password" type="password" name="password" required autocomplete="new-password" class="border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md shadow-sm mt-1 block w-full">
+                                    <input id="password" type="password" name="password" required autocomplete="new-password" class="border-gray-300 focus:border-rose-500 focus:ring-rose-500 rounded-md shadow-sm mt-1 block w-full">
                                     @error('password')
                                         <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                                     @enderror
@@ -104,7 +104,7 @@
                                 <!-- Confirm Password -->
                                 <div class="col-span-6 sm:col-span-4">
                                     <label for="password_confirmation" class="block font-medium text-sm text-gray-700">Confirmer le mot de passe</label>
-                                    <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md shadow-sm mt-1 block w-full">
+                                    <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="border-gray-300 focus:border-rose-500 focus:ring-rose-500 rounded-md shadow-sm mt-1 block w-full">
                                     @error('password_confirmation')
                                         <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
                                     @enderror
@@ -113,7 +113,7 @@
                         </div>
 
                         <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-rose-700 focus:bg-rose-700 active:bg-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 Enregistrer
                             </button>
                         </div>

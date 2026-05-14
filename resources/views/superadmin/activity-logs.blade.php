@@ -21,7 +21,7 @@
         <form method="GET" data-auto-filter action="{{ route('superadmin.activity-logs') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5">
             <div>
                 <label for="user_id" class="block text-sm font-medium text-gray-700">Utilisateur</label>
-                <select name="user_id" id="user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="user_id" id="user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     @foreach($users as $user)
                         <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
@@ -32,7 +32,7 @@
             </div>
             <div>
                 <label for="action" class="block text-sm font-medium text-gray-700">Action</label>
-                <select name="action" id="action" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="action" id="action" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Toutes</option>
                     <option value="login" {{ request('action') == 'login' ? 'selected' : '' }}>Connexion</option>
                     <option value="logout" {{ request('action') == 'logout' ? 'selected' : '' }}>Déconnexion</option>
@@ -43,11 +43,11 @@
             </div>
             <div>
                 <label for="date_from" class="block text-sm font-medium text-gray-700">Date début</label>
-                <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700">Date fin</label>
-                <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
         </form>
     </div>

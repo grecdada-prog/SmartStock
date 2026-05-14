@@ -43,7 +43,7 @@ class ManagerReportsTest extends TestCase
         $this->actingAs($manager)
             ->get(route('manager.reports.activity'))
             ->assertOk()
-            ->assertSee('Rapport activite');
+            ->assertSee('Rapport activité');
 
         $this->actingAs($manager)
             ->get(route('manager.reports.stock'))

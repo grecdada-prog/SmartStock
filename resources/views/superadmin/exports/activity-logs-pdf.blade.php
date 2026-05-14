@@ -74,7 +74,7 @@
     </table>
 
     <div class="footer">
-        <p>Document généré par SmartStock - {{ now()->format('d/m/Y à H:i') }}</p>
+        <p>Document généré par SmartStore - {{ now()->format('d/m/Y à H:i') }}</p>
     </div>
 </body>
 </html>

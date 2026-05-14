@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -19,11 +20,12 @@ class DemoDataSeederTest extends TestCase
     public function test_database_seeder_creates_a_complete_demo_dataset(): void
     {
         $this->seed(DatabaseSeeder::class);
-        $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
+        $this->seed(DemoDataSeeder::class);
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
-        $manager = User::where('email', 'manager@smartstock.test')->firstOrFail();
-        $seller = User::where('email', 'seller@smartstock.test')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
+        $manager = User::where('email', 'bertholfyllias200@gmail.com')->firstOrFail();
+        $seller = User::where('email', 'grecdada@gmail.com')->firstOrFail();
 
         $this->assertTrue($superAdmin->hasRole('super_admin'));
         $this->assertTrue($manager->hasRole('manager'));

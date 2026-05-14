@@ -13,7 +13,7 @@
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Produits</p><p class="mt-1 text-2xl font-semibold">{{ $stats['total_products'] }}</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Stock faible</p><p class="mt-1 text-2xl font-semibold">{{ $stats['low_stock_products'] }}</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Rupture</p><p class="mt-1 text-2xl font-semibold">{{ $stats['out_of_stock_products'] }}</p></div>
-        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Valeur</p><p class="mt-1 text-2xl font-semibold">{{ number_format($stats['total_value'], 0, ',', ' ') }} FCFA</p></div>
+        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Valeur</p><div class="mt-1"><x-money-toggle :amount="number_format($stats['total_value'], 0, ',', ' ') . ' FCFA'" label="la valeur du stock" /></div></div>
     </div>
 
     <form method="GET" data-auto-filter class="bg-white p-4 rounded-md shadow-sm border grid grid-cols-1 gap-4 md:grid-cols-3">

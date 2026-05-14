@@ -5,12 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @unless(request()->boolean('modal'))
-            <meta name="smartstock-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
-            <meta name="smartstock-logout-url" content="{{ route('logout') }}">
-            <meta name="smartstock-login-url" content="{{ route('login') }}">
+            <meta name="smartstore-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
+            <meta name="smartstore-logout-url" content="{{ route('logout') }}">
+            <meta name="smartstore-login-url" content="{{ route('login') }}">
         @endunless
 
         <title>{{ config('app.name', 'Laravel') }}</title>
+        <x-favicon />
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

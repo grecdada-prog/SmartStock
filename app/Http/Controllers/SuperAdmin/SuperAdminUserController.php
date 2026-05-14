@@ -9,6 +9,7 @@ use App\Models\ActivityLog;
 use App\Services\SessionManager;
 use App\Services\PasswordSetupLinkService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
 use App\Notifications\Enable2FANotification;
@@ -17,6 +18,7 @@ use App\Notifications\AccountStatusChangedNotification;
 use App\Exports\UsersExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Throwable;
 
 class SuperAdminUserController extends Controller
 {
@@ -170,16 +172,27 @@ class SuperAdminUserController extends Controller
     );
 
     // Envoyer l'email de bienvenue avec le mot de passe
-    $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
-    $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
+    $emailWarning = null;
+
+    try {
+        $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+        $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
 
     // Suggérer l'activation du 2FA pour les rôles sensibles
-    if (in_array($validated['role'], ['super_admin', 'manager'])) {
-        $user->notify(new Enable2FANotification());
+        if (in_array($validated['role'], ['super_admin', 'manager'])) {
+            $user->notify(new Enable2FANotification());
+        }
+    } catch (Throwable $exception) {
+        Log::warning('Unable to send user creation notification.', [
+            'user_id' => $user->id,
+            'exception' => $exception->getMessage(),
+        ]);
+
+        $emailWarning = 'L utilisateur a ete cree, mais l email de bienvenue n a pas pu etre envoye.';
     }
 
     return redirect()->route('superadmin.users.index')
-        ->with('success', 'Utilisateur créé avec succès ! Un email de bienvenue a été envoyé.');
+        ->with('success', 'Utilisateur cree avec succes !'.($emailWarning ? ' '.$emailWarning : ' Un email de bienvenue a ete envoye.'));
 }
 
     /**

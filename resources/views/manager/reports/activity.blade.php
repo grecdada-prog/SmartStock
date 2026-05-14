@@ -1,18 +1,18 @@
 @extends('manager.layouts.app')
 
-@section('title', 'Rapport activite')
+@section('title', 'Rapport activité')
 
 @section('content')
 <div class="space-y-6">
     <div>
-        <h1 class="text-2xl font-semibold text-gray-900">Rapport activite</h1>
-        <p class="mt-1 text-sm text-gray-600">Historique de vos actions dans SmartStock.</p>
+        <h1 class="text-2xl font-semibold text-gray-900">Rapport activité</h1>
+        <p class="mt-1 text-sm text-gray-600">Historique de vos actions dans SmartStore.</p>
     </div>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Total</p><p class="mt-1 text-2xl font-semibold">{{ $stats['total_activities'] }}</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Aujourd'hui</p><p class="mt-1 text-2xl font-semibold">{{ $stats['today_activities'] }}</p></div>
-        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Activites du mois</p><p class="mt-1 text-2xl font-semibold">{{ $stats['this_month_activities'] }}</p></div>
+        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Activités du mois</p><p class="mt-1 text-2xl font-semibold">{{ $stats['this_month_activities'] }}</p></div>
     </div>
 
     <form method="GET" data-auto-filter class="bg-white p-4 rounded-md shadow-sm border grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -45,7 +45,7 @@
                         <td class="px-4 py-3 text-sm text-gray-600">{{ $activity->ip_address ?? '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">Aucune activite trouvee.</td></tr>
+                    <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">Aucune activité trouvée.</td></tr>
                 @endforelse
             </tbody>
         </table>

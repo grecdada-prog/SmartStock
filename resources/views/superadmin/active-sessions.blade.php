@@ -43,8 +43,8 @@
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
-                                                <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                    <span class="text-green-600 font-medium text-sm">
+                                                <div class="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center">
+                                                    <span class="text-rose-600 font-medium text-sm">
                                                         {{ strtoupper(substr($session->user->name, 0, 2)) }}
                                                     </span>
                                                 </div>
@@ -60,7 +60,7 @@
                                             @elseif($session->user->hasRole('manager'))
                                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Gérant</span>
                                             @else
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Vendeur</span>
+                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-800">Vendeur</span>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -71,7 +71,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="flex items-center">
-                                                <span class="h-2 w-2 rounded-full bg-green-400 mr-2"></span>
+                                                <span class="h-2 w-2 rounded-full bg-rose-400 mr-2"></span>
                                                 {{ $session->last_activity->diffForHumans() }}
                                             </div>
                                         </td>

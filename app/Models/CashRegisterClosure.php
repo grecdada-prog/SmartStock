@@ -14,8 +14,11 @@ class CashRegisterClosure extends Model
         'business_date',
         'amount',
         'closed_by',
+        'closed_by_user_id',
         'closed_at',
         'opened_at',
+        'opened_by',
+        'opened_by_user_id',
     ];
 
     protected $casts = [
@@ -28,5 +31,15 @@ class CashRegisterClosure extends Model
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function closedByUser()
+    {
+        return $this->belongsTo(User::class, 'closed_by_user_id');
+    }
+
+    public function openedByUser()
+    {
+        return $this->belongsTo(User::class, 'opened_by_user_id');
     }
 }

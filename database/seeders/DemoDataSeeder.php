@@ -17,7 +17,7 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         $superAdmin = User::firstOrCreate(
-            ['email' => 'nanguefyllias@gmail.com'],
+            ['email' => 'nanguefyllias@gmai.com'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('Password@123'),
@@ -29,7 +29,7 @@ class DemoDataSeeder extends Seeder
         $manager = User::updateOrCreate(
             ['email' => 'bertholfyllias200@gmail.com'],
             [
-                'name' => 'Gerant Demo',
+                'name' => 'Gérant Démo',
                 'phone' => '690100200',
                 'password' => Hash::make('Password@123'),
                 'is_active' => true,
@@ -67,8 +67,8 @@ class DemoDataSeeder extends Seeder
 
         $categories = collect([
             ['name' => 'Boissons', 'description' => 'Boissons et rafraichissements'],
-            ['name' => 'Epicerie', 'description' => 'Produits alimentaires courants'],
-            ['name' => 'Hygiene', 'description' => 'Articles de soin et entretien'],
+            ['name' => 'Épicerie', 'description' => 'Produits alimentaires courants'],
+            ['name' => 'Hygiène', 'description' => 'Articles de soin et entretien'],
         ])->mapWithKeys(function (array $data) use ($manager) {
             $category = Category::updateOrCreate(
                 ['name' => $data['name'], 'created_by' => $manager->id],
@@ -83,7 +83,7 @@ class DemoDataSeeder extends Seeder
 
         $products = collect([
             [
-                'name' => 'Eau Minerale 1.5L',
+                'name' => 'Eau Minérale 1.5L',
                 'sku' => 'DEMO-EAU-15',
                 'category' => 'Boissons',
                 'purchase_price' => 250,
@@ -93,9 +93,9 @@ class DemoDataSeeder extends Seeder
                 'unit' => 'bouteille',
             ],
             [
-                'name' => 'Riz Parfume 5kg',
+                'name' => 'Riz Parfumé 5kg',
                 'sku' => 'DEMO-RIZ-5KG',
-                'category' => 'Epicerie',
+                'category' => 'Épicerie',
                 'purchase_price' => 4200,
                 'selling_price' => 5500,
                 'quantity' => 18,
@@ -103,9 +103,9 @@ class DemoDataSeeder extends Seeder
                 'unit' => 'sac',
             ],
             [
-                'name' => 'Savon Menager',
+                'name' => 'Savon Ménager',
                 'sku' => 'DEMO-SAVON-01',
-                'category' => 'Hygiene',
+                'category' => 'Hygiène',
                 'purchase_price' => 300,
                 'selling_price' => 500,
                 'quantity' => 5,
@@ -117,7 +117,7 @@ class DemoDataSeeder extends Seeder
                 ['sku' => $data['sku']],
                 [
                     'name' => $data['name'],
-                    'description' => 'Produit de demonstration SmartStock',
+                    'description' => 'Produit de démonstration SmartStock',
                     'category_id' => $categories[$data['category']]->id,
                     'purchase_price' => $data['purchase_price'],
                     'selling_price' => $data['selling_price'],
@@ -140,10 +140,10 @@ class DemoDataSeeder extends Seeder
                 'total' => 6300,
                 'amount_received' => 6500,
                 'change_given' => 200,
-                'customer_name' => 'Client Demo',
+                'customer_name' => 'Client Démo',
                 'customer_phone' => '690100300',
                 'payment_method' => 'cash',
-                'notes' => 'Vente de demonstration',
+                'notes' => 'Vente de démonstration',
             ]
         );
 
@@ -170,7 +170,7 @@ class DemoDataSeeder extends Seeder
                     'quantity_before' => $product->quantity + $quantity,
                     'quantity_after' => $product->quantity,
                     'selling_price' => $product->selling_price,
-                    'reason' => 'Vente de demonstration via POS',
+                    'reason' => 'Vente de démonstration via POS',
                     'user_id' => $seller->id,
                 ]
             );
@@ -187,7 +187,7 @@ class DemoDataSeeder extends Seeder
                     'quantity' => 20,
                     'quantity_before' => max(0, $product->quantity - 20),
                     'quantity_after' => $product->quantity,
-                    'reason' => 'Stock initial de demonstration',
+                    'reason' => 'Stock initial de démonstration',
                     'user_id' => $manager->id,
                 ]
             );
@@ -197,7 +197,7 @@ class DemoDataSeeder extends Seeder
             ['action' => 'demo_data_seeded', 'model' => 'Seeder', 'model_id' => null],
             [
                 'user_id' => $superAdmin->id,
-                'description' => 'Donnees de demonstration initialisees',
+                'description' => 'Données de démonstration initialisées',
                 'properties' => ['source' => self::class],
                 'ip_address' => '127.0.0.1',
             ]
@@ -207,7 +207,7 @@ class DemoDataSeeder extends Seeder
             ['action' => 'sale_created', 'model' => 'Sale', 'model_id' => $sale->id],
             [
                 'user_id' => $seller->id,
-                'description' => "Vente de demonstration : #{$sale->invoice_number} - Total: " . number_format($sale->total, 0, ',', ' ') . ' FCFA',
+                'description' => "Vente de démonstration : #{$sale->invoice_number} - Total: " . number_format($sale->total, 0, ',', ' ') . ' FCFA',
                 'properties' => [
                     'invoice_number' => $sale->invoice_number,
                     'seller_id' => $seller->id,
@@ -220,6 +220,6 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $this->command->info('Donnees de demo creees: bertholfyllias200@gmail.com / grecdada@gmail.com / Password@123');
+        $this->command->info('Données de démo créées: bertholfyllias200@gmail.com / grecdada@gmail.com / Password@123');
     }
 }

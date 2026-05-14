@@ -22,6 +22,7 @@ class ManagerDashboardController extends Controller
     public function index()
     {
         $managerId = auth()->id();
+        $categoryOwnerIds = User::role('super_admin')->pluck('id')->push($managerId);
         $sellerIds = User::role('seller')
             ->where('created_by', $managerId)
             ->pluck('id');
@@ -81,7 +82,7 @@ class ManagerDashboardController extends Controller
             'active_sellers' => User::role('seller')->where('created_by', $managerId)->where('is_active', true)->count(),
             'online_sellers' => SessionManager::getOnlineUsers('seller')->where('created_by', $managerId)->count(),
             'low_stock_products' => Product::where('created_by', $managerId)->lowStock()->count(),
-            'total_categories' => Category::where('created_by', $managerId)->count(),
+            'total_categories' => Category::whereIn('created_by', $categoryOwnerIds)->count(),
             'total_sales' => Sale::whereIn('seller_id', $sellerIds)->count(),
             'total_revenue' => Sale::whereIn('seller_id', $sellerIds)->sum('total'),
             'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),

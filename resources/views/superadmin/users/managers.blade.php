@@ -10,7 +10,7 @@
             <p class="mt-2 text-sm text-gray-700">Liste de tous les gérants du système</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <a href="{{ route('superadmin.managers.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto">
+            <a href="{{ route('superadmin.managers.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -24,11 +24,11 @@
         <form method="GET" data-auto-filter action="{{ route('superadmin.managers.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou email..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou email..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700">Statut</label>
-                <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actif</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactif</option>
@@ -39,9 +39,9 @@
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
-        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
                             <tr>
@@ -76,8 +76,8 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if($manager->is_active)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                     <circle cx="4" cy="4" r="3" />
                                                 </svg>
                                                 Actif
@@ -98,21 +98,21 @@
                                         {{ $manager->created_at->format('d/m/Y') }}
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <div class="flex justify-end space-x-2">
-                                            <a href="{{ route('superadmin.users.edit', $manager) }}" class="text-blue-600 hover:text-blue-900">
+                                        <x-action-menu>
+                                            <a href="{{ route('superadmin.users.edit', $manager) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
                                                 Modifier
                                             </a>
                                             @if($manager->id !== auth()->id())
-                                                <form method="POST" action="{{ route('superadmin.users.toggle-status', $manager) }}" class="inline">
+                                                <form method="POST" action="{{ route('superadmin.users.toggle-status', $manager) }}">
                                                     @csrf
-                                                    <button type="submit" class="text-yellow-600 hover:text-yellow-900">
+                                                    <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-yellow-700 transition hover:bg-yellow-50 focus:bg-yellow-50 focus:outline-none">
                                                         {{ $manager->is_active ? 'Désactiver' : 'Activer' }}
                                                     </button>
                                                 </form>
                                                 @if(\App\Services\SessionManager::isUserOnline($manager->id))
-                                                    <form method="POST" action="{{ route('superadmin.users.force-logout', $manager) }}" class="inline">
+                                                    <form method="POST" action="{{ route('superadmin.users.force-logout', $manager) }}">
                                                         @csrf
-                                                        <button type="submit" class="text-orange-600 hover:text-orange-900">
+                                                        <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-orange-700 transition hover:bg-orange-50 focus:bg-orange-50 focus:outline-none">
                                                             Déconnecter
                                                         </button>
                                                     </form>
@@ -125,13 +125,13 @@
                                                         @method('DELETE')
                                                         <button type="button"
                                                                 @click="deleteManagerId = {{ $manager->id }}; $dispatch('open-modal-delete-manager-user')"
-                                                                class="text-red-600 hover:text-red-900">
+                                                                class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-red-700 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none">
                                                             Supprimer
                                                         </button>
                                                     </form>
                                                 </div>
                                             @endif
-                                        </div>
+                                        </x-action-menu>
                                     </td>
                                 </tr>
                             @empty

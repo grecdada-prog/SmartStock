@@ -21,7 +21,7 @@ class ProductionCheck extends Command
     {
         $failed = false;
 
-        $this->info('SmartStock production check');
+        $this->info('SmartStore production check');
         $this->newLine();
 
         $failed = $this->checkEnvironment() || $failed;
@@ -107,8 +107,8 @@ class ProductionCheck extends Command
         $this->line('Cache');
 
         try {
-            Cache::put('smartstock-production-check', now()->toISOString(), 60);
-            Cache::forget('smartstock-production-check');
+            Cache::put('SmartStore-production-check', now()->toISOString(), 60);
+            Cache::forget('SmartStore-production-check');
             $this->info('Cache write/read OK.');
 
             return false;

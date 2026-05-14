@@ -15,7 +15,7 @@
                                 <p class="text-sm font-medium text-gray-500">Recette du jour</p>
                                 <p class="mt-1 text-xs text-gray-500">Recette totale encaissee aujourd'hui</p>
                             </div>
-                            <button type="button" @click="showToday = !showToday; if (showToday) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette du jour">
+                            <button type="button" @click="showToday = !showToday; if (showToday) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette du jour">
                                 <svg x-show="!showToday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
                                 </svg>
@@ -38,7 +38,7 @@
                                 <p class="text-sm font-medium text-gray-500">Recette d'hier</p>
                                 <p class="mt-1 text-xs text-gray-500">Recette totale encaissee hier</p>
                             </div>
-                            <button type="button" @click="showYesterday = !showYesterday; if (showYesterday) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette d'hier">
+                            <button type="button" @click="showYesterday = !showYesterday; if (showYesterday) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette d'hier">
                                 <svg x-show="!showYesterday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
                                 </svg>
@@ -67,7 +67,7 @@
                                 <p class="text-sm font-medium text-gray-500">Solde Cash</p>
                                 <p class="mt-1 text-xs text-gray-500">Caisse cumulee apres cloture, ajustee par le gerant</p>
                             </div>
-                            <button type="button" @click="showCash = !showCash; if (showCash) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer le solde cash">
+                            <button type="button" @click="showCash = !showCash; if (showCash) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer le solde cash">
                                 <svg x-show="!showCash" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
                                 </svg>
@@ -93,9 +93,9 @@
             </div>
 
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <a href="{{ route('seller.pos.index') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
+                <a href="{{ route('seller.pos.index') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition">
                     <div>
-                        <span class="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
+                        <span class="rounded-lg inline-flex p-3 bg-rose-50 text-rose-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
@@ -126,7 +126,7 @@
                                 type="button"
                                 @click="openingCash = true; setTimeout(() => $refs.openForm.submit(), 1200)"
                                 :disabled="openingCash"
-                                class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:cursor-wait disabled:opacity-70 lg:w-auto"
+                                class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-rose-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70 lg:w-auto"
                             >
                                 <svg x-show="openingCash" class="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

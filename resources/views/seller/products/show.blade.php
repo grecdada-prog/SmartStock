@@ -47,7 +47,7 @@
                 <dl class="space-y-3">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Prix de vente</dt>
-                        <dd class="mt-1 text-lg font-semibold text-green-600">{{ number_format($product->selling_price, 0, ',', ' ') }} FCFA</dd>
+                        <dd class="mt-1 text-lg font-semibold text-rose-600">{{ number_format($product->selling_price, 0, ',', ' ') }} FCFA</dd>
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Prix d'achat</dt>
@@ -61,7 +61,7 @@
                                     {{ $product->quantity }} (Stock faible)
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                     {{ $product->quantity }}
                                 </span>
                             @endif
@@ -84,7 +84,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     @if($product->is_active)
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                             Actif
                         </span>
                     @else

@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuration 2FA - SmartStock</title>
+    <title>Configuration 2FA - SmartStore</title>
+    <x-favicon />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50">
+    <x-flash-messages />
+
     <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mx-auto">
             <!-- Header -->
             <div class="text-center mb-8">
                 <div class="flex justify-center">
-                    <div class="bg-green-600 text-white rounded-full p-4">
+                    <div class="bg-rose-600 text-white rounded-full p-4">
                         <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
@@ -28,26 +31,12 @@
 
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="px-4 py-5 sm:p-6">
-                    @if (session('success'))
-                        <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-
-                    @if ($errors->any())
-                        <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
-                            @foreach ($errors->all() as $error)
-                                <p>{{ $error }}</p>
-                            @endforeach
-                        </div>
-                    @endif
-
                     <!-- Étapes de configuration -->
                     <div class="space-y-8">
                         <!-- Étape 1 -->
                         <div>
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                <div class="flex-shrink-0 bg-rose-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                     1
                                 </div>
                                 <h3 class="ml-3 text-lg font-medium text-gray-900">
@@ -62,7 +51,7 @@
                         <!-- Étape 2 -->
                         <div>
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                <div class="flex-shrink-0 bg-rose-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                     2
                                 </div>
                                 <h3 class="ml-3 text-lg font-medium text-gray-900">
@@ -85,7 +74,7 @@
                         <!-- Étape 3 -->
                         <div>
                             <div class="flex items-center mb-4">
-                                <div class="flex-shrink-0 bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                <div class="flex-shrink-0 bg-rose-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                     3
                                 </div>
                                 <h3 class="ml-3 text-lg font-medium text-gray-900">
@@ -106,10 +95,10 @@
                                         <input id="one_time_password" name="one_time_password" type="text" 
                                             pattern="[0-9]{6}" maxlength="6" required autofocus
                                             placeholder="000000"
-                                            class="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm text-center text-2xl tracking-widest placeholder-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            class="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm text-center text-2xl tracking-widest placeholder-gray-300 focus:outline-none focus:ring-rose-500 focus:border-rose-500">
                                     </div>
                                     <button type="submit"
-                                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150">
+                                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition duration-150">
                                         Activer l'authentification à deux facteurs
                                     </button>
                                 </form>
@@ -140,7 +129,7 @@
 
             <!-- Bouton retour -->
             <div class="mt-6 text-center">
-                <a href="{{ url()->previous() }}" class="text-sm text-green-600 hover:text-green-500">
+                <a href="{{ url()->previous() }}" class="text-sm text-rose-600 hover:text-rose-500">
                     ← Retour
                 </a>
             </div>

@@ -62,10 +62,10 @@
             <strong>Nombre de ventes:</strong> {{ $sales->count() }}
         </div>
         <div class="summary-item">
-            <strong>Chiffre d'affaires total:</strong> {{ number_format($totalRevenue, 0, ',', ' ') }} FCFA
+            <strong>Recette cumulée:</strong> {{ number_format($totalRevenue, 0, ',', ' ') }} FCFA
         </div>
         <div class="summary-item">
-            <strong>Vente moyenne:</strong> {{ number_format($averageSale, 0, ',', ' ') }} FCFA
+            <strong>Panier moyen:</strong> {{ number_format($averageSale, 0, ',', ' ') }} FCFA
         </div>
     </div>
 
@@ -101,7 +101,7 @@
     </table>
 
     <div class="footer">
-        <p>Document généré par SmartStock - {{ now()->format('d/m/Y à H:i') }}</p>
+        <p>Document généré par SmartStore - {{ now()->format('d/m/Y à H:i') }}</p>
     </div>
 </body>
 </html>

@@ -11,7 +11,9 @@ use App\Models\User;
 use App\Models\ActivityLog;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use PragmaRX\Google2FA\Google2FA;
+use PragmaRX\Google2FAQRCode\Google2FA as Google2FAQRCode;
 
 class CustomLoginController extends Controller
 {
@@ -20,7 +22,7 @@ class CustomLoginController extends Controller
      */
     public function showSuperAdminLogin()
     {
-        return view('auth.superadmin-login');
+        return $this->noStoreResponse('auth.superadmin-login');
     }
 
     /**
@@ -28,7 +30,7 @@ class CustomLoginController extends Controller
      */
     public function showLogin()
     {
-        return view('auth.login');
+        return $this->noStoreResponse('auth.login');
     }
 
     /**
@@ -260,7 +262,7 @@ class CustomLoginController extends Controller
     public function show2FASetup()
     {
         $user = Auth::user();
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FAQRCode(null, new SvgImageBackEnd());
 
         if (!$user->google2fa_secret) {
             $secret = $google2fa->generateSecretKey();
@@ -389,5 +391,14 @@ class CustomLoginController extends Controller
     protected function fireLockoutEvent(Request $request)
     {
         event(new \Illuminate\Auth\Events\Lockout($request));
+    }
+
+    private function noStoreResponse(string $view)
+    {
+        return response()->view($view)->withHeaders([
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => 'Fri, 01 Jan 1990 00:00:00 GMT',
+        ]);
     }
 }

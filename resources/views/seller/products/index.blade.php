@@ -17,11 +17,11 @@
         <form method="GET" data-auto-filter action="{{ route('seller.products') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700">Catégorie</label>
-                <select name="category_id" id="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="category_id" id="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Toutes</option>
                     @foreach(\App\Models\Category::where('is_active', true)->get() as $category)
                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
@@ -40,8 +40,8 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Produit</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Catégorie</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix d'achat</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix de vente</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                     <span class="sr-only">Actions</span>
@@ -54,8 +54,8 @@
                                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 h-10 w-10">
-                                                <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                    <span class="text-green-600 font-bold">{{ substr($product->name, 0, 1) }}</span>
+                                                <div class="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center">
+                                                    <span class="text-rose-600 font-bold">{{ substr($product->name, 0, 1) }}</span>
                                                 </div>
                                             </div>
                                             <div class="ml-4">
@@ -64,8 +64,8 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {{ $product->category->name ?? 'N/A' }}
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ number_format($product->purchase_price, 0, ',', ' ') }} FCFA
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                         {{ number_format($product->selling_price, 0, ',', ' ') }} FCFA
@@ -76,7 +76,7 @@
                                                 {{ $product->quantity }}
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                                 {{ $product->quantity }}
                                             </span>
                                         @endif

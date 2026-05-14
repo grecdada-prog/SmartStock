@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accès Refusé - SmartStock</title>
+    <title>Accès Refusé - SmartStore</title>
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-gray-50">
@@ -28,7 +28,7 @@
             <div class="mt-8 space-y-3">
                 @auth
                     <a href="{{ url()->previous() }}" 
-                       class="inline-block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition duration-150">
+                       class="inline-block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition duration-150">
                         Retour
                     </a>
                     
@@ -50,7 +50,7 @@
                     @endif
                 @else
                     <a href="{{ route('login') }}" 
-                       class="inline-block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition duration-150">
+                       class="inline-block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition duration-150">
                         Se connecter
                     </a>
                 @endauth

@@ -32,9 +32,15 @@
                     @endif
                 </p>
             </div>
+            @if($sale->customer_phone)
+            <div>
+                <p class="text-sm text-gray-500">Numéro de téléphone</p>
+                <p class="font-medium">{{ $sale->customer_phone }}</p>
+            </div>
+            @endif
             <div>
                 <p class="text-sm text-gray-500">Total</p>
-                <p class="font-semibold text-green-600 text-lg">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</p>
+                <p class="font-semibold text-rose-600 text-lg">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</p>
             </div>
             @if($sale->payment_method === 'cash')
             <div>
@@ -46,13 +52,10 @@
                 <p class="font-medium">{{ number_format($sale->change_given ?? 0, 0, ',', ' ') }} FCFA</p>
             </div>
             @endif
-            @if($sale->customer_name || $sale->customer_phone)
+            @if($sale->customer_name)
             <div>
                 <p class="text-sm text-gray-500">Client</p>
-                <p class="font-medium">
-                    {{ $sale->customer_name ?? '' }}
-                    @if($sale->customer_phone) ({{ $sale->customer_phone }})@endif
-                </p>
+                <p class="font-medium">{{ $sale->customer_name }}</p>
             </div>
             @endif
         </div>

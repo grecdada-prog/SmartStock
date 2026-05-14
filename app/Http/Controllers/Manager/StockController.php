@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -57,7 +58,14 @@ class StockController extends Controller
             'total_value' => Product::where('created_by', auth()->id())->sum(DB::raw('quantity * purchase_price')),
         ];
 
-        $categories = \App\Models\Category::where('created_by', auth()->id())
+        $superAdminIds = User::whereHas('roles', function ($query) {
+            $query->where('name', 'super_admin');
+        })->pluck('id');
+
+        $categories = \App\Models\Category::where(function ($query) use ($superAdminIds) {
+                $query->where('created_by', auth()->id())
+                    ->orWhereIn('created_by', $superAdminIds);
+            })
             ->active()
             ->orderBy('name')
             ->get();
@@ -161,7 +169,7 @@ class StockController extends Controller
         });
 
         return redirect()->route('manager.stock.index')
-            ->with('success', "Stock réapprovisionné avec succès pour {$product->name}.");
+            ->with('success', "Stock reapprovisionne avec succes pour {$product->name} !");
     }
 
     /**

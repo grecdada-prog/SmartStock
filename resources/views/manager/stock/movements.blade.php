@@ -11,7 +11,7 @@
             <p class="mt-2 text-sm text-gray-700">Traçabilité complète de tous les mouvements</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16">
-            <a href="{{ route('manager.stock.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+            <a href="{{ route('manager.stock.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 Retour au Stock
             </a>
         </div>
@@ -22,7 +22,7 @@
         <form method="GET" data-auto-filter action="{{ route('manager.stock.movements') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-5">
             <div>
                 <label for="product_id" class="block text-sm font-medium text-gray-700">Produit</label>
-                <select name="product_id" id="product_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="product_id" id="product_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous les produits</option>
                     @foreach($products as $product)
                         <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>
@@ -34,7 +34,7 @@
 
             <div>
                 <label for="type" class="block text-sm font-medium text-gray-700">Type</label>
-                <select name="type" id="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="type" id="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>Entrée</option>
                     <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Sortie</option>
@@ -45,13 +45,13 @@
             <div>
                 <label for="date_from" class="block text-sm font-medium text-gray-700">Date début</label>
                 <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
 
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700">Date fin</label>
                 <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
         </form>
     </div>
@@ -87,8 +87,8 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if($movement->type === 'in')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                     <circle cx="4" cy="4" r="3" />
                                                 </svg>
                                                 Entrée
@@ -110,7 +110,7 @@
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                        <span class="{{ $movement->type === 'in' ? 'text-green-600 font-semibold' : ($movement->type === 'out' ? 'text-red-600 font-semibold' : 'text-blue-600 font-semibold') }}">
+                                        <span class="{{ $movement->type === 'in' ? 'text-rose-600 font-semibold' : ($movement->type === 'out' ? 'text-red-600 font-semibold' : 'text-blue-600 font-semibold') }}">
                                             {{ $movement->type === 'in' ? '+' : ($movement->type === 'out' ? '-' : '±') }}{{ $movement->quantity }}
                                         </span>
                                         <span class="text-gray-500">{{ $movement->product->unit ?? '' }}</span>

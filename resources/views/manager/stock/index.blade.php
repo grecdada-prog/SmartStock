@@ -11,7 +11,7 @@
             <p class="mt-2 text-sm text-gray-700">Vue d'ensemble de votre inventaire</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap items-center gap-3">
-            <button type="button" onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-md border border-green-600 bg-white px-4 py-2 text-sm font-medium text-green-700 shadow-sm hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+            <button type="button" onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-md border border-rose-600 bg-white px-4 py-2 text-sm font-medium text-rose-700 shadow-sm hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -24,7 +24,7 @@
                 Historique
             </a>
 
-            <button type="button" @click="showRestockModal = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+            <button type="button" @click="showRestockModal = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -99,16 +99,17 @@
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="h-6 w-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Valeur Stock</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_value'], 0, ',', ' ') }}</div>
-                                <div class="ml-2 text-sm text-gray-500">FCFA</div>
+                            <dd>
+                                <x-money-toggle
+                                    :amount="number_format($stats['total_value'], 0, ',', ' ') . ' FCFA'"
+                                    label="la valeur du stock" />
                             </dd>
                         </dl>
                     </div>
@@ -122,11 +123,11 @@
         <form method="GET" data-auto-filter action="{{ route('manager.stock.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700">Catégorie</label>
-                <select name="category_id" id="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="category_id" id="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Toutes</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
@@ -135,7 +136,7 @@
             </div>
             <div>
                 <label for="stock_status" class="block text-sm font-medium text-gray-700">Statut Stock</label>
-                <select name="stock_status" id="stock_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="stock_status" id="stock_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="in" {{ request('stock_status') == 'in' ? 'selected' : '' }}>En stock</option>
                     <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stock faible</option>
@@ -154,9 +155,9 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Produit</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Catégorie</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix d'achat</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Seuil</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix de vente</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Valeur</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Mouvements</th>
                             </tr>
@@ -172,8 +173,8 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {{ $product->category->name ?? 'N/A' }}
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ number_format($product->purchase_price, 0, ',', ' ') }} FCFA
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if($product->isOutOfStock())
@@ -188,8 +189,8 @@
                                             <span class="text-gray-900 font-medium">{{ $product->quantity }} {{ $product->unit }}</span>
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {{ $product->alert_quantity }} {{ $product->unit }}
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ number_format($product->selling_price, 0, ',', ' ') }} FCFA
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                         {{ number_format($product->quantity * $product->purchase_price, 0, ',', ' ') }} FCFA
@@ -241,8 +242,8 @@
                 <div>
                     <label for="modal_restock_product_id" class="block text-sm font-medium text-gray-700">Produit *</label>
                     <select name="product_id" id="modal_restock_product_id" required onchange="updateStockModalProductInfo()"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('product_id') border-red-300 @enderror">
-                        <option value="">Selectionner un produit</option>
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('product_id') border-red-300 @enderror">
+                        <option value="">Sélectionner un produit</option>
                         @foreach($restockProducts as $product)
                             <option value="{{ $product->id }}"
                                 data-current-stock="{{ $product->quantity }}"
@@ -269,45 +270,45 @@
                     <div>
                         <label for="modal_quantity" class="block text-sm font-medium text-gray-700">Quantite *</label>
                         <input type="number" name="quantity" id="modal_quantity" required value="{{ old('quantity') }}" min="1" step="1" oninput="calculateStockModalNewStock()"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('quantity') border-red-300 @enderror">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('quantity') border-red-300 @enderror">
                         @error('quantity')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
                     <div>
                         <label for="modal_purchase_price" class="block text-sm font-medium text-gray-700">Prix d'achat unitaire *</label>
                         <input type="number" name="purchase_price" id="modal_purchase_price" required value="{{ old('purchase_price') }}" min="0" step="0.01"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('purchase_price') border-red-300 @enderror">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('purchase_price') border-red-300 @enderror">
                         @error('purchase_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
                     <div>
                         <label for="modal_selling_price" class="block text-sm font-medium text-gray-700">Prix de vente unitaire *</label>
                         <input type="number" name="selling_price" id="modal_selling_price" required value="{{ old('selling_price') }}" min="0" step="0.01"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('selling_price') border-red-300 @enderror">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('selling_price') border-red-300 @enderror">
                         @error('selling_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                 </div>
 
-                <div id="modal-new-stock-display" class="hidden rounded-md bg-green-50 p-4 text-sm text-green-800">
+                <div id="modal-new-stock-display" class="hidden rounded-md bg-rose-50 p-4 text-sm text-rose-800">
                     <span class="font-medium">Nouveau stock:</span> <span id="modal-new-stock">-</span>
                 </div>
 
                 <div>
                     <label for="modal_reference" class="block text-sm font-medium text-gray-700">Reference</label>
                     <input type="text" name="reference" id="modal_reference" value="{{ old('reference') }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('reference') border-red-300 @enderror">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reference') border-red-300 @enderror">
                     @error('reference')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
                     <label for="modal_reason" class="block text-sm font-medium text-gray-700">Raison / Notes</label>
-                    <textarea name="reason" id="modal_reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
+                    <textarea name="reason" id="modal_reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
                     @error('reason')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
                     <button type="button" @click="showRestockModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Reapprovisionner</button>
+                    <button type="submit" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Reapprovisionner</button>
                 </div>
             </form>
         </div>

@@ -32,7 +32,7 @@
                                 <div class="text-2xl font-semibold text-gray-900">{{ $stats['today_sales'] }}</div>
                                 <div class="ml-2 text-sm text-gray-500">vente(s)</div>
                             </dd>
-                            <dd class="mt-1 text-sm text-green-600 font-semibold">
+                            <dd class="mt-1 text-sm text-rose-600 font-semibold">
                                 {{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA
                             </dd>
                         </dl>
@@ -56,7 +56,7 @@
                                 <div class="text-2xl font-semibold text-gray-900">{{ $stats['this_month_sales'] }}</div>
                                 <div class="ml-2 text-sm text-gray-500">vente(s)</div>
                             </dd>
-                            <dd class="mt-1 text-sm text-green-600 font-semibold">
+                            <dd class="mt-1 text-sm text-rose-600 font-semibold">
                                 {{ number_format($stats['this_month_revenue'], 0, ',', ' ') }} FCFA
                             </dd>
                         </dl>
@@ -69,7 +69,7 @@
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="h-6 w-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -80,7 +80,7 @@
                                 <div class="text-2xl font-semibold text-gray-900">{{ $stats['total_sales'] }}</div>
                                 <div class="ml-2 text-sm text-gray-500">vente(s)</div>
                             </dd>
-                            <dd class="mt-1 text-sm text-green-600 font-semibold">
+                            <dd class="mt-1 text-sm text-rose-600 font-semibold">
                                 {{ number_format($stats['total_revenue'], 0, ',', ' ') }} FCFA
                             </dd>
                         </dl>
@@ -95,11 +95,11 @@
         <form method="GET" data-auto-filter action="{{ route('seller.sales.history') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">N° Facture</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="INV-..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="INV-..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="payment_method" class="block text-sm font-medium text-gray-700">Mode de paiement</label>
-                <select name="payment_method" id="payment_method" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="payment_method" id="payment_method" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Espèces</option>
                     <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Orange Money</option>
@@ -108,11 +108,11 @@
             </div>
             <div>
                 <label for="date_from" class="block text-sm font-medium text-gray-700">Date début</label>
-                <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700">Date fin</label>
-                <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
         </form>
     </div>
@@ -151,11 +151,11 @@
                                         </span>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                        <span class="font-semibold text-green-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
+                                        <span class="font-semibold text-rose-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                         @if($sale->payment_method === 'cash')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                                 Espèces
                                             </span>
                                         @elseif($sale->payment_method === 'card')
@@ -171,7 +171,7 @@
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <a href="{{ route('seller.sales.show', $sale) }}" data-smartstock-modal="true" data-modal-title="Facture" class="text-indigo-600 hover:text-indigo-900">Voir</a>
+                                        <a href="{{ route('seller.sales.show', $sale) }}" data-smartstore-modal="true" data-modal-title="Facture" class="text-indigo-600 hover:text-indigo-900">Voir</a>
                                     </td>
                                 </tr>
                             @empty

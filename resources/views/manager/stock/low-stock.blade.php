@@ -13,7 +13,7 @@
             <a href="{{ route('manager.stock.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
                 Tout le stock
             </a>
-            <a href="{{ route('manager.stock.restock') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700">
+            <a href="{{ route('manager.stock.restock') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700">
                 Reapprovisionner
             </a>
         </div>
@@ -29,13 +29,13 @@
                 </div>
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-orange-800">{{ $products->total() }} produit(s) a surveiller</h3>
-                    <p class="mt-2 text-sm text-orange-700">Ces articles doivent etre controles ou reapprovisionnes rapidement.</p>
+                    <p class="mt-2 text-sm text-orange-700">Ces articles doivent être controles ou réapprovisionnés rapidement.</p>
                 </div>
             </div>
         </div>
     @endif
 
-    <div class="mt-6 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+    <div class="mt-6 overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
         <table class="min-w-full divide-y divide-gray-300">
             <thead class="bg-gray-50">
                 <tr>
@@ -60,9 +60,15 @@
                             </span>
                         </td>
                         <td class="px-3 py-4 text-sm text-gray-500">{{ $product->alert_quantity }} {{ $product->unit }}</td>
-                        <td class="px-3 py-4 text-right text-sm font-medium">
-                            <a href="{{ route('manager.products.show', $product) }}" class="text-indigo-600 hover:text-indigo-900">Voir</a>
-                            <a href="{{ route('manager.products.edit', $product) }}" class="ml-4 text-blue-600 hover:text-blue-900">Modifier</a>
+                        <td class="relative px-3 py-4 text-right text-sm font-medium">
+                            <x-action-menu>
+                                <a href="{{ route('manager.products.show', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-950 focus:bg-gray-50 focus:outline-none">
+                                    Voir
+                                </a>
+                                <a href="{{ route('manager.products.edit', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
+                                    Modifier
+                                </a>
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

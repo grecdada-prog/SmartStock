@@ -1,0 +1,3 @@
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+<link rel="shortcut icon" href="{{ asset('favicon.svg') }}">
+<meta name="theme-color" content="#e11d48">

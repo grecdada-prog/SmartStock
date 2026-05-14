@@ -9,13 +9,13 @@
             <h1 class="text-2xl font-semibold text-gray-900">Vendeurs En Ligne</h1>
             <p class="mt-2 text-sm text-gray-700">
                 Liste de vos vendeurs actuellement connectés
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 ml-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 ml-2">
                     {{ $onlineSellers->count() }} en ligne
                 </span>
             </p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-<a href="{{ route('manager.sellers.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+<a href="{{ route('manager.sellers.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -30,7 +30,7 @@
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <div class="rounded-md bg-green-500 p-3">
+                        <div class="rounded-md bg-rose-500 p-3">
                             <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
@@ -101,9 +101,9 @@
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
-        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     @if($onlineSellers->count() > 0)
                         <table class="min-w-full divide-y divide-gray-300">
                             <thead class="bg-gray-50">
@@ -124,11 +124,11 @@
                                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                                             <div class="flex items-center">
                                                 <div class="h-10 w-10 flex-shrink-0">
-                                                    <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center relative">
-                                                        <span class="text-green-600 font-medium text-lg">{{ strtoupper(substr($seller->name, 0, 1)) }}</span>
+                                                    <div class="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center relative">
+                                                        <span class="text-rose-600 font-medium text-lg">{{ strtoupper(substr($seller->name, 0, 1)) }}</span>
                                                         <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-white"></span>
+                                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                                            <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-white"></span>
                                                         </span>
                                                     </div>
                                                 </div>
@@ -143,8 +143,8 @@
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm">
                                             @if($seller->is_active)
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <svg class="mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                    <svg class="mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                         <circle cx="4" cy="4" r="3" />
                                                     </svg>
                                                     Actif
@@ -160,7 +160,7 @@
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                             @if($seller->last_activity_at)
-                                                <span class="text-green-600 font-medium">
+                                                <span class="text-rose-600 font-medium">
                                                     {{ $seller->last_activity_at->diffForHumans() }}
                                                 </span>
                                             @else
@@ -177,22 +177,17 @@
                                             @endif
                                         </td>
                                         <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                            <div class="flex items-center justify-end space-x-2">
-                                                <a href="{{ route('manager.sellers.edit', $seller) }}" class="text-blue-600 hover:text-blue-900" title="Modifier">
-                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
+                                            <x-action-menu>
+                                                <a href="{{ route('manager.sellers.edit', $seller) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
+                                                    Modifier
                                                 </a>
-
-                                                <form method="POST" action="{{ route('manager.sellers.force-logout', $seller) }}" class="inline">
+                                                <form method="POST" action="{{ route('manager.sellers.force-logout', $seller) }}">
                                                     @csrf
-                                                    <button type="submit" class="text-orange-600 hover:text-orange-900" title="Déconnecter" onclick="return confirm('Êtes-vous sûr de vouloir déconnecter ce vendeur ?')">
-                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                                        </svg>
+                                                    <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-orange-700 transition hover:bg-orange-50 focus:bg-orange-50 focus:outline-none" onclick="return confirm('Êtes-vous sûr de vouloir déconnecter ce vendeur ?')">
+                                                        Déconnecter
                                                     </button>
                                                 </form>
-                                            </div>
+                                            </x-action-menu>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -206,7 +201,7 @@
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun vendeur en ligne</h3>
                             <p class="mt-1 text-sm text-gray-500">Aucun de vos vendeurs n'est actuellement connecté.</p>
                             <div class="mt-6">
-                                <a href="{{ route('manager.sellers.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <a href="{{ route('manager.sellers.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
                                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>

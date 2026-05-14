@@ -3,13 +3,6 @@
 @section('title', 'Produits')
 
 @section('content')
-    <!-- Messages flash -->
-    @if (session('error'))
-        <div class="mb-4 mx-4 sm:mx-0 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded relative">
-            <span class="block sm:inline">{{ session('error') }}</span>
-        </div>
-    @endif
-
 <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
@@ -84,8 +77,8 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Produit</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Catégorie</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix Vente</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix d'achat</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix de vente</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Créé par</th>
                             </tr>
@@ -97,8 +90,8 @@
                                         <div class="font-medium text-gray-900">{{ $product->name }}</div>
                                         <div class="text-gray-500">SKU: {{ $product->sku }}</div>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {{ $product->category->name }}
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+                                        {{ number_format($product->purchase_price, 0, ',', ' ') }} FCFA
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                         {{ number_format($product->selling_price, 0, ',', ' ') }} FCFA
@@ -109,7 +102,7 @@
                                                 {{ $product->quantity }} {{ $product->unit }}
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                                 {{ $product->quantity }} {{ $product->unit }}
                                             </span>
                                         @endif

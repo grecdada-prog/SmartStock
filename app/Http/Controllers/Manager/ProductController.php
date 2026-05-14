@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -55,7 +56,7 @@ class ProductController extends Controller
         $products = $query->latest()->paginate(20);
 
         // Catégories pour le filtre
-        $categories = Category::where('created_by', auth()->id())
+        $categories = $this->availableCategoriesQuery()
             ->active()
             ->orderBy('name')
             ->get();
@@ -68,7 +69,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $categories = Category::where('created_by', auth()->id())
+        $categories = $this->availableCategoriesQuery()
             ->active()
             ->orderBy('name')
             ->get();
@@ -99,9 +100,9 @@ class ProductController extends Controller
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
-        // Vérifier que la catégorie appartient au manager
-        $category = Category::where('id', $validated['category_id'])
-            ->where('created_by', auth()->id())
+        // Vérifier que la catégorie est disponible pour le manager.
+        $category = $this->availableCategoriesQuery()
+            ->where('id', $validated['category_id'])
             ->first();
 
         if (!$category) {
@@ -130,7 +131,7 @@ class ProductController extends Controller
         );
 
         return redirect()->route('manager.products.index')
-            ->with('success', 'Produit créé avec succès !');
+            ->with('success', 'Produit enregistre avec succes !');
     }
 
     /**
@@ -156,7 +157,7 @@ class ProductController extends Controller
         // Vérifier que le produit appartient bien au manager
         $this->authorize('update', $product);
 
-        $categories = Category::where('created_by', auth()->id())
+        $categories = $this->availableCategoriesQuery()
             ->active()
             ->orderBy('name')
             ->get();
@@ -185,9 +186,9 @@ class ProductController extends Controller
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
-        // Vérifier que la catégorie appartient au manager
-        $category = Category::where('id', $validated['category_id'])
-            ->where('created_by', auth()->id())
+        // Vérifier que la catégorie est disponible pour le manager.
+        $category = $this->availableCategoriesQuery()
+            ->where('id', $validated['category_id'])
             ->first();
 
         if (!$category) {
@@ -287,5 +288,17 @@ class ProductController extends Controller
             ->paginate(20);
 
         return view('manager.products.low-stock', compact('products'));
+    }
+
+    private function availableCategoriesQuery()
+    {
+        $superAdminIds = User::whereHas('roles', function ($query) {
+            $query->where('name', 'super_admin');
+        })->pluck('id');
+
+        return Category::where(function ($query) use ($superAdminIds) {
+            $query->where('created_by', auth()->id())
+                ->orWhereIn('created_by', $superAdminIds);
+        });
     }
 }

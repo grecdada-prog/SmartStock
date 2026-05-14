@@ -40,7 +40,7 @@
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <div class="rounded-md bg-green-500 p-3">
+                        <div class="rounded-md bg-rose-500 p-3">
                             <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
@@ -48,7 +48,7 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Ventes enregistrees</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Ventes enregistrées</dt>
                             <dd class="flex items-baseline">
                                 <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_sales']) }}</div>
                             </dd>
@@ -71,9 +71,10 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_cash_balance'], 0, ',', ' ') }}</div>
-                                <div class="ml-2 text-sm text-gray-500">FCFA</div>
+                            <dd>
+                                <x-money-toggle
+                                    :amount="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'"
+                                    label="le solde cash" />
                             </dd>
                         </dl>
                     </div>
@@ -94,9 +95,10 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Recette du jour</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_current_day_revenue'], 0, ',', ' ') }}</div>
-                                <div class="ml-2 text-sm text-gray-500">FCFA</div>
+                            <dd>
+                                <x-money-toggle
+                                    :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'"
+                                    label="la recette du jour" />
                             </dd>
                         </dl>
                     </div>
@@ -110,7 +112,7 @@
         <!-- Rapport des Ventes -->
         <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-200">
             <div class="p-6">
-                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white mx-auto">
+                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-rose-500 text-white mx-auto">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
@@ -120,7 +122,7 @@
                     Consultez les ventes détaillées avec filtres par vendeur et période
                 </p>
                 <div class="mt-4">
-                    <a href="{{ route('manager.reports.sales') }}" class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <a href="{{ route('manager.reports.sales') }}" class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
                         Consulter
                     </a>
                 </div>

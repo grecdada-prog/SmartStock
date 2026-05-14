@@ -18,7 +18,7 @@
                 Modifier
             </a>
 
-            <a href="{{ route('manager.categories.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+            <a href="{{ route('manager.categories.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Informations de la catégorie -->
-    <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="mt-6 bg-white shadow overflow-visible sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Informations</h3>
         </div>
@@ -50,8 +50,8 @@
                     <dt class="text-sm font-medium text-gray-500">Statut</dt>
                     <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                         @if($category->is_active)
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <svg class="mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                <svg class="mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                     <circle cx="4" cy="4" r="3" />
                                 </svg>
                                 Active
@@ -112,7 +112,7 @@
                 </p>
             </div>
             <div class="mt-4 sm:mt-0">
-                <a href="{{ route('manager.products.create', ['category' => $category->id]) }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+                <a href="{{ route('manager.products.create', ['category' => $category->id]) }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-colors duration-200">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -122,9 +122,9 @@
         </div>
 
         <div class="mt-4 flex flex-col">
-            <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                    <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                         @if($category->products->count() > 0)
                             <table class="min-w-full divide-y divide-gray-300">
                                 <thead class="bg-gray-50">
@@ -163,15 +163,15 @@
                                                         {{ $product->quantity }} (Faible)
                                                     </span>
                                                 @else
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                                                         {{ $product->quantity }}
                                                     </span>
                                                 @endif
                                             </td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm">
                                                 @if($product->is_active)
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        <svg class="mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                        <svg class="mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                             <circle cx="4" cy="4" r="3" />
                                                         </svg>
                                                         Actif
@@ -186,20 +186,14 @@
                                                 @endif
                                             </td>
                                             <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <div class="flex items-center justify-end space-x-2">
-                                                    <a href="{{ route('manager.products.show', $product) }}" class="text-green-600 hover:text-green-900" title="Voir">
-                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                        </svg>
+                                                <x-action-menu>
+                                                    <a href="{{ route('manager.products.show', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-950 focus:bg-gray-50 focus:outline-none">
+                                                        Voir
                                                     </a>
-
-                                                    <a href="{{ route('manager.products.edit', $product) }}" class="text-blue-600 hover:text-blue-900" title="Modifier">
-                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
+                                                    <a href="{{ route('manager.products.edit', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
+                                                        Modifier
                                                     </a>
-                                                </div>
+                                                </x-action-menu>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -209,7 +203,7 @@
                             <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 sm:px-6">
                                 <div class="text-sm text-gray-500 text-center">
                                     Affichage des 10 derniers produits.
-                                    <a href="{{ route('manager.products.index', ['category' => $category->id]) }}" class="text-green-600 hover:text-green-900 font-medium">
+                                    <a href="{{ route('manager.products.index', ['category' => $category->id]) }}" class="text-rose-600 hover:text-rose-900 font-medium">
                                         Voir tous les produits de cette catégorie →
                                     </a>
                                 </div>
@@ -222,7 +216,7 @@
                                 <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun produit</h3>
                                 <p class="mt-1 text-sm text-gray-500">Cette catégorie ne contient aucun produit pour le moment.</p>
                                 <div class="mt-6">
-                                    <a href="{{ route('manager.products.create', ['category' => $category->id]) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <a href="{{ route('manager.products.create', ['category' => $category->id]) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
                                         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                         </svg>
@@ -249,7 +243,7 @@
                     Désactiver la catégorie
                 </button>
             @else
-                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>

@@ -17,7 +17,7 @@
                 Stock Faible
             </a>
 
-            <button type="button" @click="showCreateProduct = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+            <button type="button" @click="showCreateProduct = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -31,11 +31,11 @@
         <form method="GET" data-auto-filter action="{{ route('manager.products.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700">Catégorie</label>
-                <select name="category_id" id="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="category_id" id="category_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Toutes</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
@@ -44,7 +44,7 @@
             </div>
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700">Statut</label>
-                <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actif</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactif</option>
@@ -52,7 +52,7 @@
             </div>
             <div>
                 <label for="stock_status" class="block text-sm font-medium text-gray-700">Stock</label>
-                <select name="stock_status" id="stock_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="stock_status" id="stock_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="in" {{ request('stock_status') == 'in' ? 'selected' : '' }}>En stock</option>
                     <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stock faible</option>
@@ -64,9 +64,9 @@
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
-        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
                             <tr>
@@ -120,8 +120,8 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if($product->is_active)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                     <circle cx="4" cy="4" r="3" />
                                                 </svg>
                                                 Actif
@@ -136,26 +136,19 @@
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <div class="flex justify-end space-x-3">
-                                            <!-- Bouton Voir -->
-                                            <a href="{{ route('manager.products.show', $product) }}" class="text-indigo-600 hover:text-indigo-900" title="Voir détails">
+                                        <x-action-menu>
+                                            <a href="{{ route('manager.products.show', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-950 focus:bg-gray-50 focus:outline-none">
                                                 Voir
                                             </a>
-
-                                            <!-- Bouton Modifier -->
-                                            <a href="{{ route('manager.products.edit', $product) }}" class="text-blue-600 hover:text-blue-900" title="Modifier">
+                                            <a href="{{ route('manager.products.edit', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
                                                 Modifier
                                             </a>
-
-                                            <!-- Bouton Activer/Désactiver -->
-                                            <form method="POST" action="{{ route('manager.products.toggle-status', $product) }}" class="inline">
+                                            <form method="POST" action="{{ route('manager.products.toggle-status', $product) }}">
                                                 @csrf
-                                                <button type="submit" class="text-orange-600 hover:text-orange-900" title="{{ $product->is_active ? 'Désactiver' : 'Activer' }}">
+                                                <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-orange-700 transition hover:bg-orange-50 focus:bg-orange-50 focus:outline-none">
                                                     {{ $product->is_active ? 'Désactiver' : 'Activer' }}
                                                 </button>
                                             </form>
-
-                                            <!-- Bouton Supprimer -->
                                             <div x-data="{ deleteProductId: null }">
                                                 <form method="POST"
                                                       action="{{ route('manager.products.destroy', $product) }}"
@@ -164,20 +157,19 @@
                                                     @method('DELETE')
                                                     <button type="button"
                                                             @click="deleteProductId = {{ $product->id }}; $dispatch('open-modal-delete-product')"
-                                                            class="text-red-600 hover:text-red-900"
-                                                            title="Supprimer">
+                                                            class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-red-700 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none">
                                                         Supprimer
                                                     </button>
                                                 </form>
                                             </div>
-                                        </div>
+                                        </x-action-menu>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="6" class="px-3 py-8 text-center text-sm text-gray-500">
                                         Aucun produit trouvé.
-                                        <a href="{{ route('manager.products.create') }}" class="text-green-600 hover:text-green-900 font-medium">Créer votre premier produit</a>
+                                        <a href="{{ route('manager.products.create') }}" class="text-rose-600 hover:text-rose-900 font-medium">Créer votre premier produit</a>
                                     </td>
                                 </tr>
                             @endforelse
@@ -211,18 +203,18 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <label for="modal_name" class="block text-sm font-medium text-gray-700">Nom du produit *</label>
-                        <input type="text" name="name" id="modal_name" required value="{{ old('name') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <input type="text" name="name" id="modal_name" required value="{{ old('name') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="modal_sku" class="block text-sm font-medium text-gray-700">Code SKU *</label>
-                        <input type="text" name="sku" id="modal_sku" required value="{{ old('sku') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <input type="text" name="sku" id="modal_sku" required value="{{ old('sku') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('sku')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="modal_category_id" class="block text-sm font-medium text-gray-700">Categorie *</label>
-                        <select name="category_id" id="modal_category_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
-                            <option value="">Selectionner</option>
+                        <select name="category_id" id="modal_category_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                            <option value="">Sélectionner</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                             @endforeach
@@ -231,26 +223,26 @@
                     </div>
                     <div>
                         <label for="modal_alert_quantity" class="block text-sm font-medium text-gray-700">Seuil d'alerte *</label>
-                        <input type="number" name="alert_quantity" id="modal_alert_quantity" required min="0" step="1" value="{{ old('alert_quantity', 10) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <input type="number" name="alert_quantity" id="modal_alert_quantity" required min="0" step="1" value="{{ old('alert_quantity', 10) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('alert_quantity')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="modal_unit" class="block text-sm font-medium text-gray-700">Unite *</label>
-                        <input type="text" name="unit" id="modal_unit" required value="{{ old('unit', 'piece') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <input type="text" name="unit" id="modal_unit" required value="{{ old('unit', 'piece') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('unit')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div class="sm:col-span-2">
                         <label for="modal_description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea name="description" id="modal_description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">{{ old('description') }}</textarea>
+                        <textarea name="description" id="modal_description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">{{ old('description') }}</textarea>
                     </div>
                     <div class="sm:col-span-2 flex items-center">
-                        <input type="checkbox" name="is_active" id="modal_is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <input type="checkbox" name="is_active" id="modal_is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500">
                         <label for="modal_is_active" class="ml-2 block text-sm text-gray-900">Produit actif</label>
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 border-t border-gray-200 pt-5">
                     <button type="button" @click="showCreateProduct = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Creer le produit</button>
+                    <button type="submit" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Créer le produit</button>
                 </div>
             </form>
         </div>

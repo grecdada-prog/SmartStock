@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,7 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Middlewares globaux pour le groupe 'web'
         $middleware->web(append: [
             \App\Http\Middleware\CheckInactivity::class,
             \App\Http\Middleware\SingleSessionMiddleware::class,
@@ -19,7 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\PreventDirectAccess::class,
         ]);
 
-        // Middlewares avec alias
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'log.activity' => \App\Http\Middleware\LogActivity::class,
@@ -27,5 +27,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (TokenMismatchException $exception, Request $request) {
+            $loginUrl = route('login', ['inactive' => 1]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Votre session a expire. Veuillez vous reconnecter.',
+                    'redirect' => $loginUrl,
+                ], 419);
+            }
+
+            return redirect($loginUrl);
+        });
     })->create();

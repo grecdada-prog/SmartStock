@@ -14,7 +14,7 @@
              data-sale-details-panel>
             
             <!-- Header -->
-            <div class="bg-green-600 px-6 py-4">
+            <div class="bg-rose-600 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-medium text-white">
                         Facture {{ $sale->invoice_number }}
@@ -49,9 +49,15 @@
                             @endif
                         </p>
                     </div>
+                    @if($sale->customer_phone)
+                        <div>
+                            <p class="text-sm text-gray-500">Numéro de téléphone</p>
+                            <p class="font-medium">{{ $sale->customer_phone }}</p>
+                        </div>
+                    @endif
                     <div>
                         <p class="text-sm text-gray-500">Total</p>
-                        <p class="text-lg font-bold text-green-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</p>
+                        <p class="text-lg font-bold text-rose-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</p>
                     </div>
                     @if($sale->payment_method === 'cash')
                         <div>
@@ -114,7 +120,7 @@
                             @endif
                             <div class="flex justify-between border-t pt-2">
                                 <span class="font-bold">Total :</span>
-                                <span class="font-bold text-lg text-green-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
+                                <span class="font-bold text-lg text-rose-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
                             </div>
                         </div>
                     </div>

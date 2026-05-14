@@ -8,9 +8,11 @@ use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\PasswordSetupLinkService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
 use App\Notifications\Enable2FANotification;
+use Throwable;
 
 class SuperAdminManagerController extends Controller
 {
@@ -81,15 +83,26 @@ class SuperAdminManagerController extends Controller
             $user->id
         );
 
-        // Envoyer l'email de bienvenue
-        $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
-        $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
+        $emailWarning = null;
+
+        try {
+            // Envoyer l'email de bienvenue
+            $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+            $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
 
         // Suggérer l'activation du 2FA pour les managers
-        $user->notify(new Enable2FANotification());
+            $user->notify(new Enable2FANotification());
+        } catch (Throwable $exception) {
+            Log::warning('Unable to send manager creation notification.', [
+                'user_id' => $user->id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            $emailWarning = 'Le gerant a ete cree, mais l email de bienvenue n a pas pu etre envoye.';
+        }
 
         return redirect()->route('superadmin.managers.index')
-            ->with('success', 'Manager créé avec succès ! Un email de bienvenue a été envoyé.');
+            ->with('success', 'Gerant cree avec succes !'.($emailWarning ? ' '.$emailWarning : ' Un email de bienvenue a ete envoye.'));
     }
 
     /**

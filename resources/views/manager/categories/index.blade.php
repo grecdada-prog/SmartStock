@@ -10,7 +10,7 @@
             <p class="mt-2 text-sm text-gray-700">Gérez les catégories de vos produits</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-<a href="{{ route('manager.categories.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+<a href="{{ route('manager.categories.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
@@ -24,11 +24,11 @@
         <form method="GET" data-auto-filter action="{{ route('manager.categories.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, description..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, description..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700">Statut</label>
-                <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                     <option value="">Tous</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Actif</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactif</option>
@@ -39,9 +39,9 @@
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
-        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
                             <tr>
@@ -60,8 +60,8 @@
                                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                                         <div class="flex items-center">
                                             <div class="h-10 w-10 flex-shrink-0">
-                                                <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                    <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div class="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center">
+                                                    <svg class="h-5 w-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                                     </svg>
                                                 </div>
@@ -84,8 +84,8 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if($category->is_active)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                                <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                     <circle cx="4" cy="4" r="3" />
                                                 </svg>
                                                 Actif
@@ -100,21 +100,16 @@
                                         @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <div class="flex justify-end space-x-3">
-                                            <!-- Bouton Modifier -->
-                                            <a href="{{ route('manager.categories.edit', $category) }}" class="text-blue-600 hover:text-blue-900" title="Modifier">
+                                        <x-action-menu>
+                                            <a href="{{ route('manager.categories.edit', $category) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
                                                 Modifier
                                             </a>
-
-                                            <!-- Bouton Activer/Désactiver -->
-                                            <form method="POST" action="{{ route('manager.categories.toggle-status', $category) }}" class="inline">
+                                            <form method="POST" action="{{ route('manager.categories.toggle-status', $category) }}">
                                                 @csrf
-                                                <button type="submit" class="text-orange-600 hover:text-orange-900" title="{{ $category->is_active ? 'Désactiver' : 'Activer' }}">
+                                                <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-orange-700 transition hover:bg-orange-50 focus:bg-orange-50 focus:outline-none">
                                                     {{ $category->is_active ? 'Désactiver' : 'Activer' }}
                                                 </button>
                                             </form>
-
-                                            <!-- Bouton Supprimer -->
                                             <div x-data="{ deleteCategoryId: null }">
                                                 <form method="POST"
                                                       action="{{ route('manager.categories.destroy', $category) }}"
@@ -123,20 +118,19 @@
                                                     @method('DELETE')
                                                     <button type="button"
                                                             @click="deleteCategoryId = {{ $category->id }}; $dispatch('open-modal-delete-category')"
-                                                            class="text-red-600 hover:text-red-900"
-                                                            title="Supprimer">
+                                                            class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-red-700 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none">
                                                         Supprimer
                                                     </button>
                                                 </form>
                                             </div>
-                                        </div>
+                                        </x-action-menu>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="5" class="px-3 py-8 text-center text-sm text-gray-500">
                                         Aucune catégorie trouvée.
-                                        <a href="{{ route('manager.categories.create') }}" class="text-green-600 hover:text-green-900 font-medium">Créer votre première catégorie</a>
+                                        <a href="{{ route('manager.categories.create') }}" class="text-rose-600 hover:text-rose-900 font-medium">Créer votre première catégorie</a>
                                     </td>
                                 </tr>
                             @endforelse

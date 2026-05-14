@@ -1,14 +1,14 @@
 @extends('manager.layouts.app')
 
-@section('title', 'Dashboard Gerant')
+@section('title', 'Dashboard Gérant')
 
 @section('content')
     <div class="py-2" x-data="{ showCash: false, showToday: false, showYesterday: false }">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <a href="{{ route('manager.sellers.create') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-green-500">
+                <a href="{{ route('manager.sellers.create') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-rose-500">
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-green-50 text-green-700">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-rose-50 text-rose-700">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                             </svg>
@@ -23,7 +23,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('manager.products.create') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-green-500">
+                <a href="{{ route('manager.products.create') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-rose-500">
                     <div class="flex items-center gap-3">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-blue-50 text-blue-700">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('manager.stock.restock') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-green-500">
+                <a href="{{ route('manager.stock.restock') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-rose-500">
                     <div class="flex items-center gap-3">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-purple-50 text-purple-700">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@
                             <p class="text-sm font-medium text-gray-500">Vendeurs en ligne</p>
                             <p class="mt-2 text-3xl font-semibold text-gray-900">{{ $stats['online_sellers'] }}</p>
                         </div>
-                        <span class="rounded-md bg-green-500 p-3 text-white">
+                        <span class="rounded-md bg-rose-500 p-3 text-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M12 12h.01" />
                             </svg>
@@ -80,7 +80,7 @@
                             <p class="text-sm font-medium text-gray-500">Solde Cash</p>
                             <p class="mt-2 text-2xl font-semibold text-gray-900" x-text="showCash ? '{{ number_format($stats['total_cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <button type="button" @click="showCash = !showCash; if (showCash) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700" aria-label="Afficher ou masquer le solde cash">
+                        <button type="button" @click="showCash = !showCash; if (showCash) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700" aria-label="Afficher ou masquer le solde cash">
                             <svg x-show="!showCash" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
                             </svg>
@@ -91,9 +91,12 @@
                     </div>
                     <div class="mt-4 max-h-40 overflow-y-auto divide-y divide-gray-100 text-sm">
                         @forelse($sellerFinancials as $row)
-                            <div class="flex items-center justify-between py-2">
-                                <span class="truncate text-gray-600">{{ $row['seller']->name }}</span>
-                                <span class="font-medium text-gray-900" x-text="showCash ? '{{ number_format($row['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></span>
+                            <div class="flex items-center justify-between gap-3 py-2">
+                                <a href="{{ route('manager.sellers.show', $row['seller']) }}" class="truncate text-gray-600 hover:text-rose-700">{{ $row['seller']->name }}</a>
+                                <div class="flex shrink-0 items-center gap-2">
+                                    <span class="font-medium text-gray-900" x-text="showCash ? '{{ number_format($row['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></span>
+                                    <a href="{{ route('manager.sellers.show', $row['seller']) }}" class="rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-700">Ajouter/Retirer</a>
+                                </div>
                             </div>
                         @empty
                             <p class="py-2 text-gray-500">Aucun vendeur.</p>
@@ -107,7 +110,7 @@
                             <p class="text-sm font-medium text-gray-500">Recette du jour</p>
                             <p class="mt-2 text-2xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['total_current_day_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <button type="button" @click="showToday = !showToday; if (showToday) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700" aria-label="Afficher ou masquer la recette du jour">
+                        <button type="button" @click="showToday = !showToday; if (showToday) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700" aria-label="Afficher ou masquer la recette du jour">
                             <svg x-show="!showToday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
                             </svg>
@@ -131,10 +134,10 @@
                 <div class="rounded-lg bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-sm font-medium text-gray-500">Recette hier</p>
+                            <p class="text-sm font-medium text-gray-500">Recette d'hier</p>
                             <p class="mt-2 text-2xl font-semibold text-gray-900" x-text="showYesterday ? '{{ number_format($stats['total_yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <button type="button" @click="showYesterday = !showYesterday; if (showYesterday) window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }))" class="rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700" aria-label="Afficher ou masquer la recette d'hier">
+                        <button type="button" @click="showYesterday = !showYesterday; if (showYesterday) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700" aria-label="Afficher ou masquer la recette d'hier">
                             <svg x-show="!showYesterday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
                             </svg>
@@ -165,14 +168,14 @@
                                 @forelse($topSellers as $seller)
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
-                                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
-                                                <span class="text-sm font-medium text-green-600">{{ strtoupper(substr($seller->name, 0, 2)) }}</span>
+                                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100">
+                                                <span class="text-sm font-medium text-rose-600">{{ strtoupper(substr($seller->name, 0, 2)) }}</span>
                                             </div>
                                             <div class="min-w-0 flex-1">
                                                 <p class="truncate text-sm font-medium text-gray-900">{{ $seller->name }}</p>
                                                 <p class="text-sm text-gray-500">{{ $seller->sales_count }} ventes</p>
                                             </div>
-                                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                            <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-800">
                                                 {{ number_format($seller->sales_sum_total ?? 0, 0, ',', ' ') }} FCFA
                                             </span>
                                         </div>
@@ -189,7 +192,7 @@
                     <div class="p-6">
                         <div class="mb-5 flex items-center justify-between">
                             <h3 class="text-lg font-medium text-gray-900">Alertes Stock Faible</h3>
-                            <a href="{{ route('manager.stock.low-stock') }}" class="text-sm font-medium text-green-600 hover:text-green-500">Voir tout</a>
+                            <a href="{{ route('manager.stock.low-stock') }}" class="text-sm font-medium text-rose-600 hover:text-rose-500">Voir tout</a>
                         </div>
                         <div class="flow-root">
                             <ul role="list" class="-my-5 divide-y divide-gray-200">

@@ -109,7 +109,7 @@
 <body>
     <!-- En-tête -->
     <div class="header">
-        <h1>SmartStock - Rapport des Ventes</h1>
+        <h1>SmartStore - Rapport des Ventes</h1>
         <p><strong>Manager:</strong> {{ $manager->name }}</p>
         <p><strong>Email:</strong> {{ $manager->email }}</p>
         <p><strong>Généré le:</strong> {{ now()->format('d/m/Y à H:i') }}</p>
@@ -198,7 +198,7 @@
 
     <!-- Pied de page -->
     <div class="footer">
-        <p>SmartStock - Système de Gestion de Stock</p>
+        <p>SmartStore - Système de Gestion de Stock</p>
         <p>Ce document a été généré automatiquement le {{ now()->format('d/m/Y à H:i') }}</p>
     </div>
 </body>

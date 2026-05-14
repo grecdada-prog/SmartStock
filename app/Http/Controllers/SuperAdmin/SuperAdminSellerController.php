@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Models\CashRegisterClosure;
 use App\Services\PasswordSetupLinkService;
+use App\Services\CashRegisterService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
+use Throwable;
 
 class SuperAdminSellerController extends Controller
 {
@@ -94,11 +99,22 @@ class SuperAdminSellerController extends Controller
         );
 
         // Envoyer l'email de bienvenue
-        $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
-        $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
+        $emailWarning = null;
+
+        try {
+            $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
+            $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
+        } catch (Throwable $exception) {
+            Log::warning('Unable to send seller welcome notification.', [
+                'user_id' => $user->id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            $emailWarning = 'Le vendeur a ete cree, mais l email de bienvenue n a pas pu etre envoye.';
+        }
 
         return redirect()->route('superadmin.sellers.index')
-            ->with('success', 'Vendeur créé avec succès ! Un email de bienvenue a été envoyé.');
+            ->with('success', 'Vendeur cree avec succes !'.($emailWarning ? ' '.$emailWarning : ' Un email de bienvenue a ete envoye.'));
     }
 
     /**
@@ -119,8 +135,26 @@ class SuperAdminSellerController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+        $reassignmentHistory = ActivityLog::with('user')
+            ->where('action', 'seller_reassigned')
+            ->where('model', 'User')
+            ->where('model_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get();
+        $pendingCashClosure = CashRegisterClosure::where('seller_id', $user->id)
+            ->whereNull('opened_at')
+            ->latest('closed_at')
+            ->first();
+        $cashRegisterBalance = app(CashRegisterService::class)->balanceForSeller($user);
 
-        return view('superadmin.sellers.edit', compact('user', 'managers'));
+        return view('superadmin.sellers.edit', compact(
+            'user',
+            'managers',
+            'reassignmentHistory',
+            'pendingCashClosure',
+            'cashRegisterBalance'
+        ));
     }
 
     /**
@@ -170,6 +204,118 @@ class SuperAdminSellerController extends Controller
 
         return redirect()->route('superadmin.sellers.index')
             ->with('success', 'Vendeur modifié avec succès !');
+    }
+
+    /**
+     * Reaffecter un vendeur a un autre gerant
+     */
+    public function reassignManager(Request $request, User $user)
+    {
+        $this->authorize('manageSellerAsSuperAdmin', $user);
+
+        if (!$user->hasRole('seller')) {
+            return redirect()->route('superadmin.sellers.index')
+                ->with('error', 'Cet utilisateur n\'est pas un vendeur.');
+        }
+
+        $validated = $request->validate([
+            'manager_id' => ['required', 'exists:users,id'],
+            'reason' => ['required', 'string', 'min:8', 'max:500'],
+        ]);
+
+        $newManager = User::role('manager')->where('is_active', true)->find($validated['manager_id']);
+
+        if (!$newManager) {
+            return back()->withErrors(['manager_id' => 'Gerant invalide ou inactif.'])->withInput();
+        }
+
+        if ((int) $user->created_by === (int) $newManager->id) {
+            return back()->withErrors(['manager_id' => 'Ce vendeur est deja rattache a ce gerant.'])->withInput();
+        }
+
+        $previousManager = User::find($user->created_by);
+
+        DB::transaction(function () use ($user, $newManager, $previousManager, $validated) {
+            $user->update([
+                'created_by' => $newManager->id,
+            ]);
+
+            ActivityLog::log(
+                'seller_reassigned',
+                "Vendeur reaffecte : {$user->name}",
+                'User',
+                $user->id,
+                [
+                    'seller_id' => $user->id,
+                    'seller_name' => $user->name,
+                    'previous_manager_id' => $previousManager?->id,
+                    'previous_manager_name' => $previousManager?->name,
+                    'new_manager_id' => $newManager->id,
+                    'new_manager_name' => $newManager->name,
+                    'reason' => $validated['reason'],
+                ]
+            );
+        });
+
+        return redirect()->route('superadmin.sellers.edit', $user)
+            ->with('success', "Le vendeur {$user->name} est maintenant rattache a {$newManager->name}.");
+    }
+
+    public function closeCashRegister(Request $request, User $user, CashRegisterService $cashRegisterService)
+    {
+        $this->authorize('manageSellerAsSuperAdmin', $user);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:8', 'max:500'],
+        ]);
+
+        $closure = $cashRegisterService->closeForSeller($user, null, 'super_admin', $validated['reason']);
+
+        ActivityLog::log(
+            'seller_cash_register_force_closed',
+            "Caisse fermee a distance pour {$user->name}",
+            'CashRegisterClosure',
+            $closure->id,
+            [
+                'seller_id' => $user->id,
+                'seller_name' => $user->name,
+                'reason' => $validated['reason'],
+                'amount' => (float) $closure->amount,
+            ]
+        );
+
+        return redirect()->route('superadmin.sellers.edit', $user)
+            ->with('success', "Caisse fermee pour {$user->name}. ".number_format((float) $closure->amount, 0, ',', ' ')." FCFA transferes au Solde Cash.");
+    }
+
+    public function openCashRegister(Request $request, User $user, CashRegisterService $cashRegisterService)
+    {
+        $this->authorize('manageSellerAsSuperAdmin', $user);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:8', 'max:500'],
+        ]);
+
+        $closure = $cashRegisterService->openForSeller($user, null, 'super_admin', $validated['reason']);
+
+        if (!$closure) {
+            return back()->with('error', 'Aucune caisse fermee a rouvrir pour ce vendeur.');
+        }
+
+        ActivityLog::log(
+            'seller_cash_register_force_opened',
+            "Caisse rouverte a distance pour {$user->name}",
+            'CashRegisterClosure',
+            $closure->id,
+            [
+                'seller_id' => $user->id,
+                'seller_name' => $user->name,
+                'reason' => $validated['reason'],
+            ]
+        );
+
+        return redirect()->route('superadmin.sellers.edit', $user)
+            ->with('success', "Caisse rouverte pour {$user->name}. Le vendeur peut reprendre les ventes.");
     }
 
     /**

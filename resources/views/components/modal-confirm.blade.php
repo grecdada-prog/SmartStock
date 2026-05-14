@@ -4,14 +4,14 @@
     $typeClasses = [
         'danger' => 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
         'warning' => 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
-        'success' => 'bg-green-600 hover:bg-green-700 focus:ring-green-500',
+        'success' => 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500',
         'info' => 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
     ];
 
     $iconClasses = [
         'danger' => 'bg-red-100 text-red-600',
         'warning' => 'bg-yellow-100 text-yellow-600',
-        'success' => 'bg-green-100 text-green-600',
+        'success' => 'bg-rose-100 text-rose-600',
         'info' => 'bg-blue-100 text-blue-600',
     ];
 
@@ -84,7 +84,7 @@
                 </button>
                 <button type="button"
                         @click="show = false"
-                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm transition-colors duration-200">
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 sm:mt-0 sm:w-auto sm:text-sm transition-colors duration-200">
                     {{ $cancelText }}
                 </button>
             </div>

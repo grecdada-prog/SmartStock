@@ -34,7 +34,7 @@
                             id="name"
                             required
                             value="{{ old('name', $user->name) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('name') border-red-300 @enderror"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('name') border-red-300 @enderror"
                         >
                         @error('name')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -49,7 +49,7 @@
                             id="email"
                             required
                             value="{{ old('email', $user->email) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('email') border-red-300 @enderror"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('email') border-red-300 @enderror"
                         >
                         @error('email')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -63,7 +63,7 @@
                             name="phone"
                             id="phone"
                             value="{{ old('phone', $user->phone) }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm @error('phone') border-red-300 @enderror"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('phone') border-red-300 @enderror"
                         >
                         @error('phone')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -73,7 +73,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Role</label>
                         <div class="mt-1">
-                            <span class="inline-flex items-center rounded-md bg-green-100 px-3 py-2 text-sm font-medium text-green-800">
+                            <span class="inline-flex items-center rounded-md bg-rose-100 px-3 py-2 text-sm font-medium text-rose-800">
                                 Vendeur
                             </span>
                         </div>
@@ -87,7 +87,7 @@
                     <div class="flex justify-end border-t border-gray-200 pt-4">
                         <button
                             type="submit"
-                            class="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                            class="inline-flex justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
                         >
                             Enregistrer les modifications
                         </button>

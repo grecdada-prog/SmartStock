@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -33,8 +34,9 @@ class RolePageSmokeTest extends TestCase
     public function test_super_admin_main_pages_render(): void
     {
         $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
 
         $routes = [
             'superadmin.dashboard',
@@ -47,6 +49,7 @@ class RolePageSmokeTest extends TestCase
             'superadmin.sellers.create',
             'superadmin.products',
             'superadmin.sales',
+            'superadmin.anomalies',
             'superadmin.activity-logs',
             'superadmin.sessions.active',
             'account.profile.show',
@@ -57,14 +60,27 @@ class RolePageSmokeTest extends TestCase
                 ->get(route($route))
                 ->assertOk();
         }
+
+        $this->actingAs($superAdmin)
+            ->get(route('superadmin.dashboard'))
+            ->assertSee('Supervision des gérants')
+            ->assertSee('Alertes superadmin')
+            ->assertSee('Pouvoirs rapides');
+
+        $this->actingAs($superAdmin)
+            ->get(route('superadmin.anomalies'))
+            ->assertSee('Centre des anomalies')
+            ->assertSee('Severite')
+            ->assertSee('Action conseillee');
     }
 
     public function test_manager_main_pages_render(): void
     {
         $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
 
-        $manager = User::where('email', 'manager@smartstock.test')->firstOrFail();
-        $seller = User::where('email', 'seller@smartstock.test')->firstOrFail();
+        $manager = User::where('email', 'bertholfyllias200@gmail.com')->firstOrFail();
+        $seller = User::where('email', 'grecdada@gmail.com')->firstOrFail();
         $category = Category::where('created_by', $manager->id)->firstOrFail();
         $product = Product::where('created_by', $manager->id)->firstOrFail();
 
@@ -106,7 +122,7 @@ class RolePageSmokeTest extends TestCase
 
         $this->actingAs($manager)
             ->get(route('manager.products.create'))
-            ->assertSee('Creer le produit')
+            ->assertSee('Créer le produit')
             ->assertSee("Seuil d'alerte", false)
             ->assertDontSee('marge estimee');
 
@@ -128,8 +144,9 @@ class RolePageSmokeTest extends TestCase
     public function test_seller_main_pages_render(): void
     {
         $this->seed(DatabaseSeeder::class);
+        $this->seed(DemoDataSeeder::class);
 
-        $seller = User::where('email', 'seller@smartstock.test')->firstOrFail();
+        $seller = User::where('email', 'grecdada@gmail.com')->firstOrFail();
         $product = Product::where('created_by', $seller->created_by)->active()->firstOrFail();
         $sale = Sale::where('seller_id', $seller->id)->firstOrFail();
 

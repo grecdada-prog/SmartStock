@@ -10,7 +10,7 @@
             <p class="mt-2 text-sm text-gray-700">Produits dont le stock est inférieur ou égal au seuil d'alerte</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
-<a href="{{ route('manager.products.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+<a href="{{ route('manager.products.index') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 Tous les produits
             </a>
         </div>
@@ -37,9 +37,9 @@
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
-        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
                             <tr>
@@ -96,21 +96,21 @@
                                         </div>
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <div class="flex justify-end space-x-3">
-                                            <a href="{{ route('manager.products.show', $product) }}" class="text-indigo-600 hover:text-indigo-900" title="Voir détails">
+                                        <x-action-menu>
+                                            <a href="{{ route('manager.products.show', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-950 focus:bg-gray-50 focus:outline-none">
                                                 Voir
                                             </a>
-                                            <a href="{{ route('manager.products.edit', $product) }}" class="text-blue-600 hover:text-blue-900" title="Modifier">
+                                            <a href="{{ route('manager.products.edit', $product) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
                                                 Modifier
                                             </a>
-                                        </div>
+                                        </x-action-menu>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="6" class="px-3 py-8 text-center text-sm text-gray-500">
                                         <div class="flex flex-col items-center">
-                                            <svg class="h-12 w-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="h-12 w-12 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <p class="mt-2 text-lg font-medium text-gray-900">Excellent !</p>

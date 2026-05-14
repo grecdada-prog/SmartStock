@@ -1,19 +1,21 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard Super Administrateur') }}
-        </h2>
-    </x-slot>
+@extends('superadmin.layouts.app')
 
+@section('title', 'Dashboard Super Administrateur')
+
+@section('content')
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <h1 class="mb-6 text-2xl font-semibold text-gray-900">
+                Dashboard Super Administrateur
+            </h1>
+
             <!-- Statistiques principales -->
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
                 <!-- Total utilisateurs -->
                 <a href="{{ route('superadmin.users.index') }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition">
                     <div class="p-6">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                            <div class="flex-shrink-0 bg-rose-500 rounded-md p-3">
                                 <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
@@ -29,7 +31,7 @@
                         </div>
                         <div class="mt-4">
                             <div class="text-sm">
-                                <span class="text-green-600 font-medium">{{ $stats['active_users'] }}</span>
+                                <span class="text-rose-600 font-medium">{{ $stats['active_users'] }}</span>
                                 <span class="text-gray-600"> actifs</span>
                             </div>
                         </div>
@@ -63,35 +65,37 @@
                     </div>
                 </a>
 
-                <!-- Total ventes -->
-                <a href="{{ route('superadmin.sales') }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition">
+                <!-- Recette du jour -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                            <div class="flex-shrink-0 bg-rose-500 rounded-md p-3">
                                 <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Ventes</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900">{{ $stats['total_sales'] }}</div>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Recette du jour</dt>
+                                    <dd>
+                                        <x-money-toggle
+                                            :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'"
+                                            label="la recette du jour" />
                                     </dd>
                                 </dl>
                             </div>
                         </div>
                         <div class="mt-4">
                             <div class="text-sm">
-                                <span class="text-green-600 font-medium">{{ $stats['today_sales'] }}</span>
-                                <span class="text-gray-600"> aujourd'hui</span>
+                                <span class="text-rose-600 font-medium">{{ $stats['today_sales'] }}</span>
+                                <span class="text-gray-600"> vente(s) aujourd'hui</span>
                             </div>
                         </div>
                     </div>
-                </a>
+                </div>
 
-                <!-- Chiffre d'affaires -->
-                <a href="{{ route('superadmin.statistics') }}" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition">
+                <!-- Solde cash -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
@@ -101,21 +105,26 @@
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Chiffre d'affaires</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_revenue'], 0, ',', ' ') }}</div>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
+                                    <dd>
+                                        <x-money-toggle
+                                            :amount="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'"
+                                            label="le solde cash" />
                                     </dd>
                                 </dl>
                             </div>
                         </div>
                         <div class="mt-4">
                             <div class="text-sm">
-                                <span class="text-green-600 font-medium">{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA</span>
-                                <span class="text-gray-600"> aujourd'hui</span>
+                                <x-money-toggle
+                                    :amount="number_format($stats['total_yesterday_revenue'], 0, ',', ' ') . ' FCFA'"
+                                    label="la recette d'hier"
+                                    value-class="text-sm font-medium text-rose-600" />
+                                <span class="text-gray-600"> recette d'hier</span>
                             </div>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
 
             <!-- Utilisateurs en ligne -->
@@ -123,9 +132,9 @@
                 <div class="p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-5">Utilisateurs en Ligne</h3>
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                        <a href="{{ route('superadmin.managers.index') }}" class="bg-green-50 overflow-hidden rounded-lg px-4 py-5 border border-green-200 hover:bg-green-100 transition">
+                        <a href="{{ route('superadmin.managers.index') }}" class="bg-rose-50 overflow-hidden rounded-lg px-4 py-5 border border-rose-200 hover:bg-rose-100 transition">
                             <dt class="text-sm font-medium text-gray-500 truncate">Gérants</dt>
-                            <dd class="mt-1 text-3xl font-semibold text-green-600">{{ $onlineUsers['managers'] }}</dd>
+                            <dd class="mt-1 text-3xl font-semibold text-rose-600">{{ $onlineUsers['managers'] }}</dd>
                         </a>
                         <a href="{{ route('superadmin.sellers.index') }}" class="bg-blue-50 overflow-hidden rounded-lg px-4 py-5 border border-blue-200 hover:bg-blue-100 transition">
                             <dt class="text-sm font-medium text-gray-500 truncate">Vendeurs</dt>
@@ -146,7 +155,7 @@
                     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                         <!-- Gestion Utilisateurs -->
                         <a href="{{ route('superadmin.users.index') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <svg class="h-8 w-8 text-green-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-8 w-8 text-rose-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                             <span class="text-sm font-medium text-gray-900">Utilisateurs</span>
@@ -192,9 +201,17 @@
                             <span class="text-sm font-medium text-gray-900">Statistiques</span>
                         </a>
 
+                        <!-- Anomalies -->
+                        <a href="{{ route('superadmin.anomalies') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                            <svg class="h-8 w-8 text-amber-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86l-8.2 14.2A1 1 0 003 19h18a1 1 0 00.91-1.44l-8.2-14.2a1 1 0 00-1.72 0z" />
+                            </svg>
+                            <span class="text-sm font-medium text-gray-900">Anomalies</span>
+                        </a>
+
                         <!-- Sessions Actives -->
                         <a href="{{ route('superadmin.sessions.active') }}" class="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <svg class="h-8 w-8 text-teal-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-8 w-8 text-rose-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                             <span class="text-sm font-medium text-gray-900">Sessions Actives</span>
@@ -225,9 +242,9 @@
                     <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900">Fermetures de caisse</h3>
-                            <p class="mt-1 text-sm text-gray-500">Dernieres fermetures et reouvertures des caisses vendeurs</p>
+                            <p class="mt-1 text-sm text-gray-500">Dernières fermetures et réouvertures des caisses vendeurs</p>
                         </div>
-                        <span class="inline-flex w-fit items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                        <span class="inline-flex w-fit items-center rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">
                             Supervision globale
                         </span>
                     </div>
@@ -237,7 +254,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Vendeur</th>
-                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Journee</th>
+                                    <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Journée</th>
                                     <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Fermeture</th>
                                     <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Reouverture</th>
                                     <th scope="col" class="px-4 py-3 text-left font-medium text-gray-500">Statut</th>
@@ -256,17 +273,154 @@
                                             @if($closure->opened_at)
                                                 <span class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Rouverte</span>
                                             @else
-                                                <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Fermee</span>
+                                                <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Fermée</span>
                                             @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">Aucune fermeture de caisse enregistree</td>
+                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">Aucune fermeture de caisse enregistrée</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supervision globale -->
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
+                <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="mb-5 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">Supervision des gérants</h3>
+                                <p class="mt-1 text-sm text-gray-500">Vue consolidée des équipes, des recettes et des caisses</p>
+                            </div>
+                            <a href="{{ route('superadmin.managers.index') }}" class="text-sm font-medium text-rose-600 hover:text-rose-500">
+                                Gerer les gérants
+                            </a>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-500">Gérant</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-500">Equipe</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-500">Recette du jour</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-500">Solde Cash</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-500">Alertes</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white">
+                                    @forelse($managerSummaries as $summary)
+                                        <tr>
+                                            <td class="whitespace-nowrap px-4 py-3">
+                                                <div class="font-medium text-gray-900">{{ $summary['manager']->name }}</div>
+                                                <div class="text-xs text-gray-500">{{ $summary['manager']->email }}</div>
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-gray-600">
+                                                {{ $summary['active_sellers'] }}/{{ $summary['sellers_count'] }} vendeur(s) actifs
+                                                <div class="text-xs text-gray-500">{{ $summary['online_sellers'] }} en ligne</div>
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3">
+                                                <div class="font-semibold text-gray-900">{{ number_format($summary['today_revenue'], 0, ',', ' ') }} FCFA</div>
+                                                <div class="text-xs text-gray-500">Hier: {{ number_format($summary['yesterday_revenue'], 0, ',', ' ') }} FCFA</div>
+                                            </td>
+                                            <td class="whitespace-nowrap px-4 py-3">
+                                                <div class="font-semibold text-gray-900">{{ number_format($summary['cash_balance'], 0, ',', ' ') }} FCFA</div>
+                                                <div class="text-xs text-gray-500">
+                                                    Derniere vente:
+                                                    {{ $summary['last_sale_at'] ? $summary['last_sale_at']->format('d/m H:i') : 'Aucune' }}
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex flex-wrap gap-2">
+                                                    @if($summary['pending_closures'] > 0)
+                                                        <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+                                                            {{ $summary['pending_closures'] }} caisse(s) fermée(s)
+                                                        </span>
+                                                    @endif
+                                                    @if($summary['low_stock_products'] > 0)
+                                                        <span class="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                                            {{ $summary['low_stock_products'] }} stock faible
+                                                        </span>
+                                                    @endif
+                                                    @if($summary['pending_closures'] === 0 && $summary['low_stock_products'] === 0)
+                                                        <span class="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">
+                                                            Rien a signaler
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">Aucun gérant disponible</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="mb-5">
+                            <h3 class="text-lg font-medium text-gray-900">Alertes superadmin</h3>
+                            <p class="mt-1 text-sm text-gray-500">Points de controle prioritaires a traiter</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            @forelse($oversightAlerts as $alert)
+                                @php
+                                    $palette = match($alert['severity']) {
+                                        'danger' => 'border-red-200 bg-red-50 text-red-800',
+                                        'warning' => 'border-amber-200 bg-amber-50 text-amber-800',
+                                        default => 'border-blue-200 bg-blue-50 text-blue-800',
+                                    };
+                                @endphp
+                                <div class="rounded-lg border p-4 {{ $palette }}">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="text-sm font-semibold">{{ $alert['title'] }}</p>
+                                            <p class="mt-1 text-sm">{{ $alert['message'] }}</p>
+                                        </div>
+                                        <a href="{{ $alert['route'] }}" class="shrink-0 text-xs font-semibold underline">
+                                            {{ $alert['cta'] }}
+                                        </a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                                    Aucune alerte critique pour le moment.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <div class="mt-6 rounded-lg bg-gray-50 p-4">
+                            <h4 class="text-sm font-semibold text-gray-900">Pouvoirs rapides</h4>
+                            <div class="mt-3 space-y-2 text-sm text-gray-600">
+                                <div class="flex items-center justify-between">
+                                    <span>Forcer une deconnexion</span>
+                                    <a href="{{ route('superadmin.sessions.active') }}" class="font-medium text-rose-600 hover:text-rose-500">Sessions</a>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span>Auditer une action ou une vente</span>
+                                    <a href="{{ route('superadmin.activity-logs') }}" class="font-medium text-rose-600 hover:text-rose-500">Logs</a>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span>Traiter les anomalies en cours</span>
+                                    <a href="{{ route('superadmin.anomalies') }}" class="font-medium text-rose-600 hover:text-rose-500">Anomalies</a>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span>Reprendre la main sur les comptes</span>
+                                    <a href="{{ route('superadmin.users.index') }}" class="font-medium text-rose-600 hover:text-rose-500">Utilisateurs</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -276,7 +430,7 @@
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-5">
                         <h3 class="text-lg font-medium text-gray-900">Activités Récentes</h3>
-                        <a href="{{ route('superadmin.activity-logs') }}" class="text-sm font-medium text-green-600 hover:text-green-500">
+                        <a href="{{ route('superadmin.activity-logs') }}" class="text-sm font-medium text-rose-600 hover:text-rose-500">
                             Voir tout
                         </a>
                     </div>
@@ -290,7 +444,7 @@
                                         @endif
                                         <div class="relative flex space-x-3">
                                             <div>
-                                                <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                                <span class="h-8 w-8 rounded-full bg-rose-500 flex items-center justify-center ring-8 ring-white">
                                                     <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
                                                     </svg>
@@ -320,9 +474,9 @@
 
             <!-- Actions rapides -->
             <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-                <a href="{{ route('superadmin.users.create') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
+                <a href="{{ route('superadmin.users.create') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition">
                     <div>
-                        <span class="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
+                        <span class="rounded-lg inline-flex p-3 bg-rose-50 text-rose-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
@@ -339,7 +493,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('superadmin.managers.create') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
+                <a href="{{ route('superadmin.managers.create') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +512,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('superadmin.activity-logs') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition">
+                <a href="{{ route('superadmin.activity-logs') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -379,4 +533,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

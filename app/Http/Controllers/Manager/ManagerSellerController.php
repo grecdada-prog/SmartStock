@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Models\CashBalanceAdjustment;
 use App\Models\CashRegisterClosure;
 use App\Services\SessionManager;
 use App\Services\PasswordSetupLinkService;
 use App\Services\CashRegisterService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use App\Notifications\UserCreatedNotification;
 use App\Notifications\Enable2FANotification;
@@ -45,13 +47,14 @@ class ManagerSellerController extends Controller
         $sellerIds = User::role('seller')
             ->where('created_by', auth()->id())
             ->pluck('id');
-        $cashRegisterClosures = CashRegisterClosure::with('seller')
+        $cashBalances = $this->cashBalancesForSellers($sellerIds);
+        $cashRegisterClosures = CashRegisterClosure::with(['seller', 'closedByUser', 'openedByUser'])
             ->whereIn('seller_id', $sellerIds)
             ->latest('closed_at')
             ->take(12)
             ->get();
 
-        return view('manager.sellers.index', compact('sellers', 'cashRegisterClosures'));
+        return view('manager.sellers.index', compact('sellers', 'cashBalances', 'cashRegisterClosures'));
     }
 
     /**
@@ -74,6 +77,11 @@ class ManagerSellerController extends Controller
         ]);
 
         $cashRegisterService = app(CashRegisterService::class);
+        $recentCashAdjustments = CashBalanceAdjustment::with('manager')
+            ->where('seller_id', $user->id)
+            ->latest()
+            ->take(8)
+            ->get();
 
         // Statistiques du vendeur
         $stats = [
@@ -86,7 +94,7 @@ class ManagerSellerController extends Controller
             'cash_balance' => $cashRegisterService->balanceForSeller($user),
         ];
 
-        return view('manager.sellers.show', compact('user', 'stats'));
+        return view('manager.sellers.show', compact('user', 'stats', 'recentCashAdjustments'));
     }
 
     /**
@@ -297,6 +305,23 @@ class ManagerSellerController extends Controller
         return back()->with('success', "{$user->name} a été déconnecté avec succès.");
     }
 
+    public function closeCashRegister(User $user, CashRegisterService $cashRegisterService)
+    {
+        $this->authorize('manageSeller', $user);
+
+        $closure = $cashRegisterService->closeForSeller(
+            $user,
+            null,
+            'manager',
+            'Cloture forcee par le gerant '.auth()->user()->name
+        );
+
+        return back()->with(
+            'success',
+            'Caisse cloturee pour '.$user->name.'. '.number_format((float) $closure->amount, 0, ',', ' ').' FCFA transferes au Solde Cash.'
+        );
+    }
+
     public function adjustCashBalance(Request $request, User $user, CashRegisterService $cashRegisterService)
     {
         $this->authorize('manageSeller', $user);
@@ -306,6 +331,14 @@ class ManagerSellerController extends Controller
             'amount' => ['required', 'numeric', 'min:1'],
             'reason' => ['nullable', 'string', 'max:255'],
         ]);
+
+        if ($validated['type'] === 'withdraw') {
+            $request->validate([
+                'reason' => ['required', 'string', 'max:255'],
+            ], [
+                'reason.required' => 'Veuillez renseigner le motif du retrait.',
+            ]);
+        }
 
         try {
             $cashRegisterService->adjustBalance(
@@ -322,5 +355,33 @@ class ManagerSellerController extends Controller
         $action = $validated['type'] === 'add' ? 'ajoutes' : 'retires';
 
         return back()->with('success', 'Fonds '.$action.' du Solde Cash avec succes.');
+    }
+
+    private function cashBalancesForSellers($sellerIds)
+    {
+        $closedRevenue = CashRegisterClosure::whereIn('seller_id', $sellerIds)
+            ->select('seller_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('seller_id')
+            ->pluck('total', 'seller_id');
+
+        $additions = CashBalanceAdjustment::whereIn('seller_id', $sellerIds)
+            ->where('type', 'add')
+            ->select('seller_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('seller_id')
+            ->pluck('total', 'seller_id');
+
+        $withdrawals = CashBalanceAdjustment::whereIn('seller_id', $sellerIds)
+            ->where('type', 'withdraw')
+            ->select('seller_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('seller_id')
+            ->pluck('total', 'seller_id');
+
+        return $sellerIds->mapWithKeys(function ($sellerId) use ($closedRevenue, $additions, $withdrawals) {
+            return [
+                $sellerId => (float) ($closedRevenue[$sellerId] ?? 0)
+                    + (float) ($additions[$sellerId] ?? 0)
+                    - (float) ($withdrawals[$sellerId] ?? 0),
+            ];
+        });
     }
 }

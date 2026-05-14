@@ -13,22 +13,22 @@ function buildModalUrl(url) {
 
 function createModal() {
     const wrapper = document.createElement('div');
-    wrapper.id = 'smartstock-link-modal';
+    wrapper.id = 'smartstore-link-modal';
     wrapper.setAttribute('aria-hidden', 'true');
     wrapper.innerHTML = `
-        <div class="smartstock-link-modal__backdrop" data-smartstock-modal-close></div>
-        <div class="smartstock-link-modal__panel" role="dialog" aria-modal="true" aria-labelledby="smartstock-link-modal-title">
-            <div class="smartstock-link-modal__header">
-                <h2 id="smartstock-link-modal-title">Modification</h2>
-                <button type="button" class="smartstock-link-modal__close" data-smartstock-modal-close aria-label="Fermer">&times;</button>
+        <div class="smartstore-link-modal__backdrop" data-smartstore-modal-close></div>
+        <div class="smartstore-link-modal__panel" role="dialog" aria-modal="true" aria-labelledby="smartstore-link-modal-title">
+            <div class="smartstore-link-modal__header">
+                <h2 id="smartstore-link-modal-title">Modification</h2>
+                <button type="button" class="smartstore-link-modal__close" data-smartstore-modal-close aria-label="Fermer">&times;</button>
             </div>
-            <iframe class="smartstock-link-modal__frame" title="Contenu SmartStock"></iframe>
+            <iframe class="smartstore-link-modal__frame" title="Contenu SmartStore"></iframe>
         </div>
     `;
 
     const style = document.createElement('style');
     style.textContent = `
-        #smartstock-link-modal {
+        #smartstore-link-modal {
             position: fixed;
             inset: 0;
             z-index: 80;
@@ -37,15 +37,15 @@ function createModal() {
             justify-content: center;
             padding: 1rem;
         }
-        #smartstock-link-modal.is-open {
+        #smartstore-link-modal.is-open {
             display: flex;
         }
-        .smartstock-link-modal__backdrop {
+        .smartstore-link-modal__backdrop {
             position: absolute;
             inset: 0;
             background: rgba(15, 23, 42, .48);
         }
-        .smartstock-link-modal__panel {
+        .smartstore-link-modal__panel {
             position: relative;
             display: flex;
             width: min(920px, 100%);
@@ -57,7 +57,7 @@ function createModal() {
             background: #f8fafc;
             box-shadow: 0 24px 70px rgba(15, 23, 42, .25);
         }
-        .smartstock-link-modal__header {
+        .smartstore-link-modal__header {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -66,13 +66,13 @@ function createModal() {
             background: #eef8f1;
             padding: .85rem 1rem;
         }
-        .smartstock-link-modal__header h2 {
+        .smartstore-link-modal__header h2 {
             margin: 0;
             color: #163725;
             font-size: 1rem;
             font-weight: 700;
         }
-        .smartstock-link-modal__close {
+        .smartstore-link-modal__close {
             display: inline-flex;
             height: 2rem;
             width: 2rem;
@@ -86,20 +86,20 @@ function createModal() {
             font-size: 1.5rem;
             line-height: 1;
         }
-        .smartstock-link-modal__close:hover {
+        .smartstore-link-modal__close:hover {
             background: rgba(22, 101, 52, .1);
         }
-        .smartstock-link-modal__frame {
+        .smartstore-link-modal__frame {
             width: 100%;
             flex: 1;
             border: 0;
             background: #f8fafc;
         }
         @media (max-width: 640px) {
-            #smartstock-link-modal {
+            #smartstore-link-modal {
                 padding: .5rem;
             }
-            .smartstock-link-modal__panel {
+            .smartstore-link-modal__panel {
                 max-height: 94vh;
                 min-height: 72vh;
             }
@@ -123,8 +123,8 @@ function modalTitleFor(url) {
 }
 
 function initModalLinks() {
-    const modal = document.getElementById('smartstock-link-modal') || createModal();
-    const title = modal.querySelector('#smartstock-link-modal-title');
+    const modal = document.getElementById('smartstore-link-modal') || createModal();
+    const title = modal.querySelector('#smartstore-link-modal-title');
     const frame = modal.querySelector('iframe');
     let expectedModalPath = '';
     let initialLoadDone = false;
@@ -137,7 +137,7 @@ function initModalLinks() {
         initialLoadDone = false;
 
         if (shouldRefresh) {
-            window.dispatchEvent(new CustomEvent('smartstock:refresh-now', { detail: { force: true } }));
+            window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }));
             window.location.reload();
         }
     };
@@ -156,10 +156,10 @@ function initModalLinks() {
         frame.src = buildModalUrl(url);
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
-        modal.querySelector('[data-smartstock-modal-close]').focus();
+        modal.querySelector('[data-smartstore-modal-close]').focus();
     };
 
-    modal.querySelectorAll('[data-smartstock-modal-close]').forEach((button) => {
+    modal.querySelectorAll('[data-smartstore-modal-close]').forEach((button) => {
         button.addEventListener('click', () => close(false));
     });
 
@@ -201,15 +201,15 @@ function initModalLinks() {
 
         const url = new URL(link.href, window.location.origin);
 
-        if (url.origin === window.location.origin && (isEligiblePath(url.pathname) || link.dataset.smartstockModal === 'true')) {
+        if (url.origin === window.location.origin && (isEligiblePath(url.pathname) || link.dataset.smartstoreModal === 'true')) {
             event.preventDefault();
-            open(url.toString(), link.dataset.modalTitle || null, link.dataset.smartstockModal === 'true');
+            open(url.toString(), link.dataset.modalTitle || null, link.dataset.smartstoreModal === 'true');
         }
     });
 
-    window.SmartStockModalLinks = { open, close };
+    window.SmartStoreModalLinks = { open, close };
 
-    window.addEventListener('smartstock:open-modal-url', (event) => {
+    window.addEventListener('smartstore:open-modal-url', (event) => {
         if (event.detail?.url) {
             open(event.detail.url, event.detail.title || null, Boolean(event.detail.force));
         }

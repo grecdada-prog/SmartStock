@@ -23,11 +23,11 @@
                                 x-model="searchQuery"
                                 @input="searchProducts()"
                                 placeholder="Rechercher un produit (nom ou code SKU)..."
-                                class="block w-full rounded-md border-gray-300 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                                class="block w-full rounded-md border-gray-300 py-2 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                             >
                         </div>
                         <!-- Filtre catégorie -->
-                        <select x-model="selectedCategory" class="rounded-md border-gray-300 py-2 shadow-sm focus:border-green-500 focus:ring-green-500 sm:w-52 sm:text-sm">
+                        <select x-model="selectedCategory" class="rounded-md border-gray-300 py-2 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:w-52 sm:text-sm">
                             <option value="">Toutes catégories</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -36,34 +36,32 @@
                     </div>
                 </div>
 
-                <!-- Grille de produits -->
-                <div class="grid max-h-[calc(100vh-220px)] min-h-[420px] grid-cols-2 gap-2 overflow-y-auto p-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                <!-- Liste de produits -->
+                <div class="max-h-[calc(100vh-220px)] min-h-[420px] divide-y divide-gray-100 overflow-y-auto">
                     <template x-for="product in filteredProducts" :key="product.id">
-                        <div
+                        <button
+                            type="button"
                             @click="product.quantity > 0 && addToCart(product)"
-                            class="cursor-pointer rounded-md border border-gray-200 bg-white p-2 transition-all duration-200 hover:border-green-500 hover:shadow-sm"
+                            :disabled="product.quantity <= 0"
+                            class="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-150 hover:bg-rose-50/60 disabled:cursor-not-allowed"
                             :class="{
-                                'border-green-500': isInCart(product.id),
-                                'opacity-50 cursor-not-allowed hover:border-gray-200 hover:shadow-none': product.quantity <= 0
+                                'bg-rose-50': isInCart(product.id),
+                                'opacity-55': product.quantity <= 0
                             }"
                         >
-                            <div>
-                                <div class="mb-1 flex items-start gap-2">
-                                    <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-green-100">
-                                        <span class="text-xs font-bold text-green-600" x-text="product.name.charAt(0)"></span>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <h3 class="truncate text-xs font-semibold leading-4 text-gray-900" x-text="product.name" :title="product.name"></h3>
-                                        <p class="truncate text-[11px] leading-4 text-gray-500" x-text="product.sku"></p>
-                                    </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
+                                    <span class="truncate text-sm font-semibold text-gray-900" x-text="product.name" :title="product.name"></span>
+                                    <span class="hidden text-gray-300 sm:inline">-</span>
+                                    <span class="shrink-0 text-sm font-bold text-rose-600" x-text="formatPrice(product.selling_price)"></span>
+                                    <span x-show="product.quantity <= 0" class="shrink-0 text-xs font-medium text-red-600">Indisponible</span>
                                 </div>
-                                <p class="text-sm font-bold leading-5 text-green-600" x-text="formatPrice(product.selling_price)"></p>
-                                <p class="text-[11px] leading-4" :class="product.quantity <= 0 ? 'text-red-600 font-medium' : 'text-gray-500'">
-                                    Stock: <span x-text="product.quantity"></span>
-                                </p>
-                                <p x-show="product.quantity <= 0" class="text-[11px] font-medium text-red-600">Indisponible</p>
                             </div>
-                        </div>
+
+                            <span class="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                                Stock disponible: <span x-text="product.quantity"></span>
+                            </span>
+                        </button>
                     </template>
 
                     <template x-if="filteredProducts.length === 0">
@@ -81,7 +79,7 @@
         <!-- Panel droit : Panier et paiement -->
         <div class="lg:col-span-1">
             <div class="sticky flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-lg bg-white shadow" style="top: 5rem;">
-                <div class="shrink-0 bg-green-600 px-3 py-2 text-white">
+                <div class="shrink-0 bg-rose-600 px-3 py-2 text-white">
                     <h2 class="text-base font-semibold">Panier</h2>
                     <p class="text-sm opacity-90"><span x-text="cart.length"></span> article(s)</p>
                 </div>
@@ -107,7 +105,16 @@
                                 <button @click="updateQuantity(index, -1)" class="flex h-6 w-6 items-center justify-center rounded bg-gray-200 hover:bg-gray-300">
                                     <span class="text-sm font-bold">-</span>
                                 </button>
-                                <span class="w-6 text-center text-sm font-semibold" x-text="item.quantity"></span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    :max="item.maxQuantity"
+                                    step="1"
+                                    x-model.number="item.quantity"
+                                    @change="setCartQuantity(index, item.quantity)"
+                                    @keydown.enter.prevent="$event.target.blur()"
+                                    class="h-7 w-14 rounded-md border-gray-300 px-1 text-center text-sm font-semibold shadow-sm focus:border-rose-500 focus:ring-rose-500"
+                                >
                                 <button @click="updateQuantity(index, 1)" class="flex h-6 w-6 items-center justify-center rounded bg-gray-200 hover:bg-gray-300">
                                     <span class="text-sm font-bold">+</span>
                                 </button>
@@ -126,7 +133,7 @@
                     <div class="space-y-2">
                         <div class="flex justify-between text-lg font-semibold">
                             <span>Total:</span>
-                            <span class="text-green-600" x-text="formatPrice(cartTotal)"></span>
+                            <span class="text-rose-600" x-text="formatPrice(cartTotal)"></span>
                         </div>
                     </div>
                 </div>
@@ -136,7 +143,7 @@
                     <!-- Méthode de paiement -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement</label>
-                        <select x-model="paymentMethod" @change="handlePaymentMethodChange()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <select x-model="paymentMethod" @change="handlePaymentMethodChange()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                             <option value="cash">Espèces</option>
                             <option value="card">Orange Money</option>
                             <option value="mobile_money">MTN Momo</option>
@@ -152,7 +159,7 @@
                             @input="calculateChange()"
                             step="100"
                             min="0"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                             placeholder="0"
                         >
                     </div>
@@ -161,13 +168,13 @@
                     <div x-show="paymentMethod === 'cash' && amountReceived > 0" class="p-3 bg-blue-50 rounded-md">
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-700">Monnaie:</span>
-                            <span class="text-lg font-semibold" :class="change >= 0 ? 'text-green-600' : 'text-red-600'" x-text="formatPrice(change)"></span>
+                            <span class="text-lg font-semibold" :class="change >= 0 ? 'text-rose-600' : 'text-red-600'" x-text="formatPrice(change)"></span>
                         </div>
                     </div>
 
                     <!-- Informations client -->
                     <div x-show="paymentMethod === 'cash'">
-                        <button @click="showCustomerInfo = !showCustomerInfo" type="button" class="text-sm text-green-600 hover:text-green-700">
+                        <button @click="showCustomerInfo = !showCustomerInfo" type="button" class="text-sm text-rose-600 hover:text-rose-700">
                             <span x-show="!showCustomerInfo">+ Ajouter infos client</span>
                             <span x-show="showCustomerInfo">- Masquer infos client</span>
                         </button>
@@ -178,7 +185,7 @@
                             type="text"
                             x-model="customerName"
                             placeholder="Nom du client (optionnel)"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                         >
                         <input
                             type="text"
@@ -186,7 +193,7 @@
                             :placeholder="paymentMethod === 'cash' ? 'Telephone (optionnel)' : 'Numero telephone obligatoire'"
                             :required="paymentMethod !== 'cash'"
                             placeholder="Téléphone (optionnel)"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                         >
                         <p x-show="paymentMethod !== 'cash'" class="text-xs text-gray-500">
                             Le numero est obligatoire pour Orange Money et MTN Momo.
@@ -198,7 +205,7 @@
                         <button
                             @click="processSale()"
                             :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0) || (paymentMethod !== 'cash' && !customerPhone.trim())"
-                            class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg x-show="!processing" class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -219,7 +226,7 @@
                         <button
                             @click="clearCart()"
                             :disabled="processing"
-                            class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                            class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50"
                         >
                             Vider le panier
                         </button>
@@ -242,17 +249,17 @@
             x-show="saleCompleted"
             x-transition
             @click.outside.stop
-            class="w-full max-w-md rounded-lg border border-green-200 bg-green-50 p-5 shadow-2xl"
+            class="w-full max-w-md rounded-lg border border-rose-200 bg-rose-50 p-5 shadow-2xl"
         >
             <div class="flex items-start gap-3">
-                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100">
+                    <svg class="h-6 w-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-base font-semibold text-green-900">Vente enregistree</h3>
-                    <p class="mt-1 text-sm font-medium text-green-800">
+                    <h3 class="text-base font-semibold text-rose-900">Vente enregistree</h3>
+                    <p class="mt-1 text-sm font-medium text-rose-800">
                         Vente <span x-text="lastInvoiceNumber"></span> enregistree.
                     </p>
                 </div>
@@ -262,21 +269,21 @@
                 <button
                     type="button"
                     @click="openReceipt()"
-                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-green-600 bg-white px-3 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-rose-600 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
                 >
                     Imprimer
                 </button>
                 <button
                     type="button"
                     @click="openReceipt()"
-                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
                 >
                     PDF
                 </button>
                 <button
                     type="button"
                     @click="startNewSale()"
-                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    class="inline-flex min-h-14 items-center justify-center rounded-md border border-transparent bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
                 >
                     Nouvelle vente
                 </button>
@@ -284,25 +291,36 @@
         </div>
     </div>
 
-    <!-- Toast de notification -->
+    <!-- Notification locale POS -->
     <div
         x-show="showToast"
         x-transition
-        class="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-white p-4 shadow-xl ring-1 ring-gray-200"
+        class="fixed top-3 left-1/2 z-[9999] w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-md border bg-white px-4 py-3 text-gray-900 shadow-lg"
+        :class="toastType === 'success' ? 'border-rose-300' : 'border-red-300'"
         style="display: none;"
+        role="alert"
     >
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <svg x-show="toastType === 'success'" class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div class="flex items-start gap-3">
+            <div class="mt-0.5 shrink-0" :class="toastType === 'success' ? 'text-rose-600' : 'text-red-600'">
+                <svg x-show="toastType === 'success'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M5 13l4 4L19 7" />
                 </svg>
-                <svg x-show="toastType === 'error'" class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg x-show="toastType === 'error'" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M12 9v4m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z" />
                 </svg>
             </div>
-            <div class="ml-3 flex-1">
-                <p class="text-sm font-medium text-gray-900" x-text="toastMessage"></p>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm leading-5" x-text="toastMessage"></p>
             </div>
+            <button type="button"
+                    @click="showToast = false"
+                    class="-mr-1 -mt-1 rounded-md p-1.5 text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    :class="toastType === 'success' ? 'focus:ring-rose-600' : 'focus:ring-red-600'"
+                    aria-label="Fermer le message">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
         </div>
     </div>
 </div>
@@ -315,7 +333,6 @@ function posSystem() {
         filteredProducts: @json($products),
         searchQuery: '',
         selectedCategory: '',
-
         // Panier
         cart: [],
 
@@ -387,12 +404,21 @@ function posSystem() {
             }
         },
 
-        addToCart(product) {
+        addToCart(product, quantity = 1) {
+            const requestedQuantity = Math.max(1, Math.floor(Number(quantity || 1)));
+
+            if (requestedQuantity > product.quantity) {
+                this.showNotification('Stock insuffisant', 'error');
+                return;
+            }
+
             const existingItem = this.cart.find(item => item.id === product.id);
 
             if (existingItem) {
-                if (existingItem.quantity < product.quantity) {
-                    existingItem.quantity++;
+                const newQuantity = existingItem.quantity + requestedQuantity;
+
+                if (newQuantity <= existingItem.maxQuantity) {
+                    existingItem.quantity = newQuantity;
                 } else {
                     this.showNotification('Stock insuffisant', 'error');
                 }
@@ -407,7 +433,7 @@ function posSystem() {
                     name: product.name,
                     sku: product.sku,
                     price: product.selling_price,
-                    quantity: 1,
+                    quantity: requestedQuantity,
                     maxQuantity: product.quantity
                 });
             }
@@ -432,6 +458,22 @@ function posSystem() {
             } else {
                 this.showNotification('Stock insuffisant', 'error');
             }
+        },
+
+        setCartQuantity(index, quantity) {
+            const item = this.cart[index];
+            const newQuantity = Math.floor(Number(quantity || 0));
+
+            if (newQuantity <= 0) {
+                this.removeFromCart(index);
+            } else if (newQuantity <= item.maxQuantity) {
+                item.quantity = newQuantity;
+            } else {
+                item.quantity = item.maxQuantity;
+                this.showNotification('Stock insuffisant', 'error');
+            }
+
+            this.calculateChange();
         },
 
         isInCart(productId) {
@@ -537,7 +579,7 @@ function posSystem() {
 
                     // Réinitialiser le panier
                     this.clearCartAfterSale();
-                    window.dispatchEvent(new CustomEvent('smartstock:refresh-now'));
+                    window.dispatchEvent(new CustomEvent('smartstore:refresh-now'));
                 } else {
                     this.showNotification(data.message || 'Erreur lors de l\'enregistrement', 'error');
                 }
@@ -561,8 +603,8 @@ function posSystem() {
 
         openReceipt() {
             if (this.lastReceiptUrl) {
-                if (window.SmartStockModalLinks?.open) {
-                    window.SmartStockModalLinks.open(this.lastReceiptUrl, 'Facture');
+                if (window.SmartStoreModalLinks?.open) {
+                    window.SmartStoreModalLinks.open(this.lastReceiptUrl, 'Facture');
                 } else {
                     window.location.assign(this.lastReceiptUrl);
                 }
@@ -581,7 +623,7 @@ function posSystem() {
             this.toastMessage = message;
             this.toastType = type;
             this.showToast = true;
-            setTimeout(() => this.showToast = false, 3000);
+            setTimeout(() => this.showToast = false, 5000);
         }
     }
 }

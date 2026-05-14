@@ -104,10 +104,10 @@ class RolePermissionSeeder extends Seeder
 
         // Créer un Super Admin par défaut
         $superAdminUser = User::updateOrCreate(
-            ['email' => 'nanguefyllias@gmail.com'],
+            ['email' => 'nanguefyllias@gmai.com'],
             [
                 'name' => 'Admin',
-                'password' => Hash::make('Dorab237@'),
+                'password' => Hash::make('Dorab237@berthol'),
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]
@@ -115,7 +115,7 @@ class RolePermissionSeeder extends Seeder
         $superAdminUser->assignRole('super_admin');
 
         $this->command->info('Super Admin créé avec succès!');
-        $this->command->info('Email: nanguefyllias@gmail.com');
-        $this->command->info('Password: Dorab237@');
+        $this->command->info('Email: nanguefyllias@gmai.com');
+        $this->command->info('Password: Dorab237@berthol');
     }
 }

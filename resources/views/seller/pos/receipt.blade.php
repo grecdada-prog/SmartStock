@@ -6,7 +6,7 @@
 <div class="min-h-screen bg-gray-100 py-8">
     <div class="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
         <!-- Header -->
-        <div class="bg-green-600 text-white p-6 text-center">
+        <div class="bg-rose-600 text-white p-6 text-center">
             <h1 class="text-2xl font-bold">REÇU DE VENTE</h1>
             <p class="text-sm opacity-90">{{ config('app.name') }}</p>
         </div>
@@ -31,12 +31,6 @@
                 <div class="flex justify-between text-sm mb-2">
                     <span class="font-medium">Client:</span>
                     <span>{{ $sale->customer_name }}</span>
-                </div>
-                @endif
-                @if($sale->customer_phone)
-                <div class="flex justify-between text-sm">
-                    <span class="font-medium">Téléphone:</span>
-                    <span>{{ $sale->customer_phone }}</span>
                 </div>
                 @endif
             </div>
@@ -73,6 +67,12 @@
                         @endif
                     </span>
                 </div>
+                @if($sale->customer_phone)
+                <div class="flex justify-between text-sm">
+                    <span>Numéro de téléphone:</span>
+                    <span>{{ $sale->customer_phone }}</span>
+                </div>
+                @endif
                 @if($sale->payment_method === 'cash')
                 <div class="flex justify-between text-sm">
                     <span>Montant reçu:</span>
@@ -102,7 +102,7 @@
 
     <!-- Print Button -->
     <div class="max-w-md mx-auto mt-6 text-center">
-        <button onclick="window.print()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+        <button onclick="window.print()" class="bg-rose-600 text-white px-6 py-2 rounded-lg hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500">
             Imprimer le Reçu
         </button>
         <a href="{{ route('seller.pos.index') }}" class="ml-4 bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">

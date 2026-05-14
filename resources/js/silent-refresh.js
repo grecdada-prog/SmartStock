@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAutoFilters();
     initSilentRefresh();
 
-    window.addEventListener('smartstock:refresh-now', (event) => {
+    window.addEventListener('smartstore:refresh-now', (event) => {
         document.querySelectorAll('[data-silent-refresh]').forEach((scope) => refreshScope(scope, {
             force: event.detail?.force === true,
         }));
