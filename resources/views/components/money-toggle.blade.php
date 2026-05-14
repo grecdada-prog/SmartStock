@@ -2,13 +2,39 @@
     'amount',
     'label' => 'montant',
     'valueClass' => 'text-2xl font-semibold text-gray-900',
+    'stateKey' => null,
 ])
 
-<div x-data="{ visible: false }" class="flex items-center gap-2">
+@php
+    $visibilityKey = $stateKey ?? md5($label);
+@endphp
+
+<div
+    x-data="{
+        key: @js($visibilityKey),
+        visible: false,
+        init() {
+            window.SmartStoreMoneyVisibility = window.SmartStoreMoneyVisibility || {};
+            this.visible = window.SmartStoreMoneyVisibility[this.key] === true;
+
+            this.$watch('visible', (value) => {
+                window.SmartStoreMoneyVisibility[this.key] = value;
+            });
+        },
+        toggle() {
+            this.visible = !this.visible;
+
+            if (this.visible) {
+                window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }));
+            }
+        },
+    }"
+    class="flex items-center gap-2"
+>
     <span class="{{ $valueClass }}" x-text="visible ? @js($amount) : '******'"></span>
     <button
         type="button"
-        @click="visible = !visible; if (visible) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))"
+        @click="toggle()"
         class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-50 hover:text-gray-700"
         :aria-label="visible ? 'Masquer {{ $label }}' : 'Afficher {{ $label }}'"
     >
