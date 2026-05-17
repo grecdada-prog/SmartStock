@@ -149,7 +149,6 @@
                                     </td>
                                 </tr>
 
-                                <x-sale-details-modal :sale="$sale" />
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-3 py-8 text-center text-sm text-gray-500">
@@ -163,6 +162,10 @@
             </div>
         </div>
     </div>
+
+    @foreach($sales as $sale)
+        <x-sale-details-modal :sale="$sale" />
+    @endforeach
 
     @if($sales->hasPages())
         <div class="mt-6">
