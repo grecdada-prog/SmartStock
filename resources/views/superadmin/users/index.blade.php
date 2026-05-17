@@ -210,7 +210,7 @@
                                     </h3>
                                     <div class="mt-2">
                                         <p class="text-sm text-gray-500">
-                                            Êtes-vous sûr de vouloir supprimer <strong>{{ $user->name }}</strong> ? Cette action est irréversible.
+                                            Supprimer <strong>{{ $user->name }}</strong> ? Cette action est definitive.
                                         </p>
                                     </div>
                                 </div>
@@ -223,7 +223,7 @@
                                 @method('DELETE')
                                 <button type="submit"
                                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                                    Oui, supprimer
+                                    Supprimer
                                 </button>
                             </form>
                             <button type="button"
@@ -243,8 +243,8 @@
 <x-modal-confirm
     id="reset-password"
     title="Réinitialiser le mot de passe"
-    message="Voulez-vous vraiment réinitialiser le mot de passe de cet utilisateur ? Un nouveau mot de passe temporaire sera généré et envoyé par email."
-    confirmText="Oui, réinitialiser"
+    message="Envoyer un lien de réinitialisation à cet utilisateur ?"
+    confirmText="Réinitialiser"
     cancelText="Annuler"
     type="warning" />
 

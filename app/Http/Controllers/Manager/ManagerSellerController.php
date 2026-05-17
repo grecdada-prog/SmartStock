@@ -145,7 +145,7 @@ class ManagerSellerController extends Controller
         $user->notify(new Enable2FANotification());
 
         return redirect()->route('manager.sellers.index')
-            ->with('success', 'Vendeur créé avec succès ! Un email de bienvenue a été envoyé.');
+            ->with('success', 'Vendeur cree.');
     }
 
     /**
@@ -194,7 +194,7 @@ class ManagerSellerController extends Controller
         );
 
         return redirect()->route('manager.sellers.index')
-            ->with('success', 'Vendeur mis à jour avec succès.');
+            ->with('success', 'Vendeur mis a jour.');
     }
 
     /**
@@ -218,7 +218,7 @@ class ManagerSellerController extends Controller
         $user->delete();
 
         return redirect()->route('manager.sellers.index')
-            ->with('success', "Vendeur {$userName} supprimé avec succès.");
+            ->with('success', 'Vendeur supprime.');
     }
 
     /**
@@ -252,7 +252,7 @@ class ManagerSellerController extends Controller
 
         $user->notify(new PasswordResetNotification($resetUrl));
 
-        return back()->with('success', "Un lien de reinitialisation du mot de passe a ete envoye a {$user->name}.");
+        return back()->with('success', 'Lien de reinitialisation envoye.');
     }
 
     /**
@@ -273,7 +273,7 @@ class ManagerSellerController extends Controller
             $user->id
         );
 
-        return back()->with('success', "Vendeur " . ($newStatus ? 'activé' : 'désactivé') . " avec succès.");
+        return back()->with('success', $newStatus ? 'Vendeur active.' : 'Vendeur desactive.');
     }
 
     /**
@@ -287,7 +287,7 @@ class ManagerSellerController extends Controller
         $isOnline = SessionManager::isUserOnline($user->id);
 
         if (!$isOnline) {
-            return back()->with('error', 'Ce vendeur n\'est pas connecté.');
+            return back()->with('error', 'Vendeur hors ligne.');
         }
 
         SessionManager::logoutUserFromAllSessions(
@@ -302,7 +302,7 @@ class ManagerSellerController extends Controller
             $user->id
         );
 
-        return back()->with('success', "{$user->name} a été déconnecté avec succès.");
+        return back()->with('success', 'Vendeur deconnecte.');
     }
 
     public function closeCashRegister(User $user, CashRegisterService $cashRegisterService)
@@ -314,7 +314,7 @@ class ManagerSellerController extends Controller
         if ($pendingClosure) {
             return back()->with(
                 'warning',
-                'La caisse de '.$user->name.' est deja fermee depuis le '.$pendingClosure->closed_at->format('d/m/Y').' a '.$pendingClosure->closed_at->format('H:i').'. Aucune nouvelle cloture n a ete effectuee.'
+                'Caisse deja fermee.'
             );
         }
 
@@ -327,7 +327,7 @@ class ManagerSellerController extends Controller
 
         return back()->with(
             'success',
-            'Caisse cloturee pour '.$user->name.'. '.number_format((float) $closure->amount, 0, ',', ' ').' FCFA transferes au Solde Cash.'
+            'Caisse cloturee.'
         );
     }
 
@@ -363,7 +363,7 @@ class ManagerSellerController extends Controller
 
         $action = $validated['type'] === 'add' ? 'ajoutes' : 'retires';
 
-        return back()->with('success', 'Fonds '.$action.' du Solde Cash avec succes.');
+        return back()->with('success', $validated['type'] === 'add' ? 'Fonds ajoutes.' : 'Fonds retires.');
     }
 
     private function cashBalancesForSellers($sellerIds)

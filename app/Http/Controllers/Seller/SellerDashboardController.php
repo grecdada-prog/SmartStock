@@ -87,7 +87,7 @@ class SellerDashboardController extends Controller
         if ($pendingClosure) {
             return back()->with(
                 'warning',
-                'Caisse deja fermee depuis le '.$pendingClosure->closed_at->format('d/m/Y').' a '.$pendingClosure->closed_at->format('H:i').'. Ouvrez la caisse avant de relancer une cloture.'
+                'Caisse deja fermee.'
             );
         }
 
@@ -95,7 +95,7 @@ class SellerDashboardController extends Controller
 
         return back()->with(
             'success',
-            'Caisse fermee. '.number_format((float) $closure->amount, 0, ',', ' ').' FCFA transferes dans le solde cash.'
+            'Caisse cloturee.'
         );
     }
 
@@ -103,7 +103,7 @@ class SellerDashboardController extends Controller
     {
         $cashRegisterService->openForSeller(Auth::user());
 
-        return back()->with('success', 'Caisse ouverte. Le dashboard est pret pour une nouvelle session de vente.');
+        return back()->with('success', 'Caisse ouverte.');
     }
 
     public function products(Request $request)

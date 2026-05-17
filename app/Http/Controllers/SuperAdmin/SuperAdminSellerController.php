@@ -77,7 +77,7 @@ class SuperAdminSellerController extends Controller
         $manager = User::role('manager')->find($validated['manager_id']);
 
         if (!$manager) {
-            return back()->withErrors(['manager_id' => 'Gérant invalide.'])->withInput();
+            return back()->withErrors(['manager_id' => 'Gerant invalide.'])->withInput();
         }
 
         $user = User::create([
@@ -110,11 +110,11 @@ class SuperAdminSellerController extends Controller
                 'exception' => $exception->getMessage(),
             ]);
 
-            $emailWarning = 'Le vendeur a ete cree, mais l email de bienvenue n a pas pu etre envoye.';
+            $emailWarning = 'Email non envoye.';
         }
 
         return redirect()->route('superadmin.sellers.index')
-            ->with('success', 'Vendeur cree avec succes !'.($emailWarning ? ' '.$emailWarning : ' Un email de bienvenue a ete envoye.'));
+            ->with('success', $emailWarning ? 'Vendeur cree. '.$emailWarning : 'Vendeur cree.');
     }
 
     /**
@@ -127,7 +127,7 @@ class SuperAdminSellerController extends Controller
         // Vérifier que l'utilisateur est bien un vendeur
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
-                ->with('error', 'Cet utilisateur n\'est pas un vendeur.');
+                ->with('error', 'Utilisateur invalide.');
         }
 
         $user->load('roles');
@@ -167,7 +167,7 @@ class SuperAdminSellerController extends Controller
         // Vérifier que l'utilisateur est bien un vendeur
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
-                ->with('error', 'Cet utilisateur n\'est pas un vendeur.');
+                ->with('error', 'Utilisateur invalide.');
         }
 
         $validated = $request->validate([
@@ -184,7 +184,7 @@ class SuperAdminSellerController extends Controller
         $manager = User::role('manager')->find($validated['manager_id']);
 
         if (!$manager) {
-            return back()->withErrors(['manager_id' => 'Gérant invalide.'])->withInput();
+            return back()->withErrors(['manager_id' => 'Gerant invalide.'])->withInput();
         }
 
         $user->update([
@@ -203,7 +203,7 @@ class SuperAdminSellerController extends Controller
         );
 
         return redirect()->route('superadmin.sellers.index')
-            ->with('success', 'Vendeur modifié avec succès !');
+            ->with('success', 'Vendeur mis a jour.');
     }
 
     /**
@@ -215,7 +215,7 @@ class SuperAdminSellerController extends Controller
 
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
-                ->with('error', 'Cet utilisateur n\'est pas un vendeur.');
+                ->with('error', 'Utilisateur invalide.');
         }
 
         $validated = $request->validate([
@@ -230,7 +230,7 @@ class SuperAdminSellerController extends Controller
         }
 
         if ((int) $user->created_by === (int) $newManager->id) {
-            return back()->withErrors(['manager_id' => 'Ce vendeur est deja rattache a ce gerant.'])->withInput();
+            return back()->withErrors(['manager_id' => 'Vendeur deja rattache a ce gerant.'])->withInput();
         }
 
         $previousManager = User::find($user->created_by);
@@ -258,7 +258,7 @@ class SuperAdminSellerController extends Controller
         });
 
         return redirect()->route('superadmin.sellers.edit', $user)
-            ->with('success', "Le vendeur {$user->name} est maintenant rattache a {$newManager->name}.");
+            ->with('success', 'Vendeur reaffecte.');
     }
 
     public function closeCashRegister(Request $request, User $user, CashRegisterService $cashRegisterService)
@@ -273,7 +273,7 @@ class SuperAdminSellerController extends Controller
 
         if ($pendingClosure) {
             return redirect()->route('superadmin.sellers.edit', $user)
-                ->with('warning', 'La caisse de '.$user->name.' est deja fermee depuis le '.$pendingClosure->closed_at->format('d/m/Y').' a '.$pendingClosure->closed_at->format('H:i').'. Aucune nouvelle cloture n a ete effectuee.');
+                ->with('warning', 'Caisse deja fermee.');
         }
 
         $closure = $cashRegisterService->closeForSeller($user, null, 'super_admin', $validated['reason']);
@@ -292,7 +292,7 @@ class SuperAdminSellerController extends Controller
         );
 
         return redirect()->route('superadmin.sellers.edit', $user)
-            ->with('success', "Caisse fermee pour {$user->name}. ".number_format((float) $closure->amount, 0, ',', ' ')." FCFA transferes au Solde Cash.");
+            ->with('success', 'Caisse cloturee.');
     }
 
     public function openCashRegister(Request $request, User $user, CashRegisterService $cashRegisterService)
@@ -306,7 +306,7 @@ class SuperAdminSellerController extends Controller
         $closure = $cashRegisterService->openForSeller($user, null, 'super_admin', $validated['reason']);
 
         if (!$closure) {
-            return back()->with('error', 'Aucune caisse fermee a rouvrir pour ce vendeur.');
+            return back()->with('error', 'Aucune caisse fermee.');
         }
 
         ActivityLog::log(
@@ -322,7 +322,7 @@ class SuperAdminSellerController extends Controller
         );
 
         return redirect()->route('superadmin.sellers.edit', $user)
-            ->with('success', "Caisse rouverte pour {$user->name}. Le vendeur peut reprendre les ventes.");
+            ->with('success', 'Caisse rouverte.');
     }
 
     /**
@@ -336,11 +336,11 @@ class SuperAdminSellerController extends Controller
         // Vérifier que l'utilisateur est bien un vendeur
         if (!$user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
-                ->with('error', 'Cet utilisateur n\'est pas un vendeur.');
+                ->with('error', 'Utilisateur invalide.');
         }
 
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+            return back()->with('error', 'Action non autorisee.');
         }
 
         $userName = $user->name;
@@ -355,6 +355,6 @@ class SuperAdminSellerController extends Controller
         $user->delete();
 
         return redirect()->route('superadmin.sellers.index')
-            ->with('success', "Le vendeur {$userName} a été supprimé avec succès !");
+            ->with('success', 'Vendeur supprime.');
     }
 }

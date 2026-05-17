@@ -253,8 +253,8 @@
 <x-modal-confirm
     id="delete-product"
     title="Supprimer le produit"
-    message="Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible."
-    confirmText="Oui, supprimer"
+    message="Supprimer ce produit ?"
+    confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
 

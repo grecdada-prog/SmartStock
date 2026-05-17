@@ -183,7 +183,7 @@
                                                 </a>
                                                 <form method="POST" action="{{ route('manager.sellers.force-logout', $seller) }}">
                                                     @csrf
-                                                    <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-orange-700 transition hover:bg-orange-50 focus:bg-orange-50 focus:outline-none" onclick="return confirm('Êtes-vous sûr de vouloir déconnecter ce vendeur ?')">
+                                                    <button type="submit" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-orange-700 transition hover:bg-orange-50 focus:bg-orange-50 focus:outline-none" onclick="return confirm('Déconnecter ce vendeur ?')">
                                                         Déconnecter
                                                     </button>
                                                 </form>

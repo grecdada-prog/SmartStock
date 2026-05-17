@@ -251,24 +251,24 @@
 <x-modal-confirm
     id="delete-seller"
     title="Supprimer le vendeur"
-    message="Etes-vous sur de vouloir supprimer ce vendeur ? Cette action est irreversible et supprimera toutes ses donnees."
-    confirmText="Oui, supprimer"
+    message="Supprimer ce vendeur ? Cette action est definitive."
+    confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
 
 <x-modal-confirm
     id="reset-password"
     title="Reinitialiser le mot de passe"
-    message="Voulez-vous vraiment reinitialiser le mot de passe de ce vendeur ? Un nouveau mot de passe temporaire sera genere et envoye par email."
-    confirmText="Oui, reinitialiser"
+    message="Envoyer un lien de reinitialisation a ce vendeur ?"
+    confirmText="Reinitialiser"
     cancelText="Annuler"
     type="warning" />
 
 <x-modal-confirm
     id="close-cash-register"
     title="Cloturer la caisse"
-    message="SmartStock va verifier l etat actuel de la caisse. Si elle est ouverte, la recette du jour sera transferee dans le Solde Cash; si elle est deja fermee, vous recevrez simplement son etat."
-    confirmText="Verifier et cloturer"
+    message="Verifier l etat de la caisse et la cloturer si elle est ouverte."
+    confirmText="Cloturer"
     cancelText="Annuler"
     type="success" />
 

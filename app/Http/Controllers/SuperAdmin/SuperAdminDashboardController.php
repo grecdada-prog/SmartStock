@@ -152,11 +152,10 @@ class SuperAdminDashboardController extends Controller
             ->take(5)
             ->get();
 
-        $topProducts = Product::select('products.*')
-            ->join('sale_items', 'products.id', '=', 'sale_items.product_id')
-            ->selectRaw('SUM(sale_items.quantity) as total_sold')
-            ->groupBy('products.id')
-            ->orderBy('total_sold', 'desc')
+        $topProducts = Product::query()
+            ->whereHas('saleItems')
+            ->withSum('saleItems as total_sold', 'quantity')
+            ->orderByDesc('total_sold')
             ->take(5)
             ->get();
 
@@ -296,7 +295,7 @@ class SuperAdminDashboardController extends Controller
         $stats = [
             'filtered_sales' => (clone $statsQuery)->count(),
             'filtered_revenue' => (float) (clone $statsQuery)->sum('total'),
-            'average_sale' => (float) (clone $statsQuery)->avg('total'),
+            'average_sale' => (float) ((clone $statsQuery)->avg('total') ?? 0),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),

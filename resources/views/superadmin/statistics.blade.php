@@ -1,12 +1,21 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Statistiques detaillees') }}
-        </h2>
-    </x-slot>
+@extends('superadmin.layouts.app')
+
+@section('title', 'Statistiques')
+
+@section('content')
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-900">Statistiques</h1>
+                    <p class="mt-1 text-sm text-gray-600">Vue globale des ventes et des performances.</p>
+                </div>
+                <a href="{{ route('superadmin.dashboard') }}" class="inline-flex w-fit items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    Retour dashboard
+                </a>
+            </div>
+
             <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex items-center justify-between">
@@ -242,4 +251,4 @@
             }
         });
     </script>
-</x-app-layout>
+@endsection

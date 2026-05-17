@@ -7,7 +7,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Ventes</h1>
-            <p class="mt-2 text-sm text-gray-700">Suivi global des ventes enregistrees par tous les vendeurs</p>
+            <p class="mt-2 text-sm text-gray-700">Suivi global des ventes et des encaissements.</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16">
             <x-export-buttons
@@ -64,37 +64,22 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500 truncate">Recette du jour</dt>
-                <dd class="mt-1">
-                    <x-money-toggle
-                        :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'"
-                        label="la recette du jour"
-                        value-class="text-3xl font-semibold text-gray-900" />
-                </dd>
-                <p class="mt-2 text-sm text-gray-500">Selon les caisses encore ouvertes</p>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ number_format($stats['total_current_day_revenue'], 0, ',', ' ') }} FCFA</dd>
+                <p class="mt-2 text-sm text-gray-500">Ventes du jour non cloturees</p>
             </div>
         </div>
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500 truncate">Recette d'hier</dt>
-                <dd class="mt-1">
-                    <x-money-toggle
-                        :amount="number_format($stats['total_yesterday_revenue'], 0, ',', ' ') . ' FCFA'"
-                        label="la recette d'hier"
-                        value-class="text-3xl font-semibold text-gray-900" />
-                </dd>
-                <p class="mt-2 text-sm text-gray-500">Recettes clôturées ou ventes de la veille</p>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ number_format($stats['total_yesterday_revenue'], 0, ',', ' ') }} FCFA</dd>
+                <p class="mt-2 text-sm text-gray-500">Recette de la veille</p>
             </div>
         </div>
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
-                <dd class="mt-1">
-                    <x-money-toggle
-                        :amount="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'"
-                        label="le solde cash"
-                        value-class="text-3xl font-semibold text-gray-900" />
-                </dd>
-                <p class="mt-2 text-sm text-gray-500">Caisse cumulée après clôture</p>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ number_format($stats['total_cash_balance'], 0, ',', ' ') }} FCFA</dd>
+                <p class="mt-2 text-sm text-gray-500">Solde cumule des caisses</p>
             </div>
         </div>
     </div>

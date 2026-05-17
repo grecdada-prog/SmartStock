@@ -144,8 +144,8 @@
 <x-modal-confirm
     id="delete-manager"
     title="Supprimer le gérant"
-    message="Êtes-vous sûr de vouloir supprimer ce gérant ? Cette action est irréversible."
-    confirmText="Oui, supprimer"
+    message="Supprimer ce gérant ? Cette action est definitive."
+    confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
 

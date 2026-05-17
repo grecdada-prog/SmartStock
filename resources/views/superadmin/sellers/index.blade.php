@@ -134,8 +134,8 @@
 <x-modal-confirm
     id="delete-seller"
     title="Supprimer le vendeur"
-    message="Etes-vous sur de vouloir supprimer ce vendeur ? Cette action est irreversible."
-    confirmText="Oui, supprimer"
+    message="Supprimer ce vendeur ? Cette action est definitive."
+    confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
 @endsection

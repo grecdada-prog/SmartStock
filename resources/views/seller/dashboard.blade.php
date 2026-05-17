@@ -173,16 +173,16 @@
                             </svg>
                         </span>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Confirmer la cloture</h3>
+                            <h3 class="text-lg font-semibold text-gray-900">Cloturer la caisse</h3>
                             <p class="mt-1 text-sm text-gray-600">
-                                SmartStock va verifier l etat de la caisse avant de continuer.
+                                La caisse sera verifiee avant la cloture.
                             </p>
                         </div>
                     </div>
                 </div>
                 <div class="px-6 py-5">
                     <p class="text-sm text-gray-600">
-                        Si la caisse est ouverte, la recette du jour sera transferee dans le Solde Cash et les ventes seront bloquees. Si elle est deja fermee, vous recevrez simplement son etat actuel.
+                        Si elle est deja fermee, aucune nouvelle cloture ne sera effectuee.
                     </p>
                 </div>
                 <div class="border-t border-gray-100 bg-gray-50 px-6 py-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -204,7 +204,7 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        <span x-text="closingCash ? 'Fermeture en cours...' : 'Confirmer la fermeture'"></span>
+                        <span x-text="closingCash ? 'Cloture...' : 'Cloturer'"></span>
                     </button>
                 </div>
             </div>

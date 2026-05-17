@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CashRegisterService
 {
@@ -44,15 +45,12 @@ class CashRegisterService
                     ->where('created_at', '>=', $existingClosure->opened_at)
                     ->sum('total');
 
-                $existingClosure->update([
+                $existingClosure->update($this->closureAuditAttributes([
                     'amount' => (float) $existingClosure->amount + (float) $amount,
                     'closed_by' => $closedBy,
-                    'closed_by_user_id' => $actorId,
                     'closed_at' => now(),
                     'opened_at' => null,
-                    'opened_by' => null,
-                    'opened_by_user_id' => null,
-                ]);
+                ], $actorId, true));
 
                 ActivityLog::log(
                     'cash_register_closed',
@@ -75,14 +73,13 @@ class CashRegisterService
                 ->whereDate('created_at', $businessDate)
                 ->sum('total');
 
-            $closure = CashRegisterClosure::create([
+            $closure = CashRegisterClosure::create($this->closureAuditAttributes([
                 'seller_id' => $seller->id,
                 'business_date' => $businessDate,
                 'amount' => $amount,
                 'closed_by' => $closedBy,
-                'closed_by_user_id' => $actorId,
                 'closed_at' => now(),
-            ]);
+            ], $actorId));
 
             ActivityLog::log(
                 'cash_register_closed',
@@ -123,11 +120,9 @@ class CashRegisterService
                 return $closure;
             }
 
-            $closure->update([
+            $closure->update($this->openingAuditAttributes([
                 'opened_at' => now(),
-                'opened_by' => $openedBy,
-                'opened_by_user_id' => $actorId,
-            ]);
+            ], $openedBy, $actorId));
 
             ActivityLog::log(
                 'cash_register_opened',
@@ -229,5 +224,37 @@ class CashRegisterService
         });
 
         return $closedCount;
+    }
+
+    private function closureAuditAttributes(array $attributes, ?int $actorId, bool $clearOpening = false): array
+    {
+        if (Schema::hasColumn('cash_register_closures', 'closed_by_user_id')) {
+            $attributes['closed_by_user_id'] = $actorId;
+        }
+
+        if ($clearOpening) {
+            if (Schema::hasColumn('cash_register_closures', 'opened_by')) {
+                $attributes['opened_by'] = null;
+            }
+
+            if (Schema::hasColumn('cash_register_closures', 'opened_by_user_id')) {
+                $attributes['opened_by_user_id'] = null;
+            }
+        }
+
+        return $attributes;
+    }
+
+    private function openingAuditAttributes(array $attributes, string $openedBy, ?int $actorId): array
+    {
+        if (Schema::hasColumn('cash_register_closures', 'opened_by')) {
+            $attributes['opened_by'] = $openedBy;
+        }
+
+        if (Schema::hasColumn('cash_register_closures', 'opened_by_user_id')) {
+            $attributes['opened_by_user_id'] = $actorId;
+        }
+
+        return $attributes;
     }
 }

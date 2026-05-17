@@ -151,8 +151,8 @@
 <x-modal-confirm
     id="delete-category"
     title="Supprimer la catégorie"
-    message="Êtes-vous sûr de vouloir supprimer cette catégorie ? Vous ne pourrez pas la supprimer si elle contient des produits."
-    confirmText="Oui, supprimer"
+    message="Supprimer cette catégorie ?"
+    confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
 

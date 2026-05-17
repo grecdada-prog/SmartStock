@@ -103,7 +103,7 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'role:supe
     Route::get('/users/{user}/edit', [SuperAdminUserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{user}', [SuperAdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [SuperAdminUserController::class, 'destroy'])->middleware('throttle:10,60')->name('users.destroy');
-    Route::post('/users/{user}/reset-password', [SuperAdminUserController::class, 'resetPassword'])->middleware('throttle:5,60')->name('users.reset-password');
+    Route::post('/users/{user}/reset-password', [SuperAdminUserController::class, 'resetPassword'])->middleware('throttle:30,1')->name('users.reset-password');
     Route::post('/users/{user}/toggle-status', [SuperAdminUserController::class, 'toggleStatus'])->middleware('throttle:20,60')->name('users.toggle-status');
     Route::post('/users/{user}/force-logout', [SuperAdminUserController::class, 'forceLogout'])->middleware('throttle:20,60')->name('users.force-logout');
 
@@ -158,7 +158,7 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::get('/sellers/{user}/edit', [ManagerSellerController::class, 'edit'])->name('sellers.edit');
     Route::put('/sellers/{user}', [ManagerSellerController::class, 'update'])->name('sellers.update');
     Route::delete('/sellers/{user}', [ManagerSellerController::class, 'destroy'])->middleware('throttle:10,60')->name('sellers.destroy');
-    Route::post('/sellers/{user}/reset-password', [ManagerSellerController::class, 'resetPassword'])->middleware('throttle:5,60')->name('sellers.reset-password');
+    Route::post('/sellers/{user}/reset-password', [ManagerSellerController::class, 'resetPassword'])->middleware('throttle:30,1')->name('sellers.reset-password');
     Route::post('/sellers/{user}/toggle-status', [ManagerSellerController::class, 'toggleStatus'])->middleware('throttle:20,60')->name('sellers.toggle-status');
     Route::post('/sellers/{user}/force-logout', [ManagerSellerController::class, 'forceLogout'])->middleware('throttle:20,60')->name('sellers.force-logout');
     Route::post('/sellers/{user}/cash-register/close', [ManagerSellerController::class, 'closeCashRegister'])

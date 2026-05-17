@@ -115,8 +115,8 @@
 <x-modal-confirm
     id="cleanup-sessions"
     title="Nettoyer les sessions expirées"
-    message="Voulez-vous vraiment déconnecter toutes les sessions expirées ? Cette action affectera tous les utilisateurs dont la session a expiré."
-    confirmText="Oui, nettoyer"
+    message="Supprimer les sessions expirées ?"
+    confirmText="Nettoyer"
     cancelText="Annuler"
     type="warning" />
 
@@ -124,7 +124,7 @@
 <x-modal-confirm
     id="disconnect-session"
     title="Déconnecter l'utilisateur"
-    message="Voulez-vous vraiment déconnecter cet utilisateur ? Il devra se reconnecter pour accéder à nouveau au système."
-    confirmText="Oui, déconnecter"
+    message="Déconnecter cet utilisateur ?"
+    confirmText="Déconnecter"
     cancelText="Annuler"
     type="danger" />
