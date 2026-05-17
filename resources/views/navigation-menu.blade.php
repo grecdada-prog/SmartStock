@@ -26,6 +26,9 @@
                         <x-nav-link href="{{ route('superadmin.dashboard') }}" :active="request()->routeIs('superadmin.dashboard')">
                             Dashboard
                         </x-nav-link>
+                        <x-nav-link href="{{ route('superadmin.statistics') }}" :active="request()->routeIs('superadmin.statistics')">
+                            Statistiques
+                        </x-nav-link>
                     @elseif(auth()->user()->hasRole('manager'))
                         <x-nav-link href="{{ route('manager.dashboard') }}" :active="request()->routeIs('manager.dashboard')">
                             Dashboard
@@ -116,6 +119,9 @@
             @if(auth()->user()->hasRole('super_admin'))
                 <x-responsive-nav-link href="{{ route('superadmin.dashboard') }}" :active="request()->routeIs('superadmin.dashboard')">
                     Dashboard
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('superadmin.statistics') }}" :active="request()->routeIs('superadmin.statistics')">
+                    Statistiques
                 </x-responsive-nav-link>
             @elseif(auth()->user()->hasRole('manager'))
                 <x-responsive-nav-link href="{{ route('manager.dashboard') }}" :active="request()->routeIs('manager.dashboard')">

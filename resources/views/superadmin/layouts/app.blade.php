@@ -50,6 +50,9 @@
                             <x-nav-link href="{{ route('superadmin.sales') }}" :active="request()->routeIs('superadmin.sales')">
                                 Ventes
                             </x-nav-link>
+                            <x-nav-link href="{{ route('superadmin.statistics') }}" :active="request()->routeIs('superadmin.statistics')">
+                                Statistiques
+                            </x-nav-link>
                             <x-nav-link href="{{ route('superadmin.anomalies') }}" :active="request()->routeIs('superadmin.anomalies')">
                                 Anomalies
                             </x-nav-link>
@@ -140,6 +143,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('superadmin.sales') }}" :active="request()->routeIs('superadmin.sales')">
                         Ventes
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link href="{{ route('superadmin.statistics') }}" :active="request()->routeIs('superadmin.statistics')">
+                        Statistiques
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('superadmin.anomalies') }}" :active="request()->routeIs('superadmin.anomalies')">
                         Anomalies
