@@ -3,20 +3,19 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\ActivityLog;
 use App\Models\CashBalanceAdjustment;
 use App\Models\CashRegisterClosure;
-use App\Services\SessionManager;
-use App\Services\PasswordSetupLinkService;
-use App\Services\CashRegisterService;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rules\Password;
-use App\Notifications\UserCreatedNotification;
+use App\Models\User;
 use App\Notifications\Enable2FANotification;
 use App\Notifications\PasswordResetNotification;
+use App\Notifications\UserCreatedNotification;
+use App\Services\CashRegisterService;
+use App\Services\PasswordSetupLinkService;
+use App\Services\SessionManager;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ManagerSellerController extends Controller
 {
@@ -37,9 +36,9 @@ class ManagerSellerController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('email', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -53,8 +52,18 @@ class ManagerSellerController extends Controller
             ->latest('closed_at')
             ->take(12)
             ->get();
+        $closedCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellerIds)
+            ->whereNull('opened_at')
+            ->whereDate('business_date', today())
+            ->pluck('seller_id')
+            ->all();
+        $openCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellerIds)
+            ->whereNotNull('opened_at')
+            ->whereDate('business_date', today())
+            ->pluck('seller_id')
+            ->all();
 
-        return view('manager.sellers.index', compact('sellers', 'cashBalances', 'cashRegisterClosures'));
+        return view('manager.sellers.index', compact('sellers', 'cashBalances', 'cashRegisterClosures', 'closedCashRegisterSellerIds', 'openCashRegisterSellerIds'));
     }
 
     /**
@@ -67,13 +76,13 @@ class ManagerSellerController extends Controller
 
         // Charger les relations nécessaires
         $user->load([
-            'sales' => function($query) {
+            'sales' => function ($query) {
                 $query->latest()->limit(10);
             },
-            'activityLogs' => function($query) {
+            'activityLogs' => function ($query) {
                 $query->latest()->limit(10);
             },
-            'creator'
+            'creator',
         ]);
 
         $cashRegisterService = app(CashRegisterService::class);
@@ -110,16 +119,15 @@ class ManagerSellerController extends Controller
      */
     public function store(Request $request)
     {
+        $this->normalizeContactInputs($request);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-            'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'email' => $this->strictEmailRules('unique:users'),
+            'phone' => $this->phoneRules(),
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
             'is_active' => ['boolean'],
-        ], [
-            'email.regex' => 'Le format de l\'email est invalide.',
-            'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-        ]);
+        ], $this->contactValidationMessages());
 
         $user = User::create([
             'name' => $validated['name'],
@@ -134,7 +142,7 @@ class ManagerSellerController extends Controller
 
         ActivityLog::log(
             'seller_created',
-            "Vendeur créé : {$user->name} par le gérant " . auth()->user()->name,
+            "Vendeur créé : {$user->name} par le gérant ".auth()->user()->name,
             'User',
             $user->id
         );
@@ -142,7 +150,7 @@ class ManagerSellerController extends Controller
         // Envoyer les emails de notification
         $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
         $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
-        $user->notify(new Enable2FANotification());
+        $user->notify(new Enable2FANotification);
 
         return redirect()->route('manager.sellers.index')
             ->with('success', 'Vendeur cree.');
@@ -167,17 +175,15 @@ class ManagerSellerController extends Controller
     {
         // Vérifier que le vendeur appartient bien au manager
         $this->authorize('manageSeller', $user);
+        $this->normalizeContactInputs($request);
 
         // Vérifier que c'est bien un vendeur
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id, 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-            'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'email' => $this->strictEmailRules('unique:users,email,'.$user->id),
+            'phone' => $this->phoneRules(),
             'is_active' => ['boolean'],
-        ], [
-            'email.regex' => 'Le format de l\'email est invalide.',
-            'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-        ]);
+        ], $this->contactValidationMessages());
 
         $user->update([
             'name' => $validated['name'],
@@ -263,12 +269,12 @@ class ManagerSellerController extends Controller
         // Vérifier que le vendeur appartient bien au manager
         $this->authorize('manageSeller', $user);
 
-        $newStatus = !$user->is_active;
+        $newStatus = ! $user->is_active;
         $user->update(['is_active' => $newStatus]);
 
         ActivityLog::log(
             'seller_status_changed',
-            "Statut changé pour {$user->name} : " . ($newStatus ? 'activé' : 'désactivé'),
+            "Statut changé pour {$user->name} : ".($newStatus ? 'activé' : 'désactivé'),
             'User',
             $user->id
         );
@@ -286,7 +292,7 @@ class ManagerSellerController extends Controller
 
         $isOnline = SessionManager::isUserOnline($user->id);
 
-        if (!$isOnline) {
+        if (! $isOnline) {
             return back()->with('error', 'Vendeur hors ligne.');
         }
 
@@ -309,12 +315,10 @@ class ManagerSellerController extends Controller
     {
         $this->authorize('manageSeller', $user);
 
-        $pendingClosure = $cashRegisterService->pendingClosureForSeller($user);
-
-        if ($pendingClosure) {
+        if (! $cashRegisterService->isOpenForSeller($user)) {
             return back()->with(
                 'warning',
-                'Caisse deja fermee.'
+                'La caisse de ce vendeur n\'est pas ouverte.'
             );
         }
 
@@ -344,8 +348,6 @@ class ManagerSellerController extends Controller
         if ($validated['type'] === 'withdraw') {
             $request->validate([
                 'reason' => ['required', 'string', 'max:255'],
-            ], [
-                'reason.required' => 'Veuillez renseigner le motif du retrait.',
             ]);
         }
 
@@ -368,29 +370,16 @@ class ManagerSellerController extends Controller
 
     private function cashBalancesForSellers($sellerIds)
     {
-        $closedRevenue = CashRegisterClosure::whereIn('seller_id', $sellerIds)
-            ->select('seller_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('seller_id')
-            ->pluck('total', 'seller_id');
+        $cashRegisterService = app(CashRegisterService::class);
+        $sellers = User::whereIn('id', $sellerIds)->get()->keyBy('id');
 
-        $additions = CashBalanceAdjustment::whereIn('seller_id', $sellerIds)
-            ->where('type', 'add')
-            ->select('seller_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('seller_id')
-            ->pluck('total', 'seller_id');
-
-        $withdrawals = CashBalanceAdjustment::whereIn('seller_id', $sellerIds)
-            ->where('type', 'withdraw')
-            ->select('seller_id', DB::raw('SUM(amount) as total'))
-            ->groupBy('seller_id')
-            ->pluck('total', 'seller_id');
-
-        return $sellerIds->mapWithKeys(function ($sellerId) use ($closedRevenue, $additions, $withdrawals) {
+        return $sellerIds->mapWithKeys(function ($sellerId) use ($cashRegisterService, $sellers) {
             return [
-                $sellerId => (float) ($closedRevenue[$sellerId] ?? 0)
-                    + (float) ($additions[$sellerId] ?? 0)
-                    - (float) ($withdrawals[$sellerId] ?? 0),
+                $sellerId => $sellers->has($sellerId)
+                    ? $cashRegisterService->balanceForSeller($sellers[$sellerId])
+                    : 0,
             ];
         });
     }
 }
+

@@ -3,7 +3,7 @@
 @section('title', 'Gestion des Vendeurs')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8">
+<div class="px-4 sm:px-6 lg:px-8" x-data="{ closeCashRegisterId: null }">
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Vendeurs</h1>
@@ -94,6 +94,16 @@
                                             <a href="{{ route('superadmin.sellers.edit', $seller) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
                                                 Modifier
                                             </a>
+                                            @if(in_array($seller->id, $openCashRegisterSellerIds, true))
+                                                <form method="POST" action="{{ route('superadmin.sellers.cash-register.close', $seller) }}" x-on:modal-confirmed-close-cash-register.window="if(closeCashRegisterId === {{ $seller->id }}) $el.submit()">
+                                                    @csrf
+                                                    <input type="hidden" name="reason" value="Cloture depuis la liste des vendeurs par le superadmin.">
+                                                    <input type="hidden" name="redirect_to" value="index">
+                                                    <button type="button" @click="closeCashRegisterId = {{ $seller->id }}; $dispatch('open-modal-close-cash-register')" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none">
+                                                        Cloturer la caisse
+                                                    </button>
+                                                </form>
+                                            @endif
                                             @if($seller->id !== auth()->id())
                                                 <div x-data="{ deleteSellerId: null }">
                                                     <form method="POST"
@@ -138,4 +148,12 @@
     confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
+
+<x-modal-confirm
+    id="close-cash-register"
+    title="Cloturer la caisse"
+    message="Verifier l etat de la caisse et la cloturer si elle est ouverte."
+    confirmText="Cloturer"
+    cancelText="Annuler"
+    type="success" />
 @endsection

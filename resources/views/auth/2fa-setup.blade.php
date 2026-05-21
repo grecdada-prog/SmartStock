@@ -29,6 +29,35 @@
                 </p>
             </div>
 
+            @if($user->google2fa_enabled)
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="rounded-md border border-rose-200 bg-rose-50 p-4">
+                        <h3 class="text-lg font-medium text-rose-900">
+                            2FA deja activee
+                        </h3>
+                        <p class="mt-2 text-sm text-rose-800">
+                            Votre compte utilise deja l'authentification a deux facteurs. Pour la desactiver, confirmez votre mot de passe.
+                        </p>
+                    </div>
+
+                    <form action="{{ route('2fa.disable') }}" method="POST" class="mt-6 max-w-sm">
+                        @csrf
+                        <div class="mb-4">
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                                Mot de passe
+                            </label>
+                            <input id="password" name="password" type="password" required autofocus
+                                class="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500">
+                        </div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150">
+                            Desactiver l'authentification a deux facteurs
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @else
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="px-4 py-5 sm:p-6">
                     <!-- Étapes de configuration -->
@@ -126,11 +155,12 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Bouton retour -->
             <div class="mt-6 text-center">
-                <a href="{{ url()->previous() }}" class="text-sm text-rose-600 hover:text-rose-500">
-                    ← Retour
+                <a href="{{ route('dashboard') }}" class="text-sm text-rose-600 hover:text-rose-500">
+                    &larr; Retour au dashboard
                 </a>
             </div>
         </div>
@@ -138,10 +168,12 @@
 
     <script>
         const input = document.getElementById('one_time_password');
-        
-        input.addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
+
+        if (input) {
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
     </script>
 </body>
 </html>

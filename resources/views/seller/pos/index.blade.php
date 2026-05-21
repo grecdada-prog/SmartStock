@@ -53,7 +53,7 @@
                                 <div class="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
                                     <span class="truncate text-sm font-semibold text-gray-900" x-text="product.name" :title="product.name"></span>
                                     <span class="hidden text-gray-300 sm:inline">-</span>
-                                    <span class="shrink-0 text-sm font-bold text-rose-600" x-text="formatPrice(product.selling_price)"></span>
+                                    <span class="shrink-0 text-sm font-bold text-rose-600" x-text="formatPrice(productDisplayPrice(product))"></span>
                                     <span x-show="product.quantity <= 0" class="shrink-0 text-xs font-medium text-red-600">Indisponible</span>
                                 </div>
                             </div>
@@ -99,7 +99,11 @@
                         <div class="mb-2 flex items-center gap-2 border-b border-gray-200 pb-2">
                             <div class="min-w-0 flex-1">
                                 <h4 class="truncate text-xs font-semibold text-gray-900" x-text="item.name" :title="item.name"></h4>
-                                <p class="text-xs text-gray-500" x-text="formatPrice(item.price) + ' × ' + item.quantity"></p>
+                                <div class="space-y-0.5 text-xs text-gray-500">
+                                    <template x-for="(line, lineIndex) in item.priceLines" :key="lineIndex">
+                                        <p x-text="formatPrice(line.price) + ' x ' + line.quantity"></p>
+                                    </template>
+                                </div>
                             </div>
                             <div class="flex items-center gap-1">
                                 <button @click="updateQuantity(index, -1)" class="flex h-6 w-6 items-center justify-center rounded bg-gray-200 hover:bg-gray-300">
@@ -145,8 +149,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement</label>
                         <select x-model="paymentMethod" @change="handlePaymentMethodChange()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                             <option value="cash">Espèces</option>
-                            <option value="card">Orange Money</option>
-                            <option value="mobile_money">MTN Momo</option>
+                            <option value="mobile_money">Paiement mobile</option>
                         </select>
                     </div>
 
@@ -188,15 +191,17 @@
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                         >
                         <input
-                            type="text"
+                            type="tel"
                             x-model="customerPhone"
+                            data-phone-format
+                            @smartstore:phone-formatted="customerPhone = $event.target.value"
                             :placeholder="paymentMethod === 'cash' ? 'Telephone (optionnel)' : 'Numero telephone obligatoire'"
                             :required="paymentMethod !== 'cash'"
                             placeholder="Téléphone (optionnel)"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                         >
-                        <p x-show="paymentMethod !== 'cash'" class="text-xs text-gray-500">
-                            Le numero est obligatoire pour Orange Money et MTN Momo.
+                        <p x-show="paymentMethod !== 'cash'" class="text-xs" :class="mobileOperator ? 'text-gray-500' : 'text-red-600'">
+                            <span x-text="mobileOperator ? ('Operateur detecte : ' + mobileOperatorLabel) : 'Numero Orange Money ou MTN Momo Cameroun obligatoire.'"></span>
                         </p>
                     </div>
 
@@ -204,7 +209,7 @@
                     <div class="space-y-2 pt-2">
                         <button
                             @click="processSale()"
-                            :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0) || (paymentMethod !== 'cash' && !customerPhone.trim())"
+                            :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0) || (paymentMethod !== 'cash' && (!customerPhone.trim() || !mobileOperator))"
                             class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg x-show="!processing" class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,6 +226,9 @@
                         </p>
                         <p x-show="paymentMethod !== 'cash' && cart.length > 0 && !customerPhone.trim()" class="text-sm text-red-600 text-center">
                             Renseignez le numero de telephone pour ce paiement.
+                        </p>
+                        <p x-show="paymentMethod !== 'cash' && cart.length > 0 && customerPhone.trim() && !mobileOperator" class="text-sm text-red-600 text-center">
+                            Numero non reconnu pour Orange Money ou MTN Momo Cameroun.
                         </p>
 
                         <button
@@ -291,6 +299,53 @@
         </div>
     </div>
 
+    <!-- Modal attente paiement mobile -->
+    <div
+        x-show="mobilePaymentWaiting"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4 py-6"
+        role="dialog"
+        aria-modal="true"
+    >
+        <div
+            x-show="mobilePaymentWaiting"
+            x-transition
+            @click.outside.stop
+            class="w-full max-w-md rounded-lg bg-white p-5 shadow-2xl"
+        >
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100">
+                    <svg class="h-6 w-6 animate-spin text-rose-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <h3 class="text-base font-semibold text-gray-900">Confirmation du paiement</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Demande envoyee par USSD au <span class="font-semibold" x-text="customerPhone"></span>.
+                    </p>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <span x-text="mobileOperatorLabel"></span> attend la validation du client.
+                    </p>
+                    <p x-show="mobilePaymentMessage" class="mt-3 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700" x-text="mobilePaymentMessage"></p>
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                    type="button"
+                    @click="cancelMobilePayment()"
+                    :disabled="mobilePaymentCanceling"
+                    class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-wait disabled:opacity-60"
+                >
+                    <span x-text="mobilePaymentCanceling ? 'Annulation...' : 'Annuler la transaction'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification locale POS -->
     <div
         x-show="showToast"
@@ -343,6 +398,10 @@ function posSystem() {
         customerName: '',
         customerPhone: '',
         showCustomerInfo: false,
+        mobilePaymentWaiting: false,
+        mobilePaymentCanceling: false,
+        mobilePaymentRef: '',
+        mobilePaymentMessage: '',
 
         // UI
         processing: false,
@@ -355,6 +414,9 @@ function posSystem() {
 
         init() {
             this.$watch('selectedCategory', () => this.filterProducts());
+            this.$watch('customerPhone', () => this.detectMobileOperator());
+            window.addEventListener('smartstock:mobile-payment-confirmed', (event) => this.handleMobilePaymentConfirmed(event.detail || {}));
+            window.addEventListener('smartstock:mobile-payment-failed', (event) => this.handleMobilePaymentFailed(event.detail || {}));
         },
 
         searchProducts() {
@@ -390,7 +452,7 @@ function posSystem() {
                     }
                 });
 
-                const data = await response.json();
+                const data = await this.parseJsonResponse(response);
 
                 if (!response.ok || !data.success) {
                     throw new Error(data.message || 'Refresh failed');
@@ -419,6 +481,7 @@ function posSystem() {
 
                 if (newQuantity <= existingItem.maxQuantity) {
                     existingItem.quantity = newQuantity;
+                    existingItem.priceLines = this.productPriceLines(existingItem, newQuantity);
                 } else {
                     this.showNotification('Stock insuffisant', 'error');
                 }
@@ -432,9 +495,11 @@ function posSystem() {
                     id: product.id,
                     name: product.name,
                     sku: product.sku,
-                    price: product.selling_price,
+                    price: this.productDisplayPrice(product),
                     quantity: requestedQuantity,
-                    maxQuantity: product.quantity
+                    maxQuantity: product.quantity,
+                    stockMovements: product.stock_movements || [],
+                    priceLines: this.productPriceLines(product, requestedQuantity),
                 });
             }
 
@@ -454,6 +519,7 @@ function posSystem() {
                 this.removeFromCart(index);
             } else if (newQuantity <= item.maxQuantity) {
                 item.quantity = newQuantity;
+                item.priceLines = this.productPriceLines(item, newQuantity);
                 this.calculateChange();
             } else {
                 this.showNotification('Stock insuffisant', 'error');
@@ -468,8 +534,10 @@ function posSystem() {
                 this.removeFromCart(index);
             } else if (newQuantity <= item.maxQuantity) {
                 item.quantity = newQuantity;
+                item.priceLines = this.productPriceLines(item, newQuantity);
             } else {
                 item.quantity = item.maxQuantity;
+                item.priceLines = this.productPriceLines(item, item.maxQuantity);
                 this.showNotification('Stock insuffisant', 'error');
             }
 
@@ -481,7 +549,9 @@ function posSystem() {
         },
 
         get cartTotal() {
-            return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            return this.cart.reduce((total, item) => {
+                return total + item.priceLines.reduce((lineTotal, line) => lineTotal + line.subtotal, 0);
+            }, 0);
         },
 
         calculateChange() {
@@ -490,6 +560,52 @@ function posSystem() {
             } else {
                 this.change = 0;
             }
+        },
+
+        get mobileOperator() {
+            return this.operatorForCameroonPhone(this.customerPhone);
+        },
+
+        get mobileOperatorLabel() {
+            if (this.mobileOperator === 'CM_ORANGEMONEY') {
+                return 'Orange Money';
+            }
+
+            if (this.mobileOperator === 'CM_MTNMOBILEMONEY') {
+                return 'MTN Momo';
+            }
+
+            return 'Paiement mobile';
+        },
+
+        detectMobileOperator() {
+            return this.mobileOperator;
+        },
+
+        operatorForCameroonPhone(phone) {
+            let digits = String(phone || '').replace(/\D/g, '');
+
+            if (digits.length === 12 && digits.startsWith('237')) {
+                digits = digits.slice(3);
+            }
+
+            if (digits.length !== 9 || !digits.startsWith('6')) {
+                return null;
+            }
+
+            const prefix = Number(digits.slice(0, 3));
+            const isMtn = (prefix >= 650 && prefix <= 654) || (prefix >= 670 && prefix <= 679) || (prefix >= 680 && prefix <= 683);
+            const isOrange = (prefix >= 655 && prefix <= 659) || (prefix >= 685 && prefix <= 689) || (prefix >= 690 && prefix <= 699);
+
+            if (isMtn) {
+                return 'CM_MTNMOBILEMONEY';
+            }
+
+            if (isOrange) {
+                return 'CM_ORANGEMONEY';
+            }
+
+            return null;
         },
 
         handlePaymentMethodChange() {
@@ -506,6 +622,50 @@ function posSystem() {
             return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
         },
 
+        productDisplayPrice(product) {
+            return Number(product.fifo_selling_price ?? product.selling_price ?? 0);
+        },
+
+        productPriceLines(product, quantity) {
+            let remaining = Math.max(0, Math.floor(Number(quantity || 0)));
+            const lines = [];
+            const batches = product.stockMovements || product.stock_movements || [];
+
+            batches.forEach(batch => {
+                if (remaining <= 0) {
+                    return;
+                }
+
+                const available = Math.max(0, Math.floor(Number(batch.remaining_quantity || 0)));
+                if (available <= 0) {
+                    return;
+                }
+
+                const taken = Math.min(remaining, available);
+                const price = Number(batch.selling_price ?? product.selling_price ?? product.price ?? 0);
+
+                lines.push({
+                    quantity: taken,
+                    price,
+                    subtotal: taken * price,
+                });
+
+                remaining -= taken;
+            });
+
+            if (remaining > 0) {
+                const price = Number(product.selling_price ?? product.price ?? 0);
+
+                lines.push({
+                    quantity: remaining,
+                    price,
+                    subtotal: remaining * price,
+                });
+            }
+
+            return lines;
+        },
+
         clearCart() {
             this.cart = [];
             this.amountReceived = '';
@@ -516,6 +676,10 @@ function posSystem() {
             this.saleCompleted = false;
             this.lastReceiptUrl = '';
             this.lastInvoiceNumber = '';
+            this.mobilePaymentWaiting = false;
+            this.mobilePaymentCanceling = false;
+            this.mobilePaymentRef = '';
+            this.mobilePaymentMessage = '';
         },
 
         async processSale() {
@@ -540,6 +704,11 @@ function posSystem() {
                 return;
             }
 
+            if (this.paymentMethod !== 'cash') {
+                await this.startMobilePayment();
+                return;
+            }
+
             this.processing = true;
 
             const saleData = {
@@ -551,7 +720,7 @@ function posSystem() {
                 payment_method: this.paymentMethod,
                 amount_received: this.paymentMethod === 'cash' ? this.amountReceived : this.cartTotal,
                 customer_name: this.customerName || null,
-                customer_phone: this.customerPhone || null,
+                customer_phone: this.customerPhone ? this.customerPhone.replace(/\D/g, '') : null,
                 _token: '{{ csrf_token() }}'
             };
 
@@ -566,7 +735,7 @@ function posSystem() {
                     body: JSON.stringify(saleData)
                 });
 
-                const data = await response.json();
+                const data = await this.parseJsonResponse(response);
 
                 if (data.success) {
                     this.showNotification('Vente enregistrée avec succès!', 'success');
@@ -591,6 +760,137 @@ function posSystem() {
             }
         },
 
+        async startMobilePayment() {
+            if (!this.mobileOperator) {
+                this.showNotification('Numero non reconnu pour Orange Money ou MTN Momo Cameroun.', 'error');
+                return;
+            }
+
+            this.processing = true;
+            this.mobilePaymentMessage = '';
+
+            const paymentData = {
+                items: this.cart.map(item => ({
+                    product_id: item.id,
+                    quantity: item.quantity,
+                })),
+                payment_method: 'mobile_money',
+                customer_name: this.customerName || null,
+                customer_phone: this.customerPhone ? this.customerPhone.replace(/\D/g, '') : null,
+                _token: '{{ csrf_token() }}'
+            };
+
+            try {
+                const response = await fetch('{{ route("seller.pos.mobile-payment.start") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const data = await this.parseJsonResponse(response);
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Paiement mobile echoue.');
+                }
+
+                this.mobilePaymentRef = data.payment_ref || '';
+                this.mobilePaymentMessage = data.monetbil_enabled
+                    ? 'Le client doit confirmer la demande sur son telephone.'
+                    : 'Integration prete : Monetbil est desactive dans la configuration, aucun USSD reel n est envoye.';
+                this.mobilePaymentWaiting = true;
+            } catch (error) {
+                this.showNotification(error.message || 'Paiement mobile echoue.', 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+
+        async cancelMobilePayment() {
+            if (!this.mobilePaymentRef) {
+                this.mobilePaymentWaiting = false;
+                return;
+            }
+
+            this.mobilePaymentCanceling = true;
+
+            try {
+                const response = await fetch('{{ route("seller.pos.mobile-payment.cancel") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payment_ref: this.mobilePaymentRef,
+                        _token: '{{ csrf_token() }}'
+                    })
+                });
+                const data = await this.parseJsonResponse(response);
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Annulation impossible.');
+                }
+
+                this.mobilePaymentWaiting = false;
+                this.mobilePaymentRef = '';
+                this.mobilePaymentMessage = '';
+                this.showNotification(data.message || 'Transaction mobile annulee.', 'error');
+            } catch (error) {
+                this.showNotification(error.message || 'Annulation impossible.', 'error');
+            } finally {
+                this.mobilePaymentCanceling = false;
+            }
+        },
+
+        handleMobilePaymentConfirmed(data) {
+            this.mobilePaymentWaiting = false;
+            this.mobilePaymentRef = '';
+            this.mobilePaymentMessage = '';
+            this.lastReceiptUrl = data.sale_id ? '{{ route("seller.pos.receipt", ":id") }}'.replace(':id', data.sale_id) : '';
+            this.lastInvoiceNumber = data.invoice_number || '';
+            this.saleCompleted = true;
+            this.clearCartAfterSale();
+            window.dispatchEvent(new CustomEvent('smartstore:refresh-now'));
+        },
+
+        handleMobilePaymentFailed(data) {
+            this.mobilePaymentWaiting = false;
+            this.mobilePaymentRef = '';
+            this.mobilePaymentMessage = '';
+            this.showNotification(data.message || 'Paiement mobile echoue.', 'error');
+        },
+
+        async parseJsonResponse(response) {
+            let data = {};
+
+            try {
+                data = await response.json();
+            } catch (error) {
+                data = {};
+            }
+
+            if ([401, 419].includes(response.status)) {
+                this.showNotification(data.message || 'Votre session a expire. Veuillez vous reconnecter.', 'error');
+
+                if (data.redirect) {
+                    setTimeout(() => window.location.assign(data.redirect), 1200);
+                }
+
+                throw new Error(data.message || 'Votre session a expire.');
+            }
+
+            if (response.status === 429) {
+                throw new Error(data.message || 'Trop de tentatives. Veuillez patienter quelques secondes puis reessayer.');
+            }
+
+            return data;
+        },
+
         clearCartAfterSale() {
             this.cart = [];
             this.amountReceived = '';
@@ -599,6 +899,10 @@ function posSystem() {
             this.customerPhone = '';
             this.showCustomerInfo = false;
             this.paymentMethod = 'cash';
+            this.mobilePaymentWaiting = false;
+            this.mobilePaymentCanceling = false;
+            this.mobilePaymentRef = '';
+            this.mobilePaymentMessage = '';
         },
 
         openReceipt() {

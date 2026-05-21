@@ -36,7 +36,7 @@ class RolePageSmokeTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DemoDataSeeder::class);
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
 
         $routes = [
             'superadmin.dashboard',

@@ -23,7 +23,7 @@ class DemoDataSeederTest extends TestCase
         $this->seed(DemoDataSeeder::class);
         $this->seed(DemoDataSeeder::class);
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
         $manager = User::where('email', 'bertholfyllias200@gmail.com')->firstOrFail();
         $seller = User::where('email', 'grecdada@gmail.com')->firstOrFail();
 

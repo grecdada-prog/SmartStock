@@ -15,7 +15,11 @@ class PreventDirectAccess
         }
 
         if ($request->expectsJson()) {
-            abort(401, 'Non authentifié.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre session a expire. Veuillez vous reconnecter.',
+                'redirect' => route('login', ['inactive' => 1]),
+            ], 401);
         }
 
         return redirect()->route('login');
@@ -25,9 +29,11 @@ class PreventDirectAccess
     {
         return $request->is(
             '/',
+            'csrf-token',
             'login',
             'superadmin/login',
             '2fa/verify',
+            'payments/monetbil/callback',
             'forgot-password',
             'reset-password',
             'reset-password/*',

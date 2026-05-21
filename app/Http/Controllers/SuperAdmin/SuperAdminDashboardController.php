@@ -44,6 +44,9 @@ class SuperAdminDashboardController extends Controller
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
+            'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
+            'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
+            'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
         ];
 
         $onlineUsers = SessionManager::getOnlineCountByRole();
@@ -299,6 +302,9 @@ class SuperAdminDashboardController extends Controller
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
+            'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
+            'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
+            'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
         ];
 
         return view('superadmin.sales', compact('sales', 'sellers', 'stats'));
@@ -470,45 +476,14 @@ class SuperAdminDashboardController extends Controller
             ->orderBy('name')
             ->get()
             ->map(function (User $seller) use ($cashRegisterService) {
-                $todayClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereDate('business_date', today())
-                    ->first();
-                $pendingClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereNull('opened_at')
-                    ->latest('closed_at')
-                    ->first();
-                $lastOpenedClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereNotNull('opened_at')
-                    ->latest('opened_at')
-                    ->first();
-                $currentSessionOpenedAt = $todayClosure?->opened_at;
-
-                if (!$currentSessionOpenedAt && $lastOpenedClosure?->opened_at?->isToday()) {
-                    $currentSessionOpenedAt = $lastOpenedClosure->opened_at;
-                }
-
-                $todayRevenueQuery = Sale::where('seller_id', $seller->id)
-                    ->whereDate('created_at', today());
-
-                if ($pendingClosure) {
-                    $todayRevenueQuery->whereRaw('1 = 0');
-                } elseif ($currentSessionOpenedAt) {
-                    $todayRevenueQuery->where('created_at', '>=', $currentSessionOpenedAt);
-                }
-
-                $yesterdayClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereDate('business_date', today()->subDay())
-                    ->first();
-                $yesterdayRevenue = $yesterdayClosure?->amount
-                    ?? Sale::where('seller_id', $seller->id)
-                        ->whereDate('created_at', today()->subDay())
-                        ->sum('total');
-
                 return [
                     'seller' => $seller,
                     'cash_balance' => (float) $cashRegisterService->balanceForSeller($seller),
-                    'today_revenue' => (float) $todayRevenueQuery->sum('total'),
-                    'yesterday_revenue' => (float) $yesterdayRevenue,
+                    'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($seller),
+                    'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
+                    'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
+                    'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
+                    'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($seller),
                 ];
             });
     }
@@ -542,6 +517,9 @@ class SuperAdminDashboardController extends Controller
                     'today_revenue' => (float) $sellerFinancialRows->sum('today_revenue'),
                     'yesterday_revenue' => (float) $sellerFinancialRows->sum('yesterday_revenue'),
                     'cash_balance' => (float) $sellerFinancialRows->sum('cash_balance'),
+                    'orange_money_balance' => (float) $sellerFinancialRows->sum('orange_money_balance'),
+                    'mtn_momo_balance' => (float) $sellerFinancialRows->sum('mtn_momo_balance'),
+                    'mobile_money_balance' => (float) $sellerFinancialRows->sum('mobile_money_balance'),
                     'pending_closures' => CashRegisterClosure::whereIn('seller_id', $sellerIds)
                         ->whereNull('opened_at')
                         ->count(),
@@ -702,3 +680,4 @@ class SuperAdminDashboardController extends Controller
             ->values();
     }
 }
+

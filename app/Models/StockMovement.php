@@ -19,6 +19,7 @@ class StockMovement extends Model
         'selling_price',
         'remaining_quantity',
         'batch_code',
+        'barcode',
         'reference',
         'reason',
         'user_id',

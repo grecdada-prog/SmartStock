@@ -7,7 +7,13 @@
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
-            <h1 class="text-2xl font-semibold text-gray-900">Historique des Mouvements de Stock</h1>
+            <h1 class="text-2xl font-semibold text-gray-900">
+                @if($selectedProduct)
+                    Historique de {{ $selectedProduct->name }}
+                @else
+                    Historique des Mouvements de Stock
+                @endif
+            </h1>
             <p class="mt-2 text-sm text-gray-700">Traçabilité complète de tous les mouvements</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16">
@@ -23,7 +29,7 @@
             <div>
                 <label for="product_id" class="block text-sm font-medium text-gray-700">Produit</label>
                 <select name="product_id" id="product_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
-                    <option value="">Tous les produits</option>
+                    <option value="">Choisir un produit</option>
                     @foreach($products as $product)
                         <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>
                             {{ $product->name }}
@@ -68,6 +74,9 @@
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Produit</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Quantité</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix achat</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix vente</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Lot restant</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Avant → Après</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Référence</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Raison</th>
@@ -116,6 +125,19 @@
                                         <span class="text-gray-500">{{ $movement->product->unit ?? '' }}</span>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        {{ $movement->purchase_price !== null ? number_format($movement->purchase_price, 0, ',', ' ').' FCFA' : '-' }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        {{ $movement->selling_price !== null ? number_format($movement->selling_price, 0, ',', ' ').' FCFA' : '-' }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        @if($movement->type === 'in' && $movement->remaining_quantity !== null)
+                                            {{ $movement->remaining_quantity }} {{ $movement->product->unit ?? '' }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                         {{ $movement->quantity_before }} → <span class="font-medium text-gray-900">{{ $movement->quantity_after }}</span>
                                     </td>
                                     <td class="px-3 py-4 text-sm text-gray-500">
@@ -132,7 +154,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="px-3 py-8 text-center text-sm text-gray-500">
+                                    <td colspan="11" class="px-3 py-8 text-center text-sm text-gray-500">
                                         Aucun mouvement de stock trouvé.
                                     </td>
                                 </tr>

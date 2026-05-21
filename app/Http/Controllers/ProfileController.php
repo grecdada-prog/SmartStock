@@ -35,12 +35,13 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+        $this->normalizeContactInputs($request);
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone' => ['nullable', 'string', 'max:20'],
-        ]);
+            'email' => $this->strictEmailRules('unique:users,email,' . $user->id),
+            'phone' => $this->phoneRules(),
+        ], $this->contactValidationMessages());
 
         $user->update([
             'name' => $request->name,
@@ -102,3 +103,4 @@ class ProfileController extends Controller
         return back()->with('success', 'Mot de passe modifié avec succès.');
     }
 }
+

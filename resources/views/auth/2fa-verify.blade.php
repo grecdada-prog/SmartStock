@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vérification 2FA - SmartStore</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Verification 2FA - SmartStore</title>
     <x-favicon />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -12,7 +13,6 @@
 
     <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
-            <!-- Logo et titre -->
             <div>
                 <div class="flex justify-center">
                     <div class="bg-rose-600 text-white rounded-full p-4">
@@ -22,25 +22,24 @@
                     </div>
                 </div>
                 <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    Authentification à deux facteurs
+                    Authentification a deux facteurs
                 </h2>
                 <p class="mt-2 text-center text-sm text-gray-600">
-                    Entrez le code à 6 chiffres de votre application d'authentification
+                    Entrez le code a 6 chiffres de votre application d'authentification
                 </p>
             </div>
 
-            <!-- Formulaire 2FA -->
             <div class="bg-white py-8 px-4 shadow-lg rounded-lg sm:px-10">
-                <form class="space-y-6" action="{{ route('2fa.verify.post') }}" method="POST">
+                <form id="twoFactorForm" class="space-y-6" action="{{ route('2fa.verify.post') }}" method="POST">
                     @csrf
 
-                    <!-- Code 2FA -->
                     <div>
                         <label for="one_time_password" class="block text-sm font-medium text-gray-700">
-                            Code de vérification
+                            Code de verification
                         </label>
                         <div class="mt-1">
-                            <input id="one_time_password" name="one_time_password" type="text" 
+                            <input id="one_time_password" name="one_time_password" type="text"
+                                inputmode="numeric" autocomplete="one-time-code"
                                 pattern="[0-9]{6}" maxlength="6" required autofocus
                                 placeholder="000000"
                                 class="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm text-center text-2xl tracking-widest placeholder-gray-300 focus:outline-none focus:ring-rose-500 focus:border-rose-500">
@@ -50,11 +49,10 @@
                         </p>
                     </div>
 
-                    <!-- Submit button -->
                     <div>
                         <button type="submit"
                             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition duration-150">
-                            Vérifier
+                            Verifier
                         </button>
                     </div>
                 </form>
@@ -66,14 +64,13 @@
                         </div>
                         <div class="relative flex justify-center text-sm">
                             <span class="px-2 bg-white text-gray-500">
-                                Sécurité renforcée
+                                Securite renforcee
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Aide -->
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -86,7 +83,7 @@
                             Besoin d'aide ?
                         </h3>
                         <div class="mt-2 text-sm text-blue-700">
-                            <p>Ouvrez votre application d'authentification (Google Authenticator, Authy, etc.) et entrez le code affiché.</p>
+                            <p>Ouvrez votre application d'authentification et entrez le code affiche.</p>
                         </div>
                     </div>
                 </div>
@@ -95,16 +92,56 @@
     </div>
 
     <script>
-        // Auto-focus sur le champ et validation en temps réel
         const input = document.getElementById('one_time_password');
-        
-        input.addEventListener('input', function(e) {
-            // Permet uniquement les chiffres
+        const form = document.getElementById('twoFactorForm');
+        let isSubmitting = false;
+
+        async function refreshCsrfToken() {
+            try {
+                const response = await fetch('{{ route('csrf-token') }}', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const tokenInput = form.querySelector('input[name="_token"]');
+                const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+
+                if (data.token && tokenInput) {
+                    tokenInput.value = data.token;
+                }
+
+                if (data.token && tokenMeta) {
+                    tokenMeta.setAttribute('content', data.token);
+                }
+            } catch (error) {
+                // Submit normally if the token refresh endpoint cannot be reached.
+            }
+        }
+
+        form.addEventListener('submit', async function(event) {
+            if (isSubmitting) {
+                return;
+            }
+
+            event.preventDefault();
+            isSubmitting = true;
+            await refreshCsrfToken();
+            form.requestSubmit();
+        });
+
+        input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
-            
-            // Soumet automatiquement si 6 chiffres sont entrés
+
             if (this.value.length === 6) {
-                this.form.submit();
+                form.requestSubmit();
             }
         });
     </script>

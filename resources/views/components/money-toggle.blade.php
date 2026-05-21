@@ -29,9 +29,9 @@
             }
         },
     }"
-    class="flex items-center gap-2"
+    class="flex min-w-0 max-w-full items-start justify-between gap-2"
 >
-    <span class="{{ $valueClass }} whitespace-nowrap" x-text="visible ? @js($amount) : '******'"></span>
+    <span class="{{ $valueClass }} min-w-0 break-words leading-tight" x-text="visible ? @js($amount) : '******'"></span>
     <button
         type="button"
         @click="toggle()"

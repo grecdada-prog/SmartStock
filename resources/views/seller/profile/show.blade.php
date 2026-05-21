@@ -95,6 +95,58 @@
                 </form>
             </div>
         </div>
+
+        <div class="rounded-lg bg-white shadow">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">
+                            Authentification a deux facteurs
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Protege votre compte vendeur avec un code de verification.
+                        </p>
+                    </div>
+                    @if($user->google2fa_enabled)
+                        <span class="inline-flex w-fit items-center rounded-full bg-rose-100 px-3 py-1 text-sm font-medium text-rose-800">
+                            Activee
+                        </span>
+                    @else
+                        <span class="inline-flex w-fit items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
+                            Desactivee
+                        </span>
+                    @endif
+                </div>
+
+                <div class="mt-5">
+                    @if($user->google2fa_enabled)
+                        <form method="POST" action="{{ route('2fa.disable') }}" class="flex flex-col gap-3 sm:flex-row">
+                            @csrf
+                            <input
+                                type="password"
+                                name="password"
+                                placeholder="Mot de passe"
+                                required
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:max-w-xs sm:text-sm"
+                            >
+                            <button
+                                type="submit"
+                                class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            >
+                                Desactiver 2FA
+                            </button>
+                        </form>
+                    @else
+                        <a
+                            href="{{ route('2fa.setup') }}"
+                            class="inline-flex justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                        >
+                            Activer 2FA
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

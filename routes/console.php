@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Schedule;
 use App\Services\SessionManager;
+use Illuminate\Support\Facades\Schedule;
 
 // Nettoyer les sessions expirées toutes les 15 minutes
 Schedule::call(function () {
@@ -9,10 +9,7 @@ Schedule::call(function () {
 })->everyFifteenMinutes()->name('clean-expired-sessions')->withoutOverlapping();
 
 Schedule::command('cash-registers:close-daily')
-    ->dailyAt('23:00')
+    ->dailyAt('21:30')
     ->timezone('Africa/Douala')
     ->name('close-seller-cash-registers')
     ->withoutOverlapping();
-
-// Alternative : Si vous préférez utiliser la commande
-// Schedule::command('sessions:clean')->everyFifteenMinutes();

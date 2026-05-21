@@ -13,7 +13,7 @@
     </div>
 
     <!-- Statistiques -->
-    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
@@ -30,6 +30,31 @@
                             <dd class="flex items-baseline">
                                 <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['total_sellers']) }}</div>
                             </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-md bg-orange-500 p-3">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h.01M11 15h2M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Paiements mobiles</dt>
+                            <dd>
+                                <x-money-toggle
+                                    :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
+                                    label="le solde des paiements mobiles" />
+                            </dd>
+                            <dd class="mt-1 text-xs text-gray-500">Orange Money + MTN Momo</dd>
                         </dl>
                     </div>
                 </div>

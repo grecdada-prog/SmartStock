@@ -89,8 +89,6 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:100', 'unique:products,sku'],
-            'description' => ['nullable', 'string', 'max:1000'],
             'category_id' => ['required', 'exists:categories,id'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
@@ -111,8 +109,8 @@ class ProductController extends Controller
 
         $product = Product::create([
             'name' => $validated['name'],
-            'sku' => $validated['sku'],
-            'description' => $validated['description'] ?? null,
+            'sku' => $this->generateSku($validated['name']),
+            'description' => null,
             'category_id' => $validated['category_id'],
             'purchase_price' => 0,
             'selling_price' => 0,
@@ -301,4 +299,22 @@ class ProductController extends Controller
                 ->orWhereIn('created_by', $superAdminIds);
         });
     }
+
+    private function generateSku(string $productName): string
+    {
+        $prefix = str($productName)
+            ->ascii()
+            ->upper()
+            ->replaceMatches('/[^A-Z0-9]+/', '')
+            ->substr(0, 3)
+            ->padRight(3, 'X')
+            ->toString();
+
+        do {
+            $sku = $prefix.'-'.now()->format('ymd').'-'.str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
+        } while (Product::where('sku', $sku)->exists());
+
+        return $sku;
+    }
 }
+

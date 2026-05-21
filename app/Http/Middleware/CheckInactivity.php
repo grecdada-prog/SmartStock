@@ -18,7 +18,7 @@ class CheckInactivity
 
         $user = Auth::user();
         $lastActivity = $user->last_activity;
-        $inactivityTimeout = (int) config('session.lifetime', 10);
+        $inactivityTimeout = (int) config('session.lifetime', 120);
 
         if ($request->session()->pull('just_logged_in', false)) {
             $this->touchActivity($request, $user);
@@ -39,6 +39,14 @@ class CheckInactivity
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Votre session a expire pour inactivite. Veuillez vous reconnecter.',
+                    'redirect' => route('login', ['inactive' => 1]),
+                ], 419);
+            }
 
             return redirect()
                 ->route('login')

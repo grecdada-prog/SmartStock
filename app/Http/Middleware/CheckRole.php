@@ -11,6 +11,14 @@ class CheckRole
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!auth()->check()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Votre session a expire. Veuillez vous reconnecter.',
+                    'redirect' => route('login', ['inactive' => 1]),
+                ], 401);
+            }
+
             return redirect()->route('login');
         }
 
@@ -24,6 +32,13 @@ class CheckRole
         }
 
         // Si aucun rôle ne correspond, rediriger selon le rôle de l'utilisateur
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acces non autorise.',
+            ], 403);
+        }
+
         if ($user->hasRole('super_admin')) {
             return redirect()->route('superadmin.dashboard');
         } elseif ($user->hasRole('manager')) {

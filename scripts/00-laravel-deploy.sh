@@ -3,6 +3,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+rm -f bootstrap/cache/config.php \
+    bootstrap/cache/events.php \
+    bootstrap/cache/packages.php \
+    bootstrap/cache/routes-v7.php \
+    bootstrap/cache/services.php
+
 php artisan down --retry=60 || true
 trap 'php artisan up || true' EXIT
 

@@ -94,7 +94,7 @@
                 <div class="rounded-lg bg-white shadow">
                     <div class="border-b border-gray-100 p-6">
                         <h3 class="text-lg font-medium text-gray-900">Controle de caisse</h3>
-                        <p class="mt-1 text-sm text-gray-500">Pouvoir superadmin pour intervenir a distance sur la caisse du vendeur.</p>
+                        <p class="mt-1 text-sm text-gray-500">Pouvoir superadmin pour fermer une caisse a distance. Seul le vendeur peut rouvrir sa caisse.</p>
                     </div>
                     <div class="space-y-4 p-6">
                         <div class="rounded-lg bg-gray-50 p-4">
@@ -104,27 +104,20 @@
                                 @if($pendingCashClosure)
                                     <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Caisse fermée</span>
                                     <span class="ml-2 text-gray-500">depuis le {{ $pendingCashClosure->closed_at->format('d/m/Y H:i') }}</span>
-                                @else
+                                @elseif($openCashRegister)
                                     <span class="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">Caisse ouverte</span>
+                                    <span class="ml-2 text-gray-500">depuis le {{ $openCashRegister->opened_at->format('d/m/Y H:i') }}</span>
+                                @else
+                                    <span class="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">Caisse non ouverte</span>
                                 @endif
                             </div>
                         </div>
 
                         @if($pendingCashClosure)
-                            <form method="POST" action="{{ route('superadmin.sellers.cash-register.open', $user) }}" class="space-y-3">
-                                @csrf
-                                <div>
-                                    <label for="open_reason" class="block text-sm font-medium text-gray-700">Motif de réouverture *</label>
-                                    <textarea name="reason" id="open_reason" rows="3"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reason') border-red-300 @enderror"
-                                        placeholder="Explique pourquoi la caisse doit être rouverte...">{{ old('reason') }}</textarea>
-                                </div>
-                                <button type="submit"
-                                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
-                                    Rouvrir la caisse
-                                </button>
-                            </form>
-                        @else
+                            <div class="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                                La caisse est fermee. Elle ne peut etre rouverte que par le vendeur depuis son dashboard.
+                            </div>
+                        @elseif($openCashRegister)
                             <form method="POST" action="{{ route('superadmin.sellers.cash-register.close', $user) }}" class="space-y-3">
                                 @csrf
                                 <div>
@@ -138,6 +131,10 @@
                                     Fermer la caisse
                                 </button>
                             </form>
+                        @else
+                            <div class="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                                La caisse n'est pas ouverte aujourd'hui. Seul le vendeur peut l'ouvrir depuis son dashboard.
+                            </div>
                         @endif
                     </div>
                 </div>

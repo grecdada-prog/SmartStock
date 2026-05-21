@@ -5,9 +5,9 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ showToday: false, showYesterday: false, showCash: false, showCloseModal: false, closingCash: false, openingCash: false }">
+    <div class="py-12" x-data="{ showToday: false, showYesterday: false, showCash: false, showMobile: false, showCloseModal: false, closingCash: false, openingCash: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 gap-5 lg:grid-cols-3 mb-8">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 mb-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex items-start justify-between gap-4">
@@ -26,7 +26,7 @@
                         </div>
                         <div class="mt-6">
                             <p class="text-3xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                            <p class="mt-2 text-sm text-gray-500">{{ $stats['today_cash_sales'] }} vente(s)</p>
+                            <p class="mt-2 text-sm text-gray-500">{{ $stats['today_sales'] }} vente(s), toutes methodes</p>
                         </div>
                     </div>
                 </div>
@@ -81,12 +81,35 @@
                             <p class="mt-2 text-sm text-gray-500">
                                 @if($stats['cash_register_closed_today'])
                                     Journee de vente terminee. Caisse fermee depuis le {{ $stats['cash_register_closed_at']->format('d/m/Y') }} a {{ $stats['cash_register_closed_at']->format('H:i') }}
-                                @elseif($stats['cash_register_opened_at'])
-                                    Caisse rouverte le {{ $stats['cash_register_opened_at']->format('d/m/Y') }} a {{ $stats['cash_register_opened_at']->format('H:i') }}
+                                @elseif($stats['cash_register_is_open'])
+                                    Caisse ouverte le {{ $stats['cash_register_opened_at']->format('d/m/Y') }} a {{ $stats['cash_register_opened_at']->format('H:i') }}
                                 @else
-                                    Caisse ouverte aujourd'hui
+                                    Caisse non ouverte aujourd'hui
                                 @endif
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Paiements mobiles</p>
+                                <p class="mt-1 text-xs text-gray-500">Orange Money et MTN Momo</p>
+                            </div>
+                            <button type="button" @click="showMobile = !showMobile" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer les soldes mobiles">
+                                <svg x-show="!showMobile" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
+                                </svg>
+                                <svg x-show="showMobile" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-6">
+                            <p class="text-3xl font-semibold text-gray-900" x-text="showMobile ? '{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                            <p class="mt-2 text-sm text-gray-500">Orange Money + MTN Momo</p>
                         </div>
                     </div>
                 </div>
@@ -114,11 +137,11 @@
             </div>
 
             <div class="mt-5 rounded-lg border border-red-200 bg-white p-5 shadow-sm">
-                @if($stats['cash_register_closed_today'])
+                @if(!$stats['cash_register_is_open'])
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <h3 class="text-base font-semibold text-gray-900">Caisse fermee</h3>
-                            <p class="mt-1 text-sm text-gray-500">La recette du jour est transferee dans le Solde Cash. Les ventes sont bloquees jusqu'a l'ouverture.</p>
+                            <h3 class="text-base font-semibold text-gray-900">Caisse non ouverte</h3>
+                            <p class="mt-1 text-sm text-gray-500">Les ventes sont bloquees jusqu'a votre ouverture manuelle de la caisse.</p>
                         </div>
                         <form x-ref="openForm" method="POST" action="{{ route('seller.dashboard.open-cash-register') }}">
                             @csrf
@@ -140,7 +163,7 @@
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <h3 class="text-base font-semibold text-red-900">Fermeture de caisse</h3>
-                            <p class="mt-1 text-sm text-gray-600">Action importante : elle termine la journee de vente, transfere la recette du jour dans le Solde Cash et remet la recette du jour a zero.</p>
+                            <p class="mt-1 text-sm text-gray-600">Action importante : elle termine la journee de vente, transfere les especes dans le Solde Cash et les paiements mobiles dans leur solde dedie.</p>
                         </div>
                         <button
                             type="button"
@@ -196,7 +219,7 @@
                     </button>
                     <button
                         type="button"
-                        @click="closingCash = true; setTimeout(() => $refs.closeForm.submit(), 4000)"
+                        @click="closingCash = true; $refs.closeForm.submit()"
                         :disabled="closingCash"
                         class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-wait disabled:opacity-80"
                     >

@@ -126,20 +126,19 @@ class SuperAdminUserController extends Controller
     /**
      * Créer un nouvel utilisateur
      */
-    public function store(Request $request)
+public function store(Request $request)
 {
+    $this->normalizeContactInputs($request);
+
     $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-        'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+        'email' => $this->strictEmailRules('unique:users'),
+        'phone' => $this->phoneRules(),
         'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
         'role' => ['required', 'in:super_admin,manager,seller'],
         'manager_id' => ['required_if:role,seller', 'nullable', 'exists:users,id'],
         'is_active' => ['boolean'],
-    ], [
-        'email.regex' => 'Le format de l\'email est invalide.',
-        'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-    ]);
+    ], $this->contactValidationMessages());
 
     $creatorId = auth()->id();
 
@@ -217,19 +216,17 @@ class SuperAdminUserController extends Controller
 public function update(Request $request, User $user)
 {
     $this->authorize('manageAsSuperAdmin', $user);
+    $this->normalizeContactInputs($request);
 
     $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id, 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-        'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+        'email' => $this->strictEmailRules('unique:users,email,' . $user->id),
+        'phone' => $this->phoneRules(),
         'role' => ['required', 'in:super_admin,manager,seller'],
         'manager_id' => ['required_if:role,seller', 'nullable', 'exists:users,id'],
         'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
         'is_active' => ['boolean'],
-    ], [
-        'email.regex' => 'Le format de l\'email est invalide.',
-        'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-    ]);
+    ], $this->contactValidationMessages());
 
     if ($user->id === auth()->id() && $validated['role'] !== $user->getRoleNames()->first()) {
         return back()->withErrors(['role' => 'Vous ne pouvez pas modifier votre propre role.'])->withInput();
@@ -444,3 +441,5 @@ public function toggleStatus(User $user)
         return $pdf->download('utilisateurs_' . now()->format('Y-m-d_H-i-s') . '.pdf');
     }
 }
+
+

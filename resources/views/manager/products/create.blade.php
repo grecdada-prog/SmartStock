@@ -22,12 +22,6 @@
                     </div>
 
                     <div>
-                        <label for="sku" class="block text-sm font-medium text-gray-700">Code SKU *</label>
-                        <input type="text" name="sku" id="sku" required value="{{ old('sku') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
-                        @error('sku')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
                         <label for="category_id" class="block text-sm font-medium text-gray-700">Categorie *</label>
                         <select name="category_id" id="category_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                             <option value="">Sélectionner</option>
@@ -48,12 +42,6 @@
                         <label for="unit" class="block text-sm font-medium text-gray-700">Unite *</label>
                         <input type="text" name="unit" id="unit" required value="{{ old('unit', 'piece') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('unit')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div class="sm:col-span-2">
-                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea name="description" id="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">{{ old('description') }}</textarea>
-                        @error('description')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
                     <div class="sm:col-span-2 flex items-center">

@@ -63,4 +63,27 @@ class CheckInactivityTest extends TestCase
         $this->assertTrue(Auth::check());
         $this->assertTrue(ActiveSession::first()->last_activity->greaterThan(now()->subMinute()));
     }
+
+    public function test_expired_json_request_gets_session_expired_response(): void
+    {
+        config(['session.lifetime' => 10]);
+
+        $user = User::factory()->create([
+            'last_activity' => now()->subMinutes(10),
+        ]);
+
+        Auth::login($user);
+
+        $request = Request::create('/seller/pos/sale', 'POST', [], [], [], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+        ]);
+        $request->setLaravelSession(new Store('array', new ArraySessionHandler(120)));
+
+        $response = (new CheckInactivity())->handle($request, fn () => response()->json(['ok' => true]));
+
+        $this->assertSame(419, $response->getStatusCode());
+        $this->assertStringContainsString('session a expire', $response->getContent());
+        $this->assertFalse(Auth::check());
+    }
 }

@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\ActivityLog;
 use App\Events\UserLoggedIn;
 use App\Events\UserLoggedOut;
+use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
+use App\Models\User;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FAQRCode\Google2FA as Google2FAQRCode;
 
@@ -38,14 +38,17 @@ class CustomLoginController extends Controller
      */
     public function superAdminLogin(Request $request)
     {
+        $this->normalizeContactInputs($request, [], ['email']);
+
         $request->validate([
-            'email' => 'required|email',
+            'email' => ['required', 'email:rfc,filter', 'regex:/^(?!.*\.\.)[A-Z0-9](?:[A-Z0-9._%+\-]{0,62}[A-Z0-9])?@(?:[A-Z0-9](?:[A-Z0-9\-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}$/i'],
             'password' => 'required',
-        ]);
+        ], $this->contactValidationMessages());
 
         // Limiter les tentatives de connexion
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
+
             return $this->sendLockoutResponse($request);
         }
 
@@ -55,16 +58,18 @@ class CustomLoginController extends Controller
             $user = Auth::user();
 
             // Vérifier si l'utilisateur est Super Admin
-            if (!$user->hasRole('super_admin')) {
+            if (! $user->hasRole('super_admin')) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Accès non autorisé.',
                 ]);
             }
 
             // Vérifier si le compte est actif
-            if (!$user->is_active) {
+            if (! $user->is_active) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Votre compte a été désactivé.',
                 ]);
@@ -72,9 +77,7 @@ class CustomLoginController extends Controller
 
             // Vérifier si 2FA est activé
             if ($user->google2fa_enabled) {
-                Auth::logout();
-                $request->session()->put('2fa:user:id', $user->id);
-                return redirect()->route('2fa.verify');
+                return $this->beginTwoFactorChallenge($request, $user);
             }
 
             // Régénérer la session pour éviter la fixation de session
@@ -106,14 +109,17 @@ class CustomLoginController extends Controller
      */
     public function login(Request $request)
     {
+        $this->normalizeContactInputs($request, [], ['email']);
+
         $request->validate([
-            'email' => 'required|email',
+            'email' => ['required', 'email:rfc,filter', 'regex:/^(?!.*\.\.)[A-Z0-9](?:[A-Z0-9._%+\-]{0,62}[A-Z0-9])?@(?:[A-Z0-9](?:[A-Z0-9\-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}$/i'],
             'password' => 'required',
-        ]);
+        ], $this->contactValidationMessages());
 
         // Limiter les tentatives de connexion
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
+
             return $this->sendLockoutResponse($request);
         }
 
@@ -123,16 +129,18 @@ class CustomLoginController extends Controller
             $user = Auth::user();
 
             // Ce formulaire est réservé aux comptes gérant et vendeur.
-            if (!$user->hasAnyRole(['manager', 'seller'])) {
+            if (! $user->hasAnyRole(['manager', 'seller'])) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Accès non autorisé pour ce compte.',
                 ])->onlyInput('email');
             }
 
             // Vérifier si le compte est actif
-            if (!$user->is_active) {
+            if (! $user->is_active) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Votre compte a été désactivé.',
                 ]);
@@ -140,9 +148,7 @@ class CustomLoginController extends Controller
 
             // Vérifier si 2FA est activé
             if ($user->google2fa_enabled) {
-                Auth::logout();
-                $request->session()->put('2fa:user:id', $user->id);
-                return redirect()->route('2fa.verify');
+                return $this->beginTwoFactorChallenge($request, $user);
             }
 
             // Régénérer la session
@@ -199,7 +205,7 @@ class CustomLoginController extends Controller
      */
     public function show2FAVerify()
     {
-        if (!session()->has('2fa:user:id')) {
+        if (! session()->has('2fa:user:id')) {
             return redirect()->route('login');
         }
 
@@ -212,27 +218,30 @@ class CustomLoginController extends Controller
     public function verify2FA(Request $request)
     {
         $request->validate([
-            'one_time_password' => 'required|numeric',
+            'one_time_password' => ['required', 'regex:/^\d{1,6}$/'],
         ]);
 
         $userId = session('2fa:user:id');
+        $remember = (bool) session('2fa:remember', false);
         $user = User::find($userId);
 
-        if (!$user) {
+        if (! $user || ! $user->google2fa_enabled || blank($user->google2fa_secret)) {
+            session()->forget(['2fa:user:id', '2fa:remember']);
+
             return redirect()->route('login')->withErrors([
                 'error' => 'Session expirée. Veuillez vous reconnecter.',
             ]);
         }
 
-        $google2fa = new Google2FA();
-        $valid = $google2fa->verifyKey($user->google2fa_secret, $request->one_time_password);
+        $google2fa = new Google2FA;
+        $oneTimePassword = $this->normalizeOneTimePassword($request->input('one_time_password'));
+        $valid = $google2fa->verifyKey($user->google2fa_secret, $oneTimePassword, 2);
 
         if ($valid) {
             // Authentifier l'utilisateur
-            Auth::login($user);
+            Auth::login($user, $remember);
             $request->session()->regenerate();
-            session()->forget('2fa:user:id');
-            session()->forget('2fa:role');
+            session()->forget(['2fa:user:id', '2fa:remember']);
 
             // Marquer que l'utilisateur vient de se connecter
             $request->session()->put('just_logged_in', true);
@@ -240,6 +249,7 @@ class CustomLoginController extends Controller
 
             // Déclencher l'événement de connexion
             event(new UserLoggedIn($user, $request->ip(), $request->userAgent()));
+            $this->clearLoginAttempts($request);
 
             // Rediriger selon le rôle
             if ($user->hasRole('super_admin')) {
@@ -262,23 +272,28 @@ class CustomLoginController extends Controller
     public function show2FASetup()
     {
         $user = Auth::user();
-        $google2fa = new Google2FAQRCode(null, new SvgImageBackEnd());
+        $google2fa = new Google2FAQRCode(null, new SvgImageBackEnd);
+        $QR_Image = null;
+        $secret = $user->google2fa_secret;
 
-        if (!$user->google2fa_secret) {
+        if (! $user->google2fa_enabled && ! $user->google2fa_secret) {
             $secret = $google2fa->generateSecretKey();
             $user->google2fa_secret = $secret;
             $user->save();
         }
 
-        $QR_Image = $google2fa->getQRCodeInline(
-            config('app.name'),
-            $user->email,
-            $user->google2fa_secret
-        );
+        if (! $user->google2fa_enabled) {
+            $QR_Image = $google2fa->getQRCodeInline(
+                config('app.name'),
+                $user->email,
+                $user->google2fa_secret
+            );
+        }
 
         return view('auth.2fa-setup', [
             'QR_Image' => $QR_Image,
             'secret' => $user->google2fa_secret,
+            'user' => $user,
         ]);
     }
 
@@ -288,17 +303,20 @@ class CustomLoginController extends Controller
     public function enable2FA(Request $request)
     {
         $request->validate([
-            'one_time_password' => 'required|numeric',
+            'one_time_password' => ['required', 'regex:/^\d{1,6}$/'],
         ]);
 
         $user = Auth::user();
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
+        $oneTimePassword = $this->normalizeOneTimePassword($request->input('one_time_password'));
 
-        $valid = $google2fa->verifyKey($user->google2fa_secret, $request->one_time_password);
+        $valid = $google2fa->verifyKey($user->google2fa_secret, $oneTimePassword, 2);
 
         if ($valid) {
-            $user->google2fa_enabled = true;
-            $user->save();
+            User::whereKey($user->id)->update([
+                'google2fa_enabled' => true,
+            ]);
+            $user->forceFill(['google2fa_enabled' => true]);
 
             ActivityLog::log(
                 '2fa_enabled',
@@ -307,7 +325,15 @@ class CustomLoginController extends Controller
                 $user->id
             );
 
-            return redirect()->back()->with('success', 'Authentification à deux facteurs activée avec succès.');
+            event(new UserLoggedOut($user));
+
+            Auth::logout();
+            $request->session()->flush();
+            $request->session()->regenerate();
+            $request->session()->regenerateToken();
+            $request->session()->flash('success', 'Authentification a deux facteurs activee. Reconnectez-vous pour verifier votre nouvelle protection.');
+
+            return redirect()->route('login');
         }
 
         return back()->withErrors([
@@ -326,7 +352,7 @@ class CustomLoginController extends Controller
 
         $user = Auth::user();
 
-        if (!Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->password, $user->password)) {
             return back()->withErrors([
                 'password' => 'Mot de passe incorrect.',
             ]);
@@ -384,13 +410,32 @@ class CustomLoginController extends Controller
         );
 
         return back()->withErrors([
-            'email' => 'Trop de tentatives de connexion. Veuillez réessayer dans ' . $seconds . ' secondes.',
+            'email' => 'Trop de tentatives de connexion. Veuillez réessayer dans '.$seconds.' secondes.',
         ])->onlyInput('email')->with('lockout_seconds', $seconds);
     }
 
     protected function fireLockoutEvent(Request $request)
     {
         event(new \Illuminate\Auth\Events\Lockout($request));
+    }
+
+    private function beginTwoFactorChallenge(Request $request, User $user)
+    {
+        $userId = $user->id;
+        $remember = $request->filled('remember');
+
+        Auth::logout();
+        $request->session()->regenerate();
+        $request->session()->regenerateToken();
+        $request->session()->put('2fa:user:id', $userId);
+        $request->session()->put('2fa:remember', $remember);
+
+        return redirect()->route('2fa.verify');
+    }
+
+    private function normalizeOneTimePassword(mixed $value): string
+    {
+        return str_pad(preg_replace('/\D/', '', (string) $value), 6, '0', STR_PAD_LEFT);
     }
 
     private function noStoreResponse(string $view)
@@ -402,3 +447,4 @@ class CustomLoginController extends Controller
         ]);
     }
 }
+

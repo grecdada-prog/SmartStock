@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\ActivityLog;
 use App\Models\CashRegisterClosure;
-use App\Services\PasswordSetupLinkService;
+use App\Models\User;
+use App\Notifications\Enable2FANotification;
+use App\Notifications\UserCreatedNotification;
 use App\Services\CashRegisterService;
+use App\Services\PasswordSetupLinkService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
-use App\Notifications\UserCreatedNotification;
 use Throwable;
 
 class SuperAdminSellerController extends Controller
@@ -33,15 +34,25 @@ class SuperAdminSellerController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('email', 'like', '%'.$request->search.'%');
             });
         }
 
         $sellers = $query->latest()->paginate(20);
+        $closedCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->getCollection()->pluck('id'))
+            ->whereNull('opened_at')
+            ->whereDate('business_date', today())
+            ->pluck('seller_id')
+            ->all();
+        $openCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->getCollection()->pluck('id'))
+            ->whereNotNull('opened_at')
+            ->whereDate('business_date', today())
+            ->pluck('seller_id')
+            ->all();
 
-        return view('superadmin.sellers.index', compact('sellers'));
+        return view('superadmin.sellers.index', compact('sellers', 'closedCashRegisterSellerIds', 'openCashRegisterSellerIds'));
     }
 
     /**
@@ -62,21 +73,20 @@ class SuperAdminSellerController extends Controller
      */
     public function store(Request $request)
     {
+        $this->normalizeContactInputs($request);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-            'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'email' => $this->strictEmailRules('unique:users'),
+            'phone' => $this->phoneRules(),
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
             'manager_id' => ['required', 'exists:users,id'],
             'is_active' => ['boolean'],
-        ], [
-            'email.regex' => 'Le format de l\'email est invalide.',
-            'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-        ]);
+        ], $this->contactValidationMessages());
 
         $manager = User::role('manager')->find($validated['manager_id']);
 
-        if (!$manager) {
+        if (! $manager) {
             return back()->withErrors(['manager_id' => 'Gerant invalide.'])->withInput();
         }
 
@@ -104,6 +114,7 @@ class SuperAdminSellerController extends Controller
         try {
             $setupUrl = app(PasswordSetupLinkService::class)->createUrl($user);
             $user->notify(new UserCreatedNotification($setupUrl, auth()->user()));
+            $user->notify(new Enable2FANotification);
         } catch (Throwable $exception) {
             Log::warning('Unable to send seller welcome notification.', [
                 'user_id' => $user->id,
@@ -125,7 +136,7 @@ class SuperAdminSellerController extends Controller
         $this->authorize('manageSellerAsSuperAdmin', $user);
 
         // Vérifier que l'utilisateur est bien un vendeur
-        if (!$user->hasRole('seller')) {
+        if (! $user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
                 ->with('error', 'Utilisateur invalide.');
         }
@@ -144,8 +155,10 @@ class SuperAdminSellerController extends Controller
             ->get();
         $pendingCashClosure = CashRegisterClosure::where('seller_id', $user->id)
             ->whereNull('opened_at')
+            ->whereDate('business_date', today())
             ->latest('closed_at')
             ->first();
+        $openCashRegister = app(CashRegisterService::class)->openRegisterForSeller($user);
         $cashRegisterBalance = app(CashRegisterService::class)->balanceForSeller($user);
 
         return view('superadmin.sellers.edit', compact(
@@ -153,6 +166,7 @@ class SuperAdminSellerController extends Controller
             'managers',
             'reassignmentHistory',
             'pendingCashClosure',
+            'openCashRegister',
             'cashRegisterBalance'
         ));
     }
@@ -164,26 +178,25 @@ class SuperAdminSellerController extends Controller
     {
         $this->authorize('manageSellerAsSuperAdmin', $user);
 
+        $this->normalizeContactInputs($request);
+
         // Vérifier que l'utilisateur est bien un vendeur
-        if (!$user->hasRole('seller')) {
+        if (! $user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
                 ->with('error', 'Utilisateur invalide.');
         }
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id, 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-            'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'email' => $this->strictEmailRules('unique:users,email,'.$user->id),
+            'phone' => $this->phoneRules(),
             'manager_id' => ['required', 'exists:users,id'],
             'is_active' => ['boolean'],
-        ], [
-            'email.regex' => 'Le format de l\'email est invalide.',
-            'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-        ]);
+        ], $this->contactValidationMessages());
 
         $manager = User::role('manager')->find($validated['manager_id']);
 
-        if (!$manager) {
+        if (! $manager) {
             return back()->withErrors(['manager_id' => 'Gerant invalide.'])->withInput();
         }
 
@@ -213,7 +226,7 @@ class SuperAdminSellerController extends Controller
     {
         $this->authorize('manageSellerAsSuperAdmin', $user);
 
-        if (!$user->hasRole('seller')) {
+        if (! $user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
                 ->with('error', 'Utilisateur invalide.');
         }
@@ -225,7 +238,7 @@ class SuperAdminSellerController extends Controller
 
         $newManager = User::role('manager')->where('is_active', true)->find($validated['manager_id']);
 
-        if (!$newManager) {
+        if (! $newManager) {
             return back()->withErrors(['manager_id' => 'Gerant invalide ou inactif.'])->withInput();
         }
 
@@ -271,9 +284,13 @@ class SuperAdminSellerController extends Controller
 
         $pendingClosure = $cashRegisterService->pendingClosureForSeller($user);
 
-        if ($pendingClosure) {
-            return redirect()->route('superadmin.sellers.edit', $user)
-                ->with('warning', 'Caisse deja fermee.');
+        $redirect = $request->input('redirect_to') === 'index'
+            ? redirect()->route('superadmin.sellers.index')
+            : redirect()->route('superadmin.sellers.edit', $user);
+
+        if ($pendingClosure || ! $cashRegisterService->isOpenForSeller($user)) {
+            return $redirect
+                ->with('warning', 'La caisse de ce vendeur n\'est pas ouverte.');
         }
 
         $closure = $cashRegisterService->closeForSeller($user, null, 'super_admin', $validated['reason']);
@@ -291,38 +308,8 @@ class SuperAdminSellerController extends Controller
             ]
         );
 
-        return redirect()->route('superadmin.sellers.edit', $user)
+        return $redirect
             ->with('success', 'Caisse cloturee.');
-    }
-
-    public function openCashRegister(Request $request, User $user, CashRegisterService $cashRegisterService)
-    {
-        $this->authorize('manageSellerAsSuperAdmin', $user);
-
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'min:8', 'max:500'],
-        ]);
-
-        $closure = $cashRegisterService->openForSeller($user, null, 'super_admin', $validated['reason']);
-
-        if (!$closure) {
-            return back()->with('error', 'Aucune caisse fermee.');
-        }
-
-        ActivityLog::log(
-            'seller_cash_register_force_opened',
-            "Caisse rouverte a distance pour {$user->name}",
-            'CashRegisterClosure',
-            $closure->id,
-            [
-                'seller_id' => $user->id,
-                'seller_name' => $user->name,
-                'reason' => $validated['reason'],
-            ]
-        );
-
-        return redirect()->route('superadmin.sellers.edit', $user)
-            ->with('success', 'Caisse rouverte.');
     }
 
     /**
@@ -334,7 +321,7 @@ class SuperAdminSellerController extends Controller
         $this->authorize('manageSellerAsSuperAdmin', $user);
 
         // Vérifier que l'utilisateur est bien un vendeur
-        if (!$user->hasRole('seller')) {
+        if (! $user->hasRole('seller')) {
             return redirect()->route('superadmin.sellers.index')
                 ->with('error', 'Utilisateur invalide.');
         }
@@ -358,3 +345,5 @@ class SuperAdminSellerController extends Controller
             ->with('success', 'Vendeur supprime.');
     }
 }
+
+

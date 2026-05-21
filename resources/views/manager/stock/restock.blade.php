@@ -69,15 +69,10 @@
                 </div>
 
                 <div>
-                    <label for="reference" class="block text-sm font-medium text-gray-700">Reference</label>
-                    <input type="text" name="reference" id="reference" value="{{ old('reference') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reference') border-red-300 @enderror">
-                    @error('reference')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-                </div>
-
-                <div>
-                    <label for="reason" class="block text-sm font-medium text-gray-700">Raison / Notes</label>
-                    <textarea name="reason" id="reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
-                    @error('reason')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                    <label for="barcode" class="block text-sm font-medium text-gray-700">Code-barres du nouveau stock *</label>
+                    <input type="text" name="barcode" id="barcode" required value="{{ old('barcode') }}" placeholder="6 9455 85 0039 13" pattern="\d \d{4} \d{2} \d{4} \d{2}" inputmode="numeric" maxlength="17" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
+                    <p class="mt-1 text-xs text-gray-500">Saisissez 13 chiffres, les espaces sont ajoutes automatiquement.</p>
+                    @error('barcode')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">

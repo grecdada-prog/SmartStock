@@ -54,16 +54,15 @@ class SuperAdminManagerController extends Controller
      */
     public function store(Request $request)
     {
+        $this->normalizeContactInputs($request);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-            'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'email' => $this->strictEmailRules('unique:users'),
+            'phone' => $this->phoneRules(),
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
             'is_active' => ['boolean'],
-        ], [
-            'email.regex' => 'Le format de l\'email est invalide.',
-            'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-        ]);
+        ], $this->contactValidationMessages());
 
         $user = User::create([
             'name' => $validated['name'],
@@ -129,6 +128,8 @@ class SuperAdminManagerController extends Controller
     {
         $this->authorize('manageManagerAsSuperAdmin', $user);
 
+        $this->normalizeContactInputs($request);
+
         // Vérifier que l'utilisateur est bien un manager
         if (!$user->hasRole('manager')) {
             return redirect()->route('superadmin.managers.index')
@@ -137,13 +138,10 @@ class SuperAdminManagerController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id, 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'],
-            'phone' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+            'email' => $this->strictEmailRules('unique:users,email,' . $user->id),
+            'phone' => $this->phoneRules(),
             'is_active' => ['boolean'],
-        ], [
-            'email.regex' => 'Le format de l\'email est invalide.',
-            'phone.regex' => 'Le téléphone doit contenir uniquement des chiffres (9-15 caractères).',
-        ]);
+        ], $this->contactValidationMessages());
 
         $user->update([
             'name' => $validated['name'],
@@ -196,3 +194,5 @@ class SuperAdminManagerController extends Controller
             ->with('success', "Le manager {$userName} a été supprimé avec succès !");
     }
 }
+
+

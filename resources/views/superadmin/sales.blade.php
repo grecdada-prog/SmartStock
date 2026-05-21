@@ -53,7 +53,7 @@
         </form>
     </div>
 
-    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500 truncate">Ventes filtrees</dt>
@@ -80,6 +80,13 @@
                 <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
                 <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ number_format($stats['total_cash_balance'], 0, ',', ' ') }} FCFA</dd>
                 <p class="mt-2 text-sm text-gray-500">Solde cumule des caisses</p>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <dt class="text-sm font-medium text-gray-500 truncate">Paiements mobiles</dt>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ number_format($stats['total_mobile_money_balance'], 0, ',', ' ') }} FCFA</dd>
+                <p class="mt-2 text-sm text-gray-500">Orange Money + MTN Momo</p>
             </div>
         </div>
     </div>

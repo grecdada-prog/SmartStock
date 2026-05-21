@@ -15,62 +15,30 @@ class SellerDashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-
-        $todayClosure = CashRegisterClosure::where('seller_id', $user->id)
-            ->whereDate('business_date', today())
-            ->first();
-
-        $pendingClosure = CashRegisterClosure::where('seller_id', $user->id)
-            ->whereNull('opened_at')
-            ->latest('closed_at')
-            ->first();
-
-        $lastOpenedClosure = CashRegisterClosure::where('seller_id', $user->id)
-            ->whereNotNull('opened_at')
-            ->latest('opened_at')
-            ->first();
-
-        $currentSessionOpenedAt = $todayClosure?->opened_at;
-
-        if (!$currentSessionOpenedAt && $lastOpenedClosure?->opened_at?->isToday()) {
-            $currentSessionOpenedAt = $lastOpenedClosure->opened_at;
-        }
-
-        $todaySalesQuery = Sale::where('seller_id', $user->id)
-            ->whereDate('created_at', today());
-
-        if ($pendingClosure) {
-            $todaySalesQuery->whereRaw('1 = 0');
-        } elseif ($currentSessionOpenedAt) {
-            $todaySalesQuery->where('created_at', '>=', $currentSessionOpenedAt);
-        }
-
-        $todayCashRevenue = Sale::where('seller_id', $user->id)
-            ->whereDate('created_at', today());
-
-        if ($pendingClosure) {
-            $todayCashRevenue->whereRaw('1 = 0');
-        } elseif ($currentSessionOpenedAt) {
-            $todayCashRevenue->where('created_at', '>=', $currentSessionOpenedAt);
-        }
-
+        $cashRegisterService = app(CashRegisterService::class);
+        $pendingClosure = $cashRegisterService->pendingClosureForSeller($user);
+        $todayCashSalesQuery = $cashRegisterService->currentDayCashSalesQuery($user);
+        $todaySalesQuery = $cashRegisterService->currentDaySalesQuery($user);
+        $currentSessionOpenedAt = $cashRegisterService->currentSessionOpenedAt($user);
+        $cashRegisterIsOpen = $cashRegisterService->isOpenForSeller($user);
         $yesterdayClosure = CashRegisterClosure::where('seller_id', $user->id)
             ->whereDate('business_date', today()->subDay())
             ->first();
 
-        $yesterdayCashSalesQuery = Sale::where('seller_id', $user->id)
-            ->whereDate('created_at', today()->subDay());
-
         $stats = [
-            'today_cash_sales' => (clone $todaySalesQuery)->count(),
-            'today_revenue' => (clone $todayCashRevenue)->sum('total'),
+            'today_sales' => (clone $todaySalesQuery)->count(),
+            'today_cash_sales' => (clone $todayCashSalesQuery)->count(),
+            'today_revenue' => (clone $todaySalesQuery)->sum('total'),
             'yesterday_cash_sales' => $yesterdayClosure
                 ? null
-                : (clone $yesterdayCashSalesQuery)->count(),
-            'yesterday_revenue' => $yesterdayClosure?->amount
-                ?? (clone $yesterdayCashSalesQuery)->sum('total'),
-            'cash_balance' => app(CashRegisterService::class)->balanceForSeller($user),
+                : $cashRegisterService->cashSalesCountForDate($user, today()->subDay()),
+            'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($user),
+            'cash_balance' => $cashRegisterService->balanceForSeller($user),
+            'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($user),
+            'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($user),
+            'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($user),
             'cash_register_closed_today' => $pendingClosure !== null,
+            'cash_register_is_open' => $cashRegisterIsOpen,
             'cash_register_closed_at' => $pendingClosure?->closed_at,
             'cash_register_closed_business_date' => $pendingClosure?->business_date,
             'cash_register_opened_at' => $currentSessionOpenedAt,
@@ -82,12 +50,12 @@ class SellerDashboardController extends Controller
     public function closeCashRegister(CashRegisterService $cashRegisterService)
     {
         $seller = Auth::user();
-        $pendingClosure = $cashRegisterService->pendingClosureForSeller($seller);
-
-        if ($pendingClosure) {
+        if (! $cashRegisterService->isOpenForSeller($seller)) {
             return back()->with(
                 'warning',
-                'Caisse deja fermee.'
+                $cashRegisterService->pendingClosureForSeller($seller)
+                    ? 'La caisse est deja cloturee.'
+                    : 'Ouvrez la caisse avant de la cloturer.'
             );
         }
 
@@ -186,3 +154,4 @@ class SellerDashboardController extends Controller
         return view('seller.my-stats', compact('stats', 'salesChart'));
     }
 }
+

@@ -18,7 +18,7 @@
         </a>
     </div>
 
-    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <a href="{{ route('superadmin.users.index') }}" class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm transition hover:border-rose-200 hover:shadow-md">
             <div class="flex items-start justify-between gap-4">
                 <div>
@@ -65,6 +65,17 @@
                     value-class="text-sm font-semibold text-rose-600" />
                 <span>hier</span>
             </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-gray-500">Paiements mobiles</p>
+            <div class="mt-2">
+                <x-money-toggle
+                    :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
+                    label="le solde des paiements mobiles"
+                    value-class="text-2xl font-semibold text-gray-900" />
+            </div>
+            <p class="mt-2 text-sm text-gray-500">Orange Money et MTN Momo</p>
         </div>
     </section>
 
@@ -124,7 +135,7 @@
                             <th class="px-5 py-3 text-left font-medium text-gray-500">Gerant</th>
                             <th class="px-5 py-3 text-left font-medium text-gray-500">Equipe</th>
                             <th class="px-5 py-3 text-left font-medium text-gray-500">Recette</th>
-                            <th class="px-5 py-3 text-left font-medium text-gray-500">Solde Cash</th>
+                            <th class="px-5 py-3 text-left font-medium text-gray-500">Soldes</th>
                             <th class="px-5 py-3 text-left font-medium text-gray-500">Etat</th>
                         </tr>
                     </thead>
@@ -144,8 +155,8 @@
                                     <p class="text-xs text-gray-500">Hier: {{ number_format($summary['yesterday_revenue'], 0, ',', ' ') }} FCFA</p>
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4">
-                                    <p class="font-semibold text-gray-900">{{ number_format($summary['cash_balance'], 0, ',', ' ') }} FCFA</p>
-                                    <p class="text-xs text-gray-500">{{ $summary['last_sale_at'] ? 'Derniere vente '.$summary['last_sale_at']->format('d/m H:i') : 'Aucune vente' }}</p>
+                                    <p class="font-semibold text-gray-900">Cash: {{ number_format($summary['cash_balance'], 0, ',', ' ') }} FCFA</p>
+                                    <p class="text-xs text-gray-500">Mobile: {{ number_format($summary['mobile_money_balance'], 0, ',', ' ') }} FCFA</p>
                                 </td>
                                 <td class="px-5 py-4">
                                     <div class="flex flex-wrap gap-2">

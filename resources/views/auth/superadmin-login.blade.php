@@ -42,11 +42,25 @@
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                        <input type="password" 
-                               name="password" 
-                               id="password" 
-                               required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 @error('password') border-red-500 @enderror">
+                        <div class="relative mt-1">
+                            <input type="password"
+                                   name="password"
+                                   id="password"
+                                   required
+                                   class="block w-full rounded-md border border-gray-300 px-3 py-2 pr-11 shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 @error('password') border-red-500 @enderror">
+                            <button type="button"
+                                    id="toggleSuperAdminPassword"
+                                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500"
+                                    aria-label="Afficher le mot de passe"
+                                    aria-pressed="false">
+                                <svg id="superAdminEyeIcon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
+                                </svg>
+                                <svg id="superAdminEyeOffIcon" class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
+                                </svg>
+                            </button>
+                        </div>
                         @error('password')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -106,6 +120,22 @@
             }
         }, 1000);
         @endif
+
+        const superAdminPasswordInput = document.getElementById('password');
+        const superAdminPasswordToggle = document.getElementById('toggleSuperAdminPassword');
+        const superAdminEyeIcon = document.getElementById('superAdminEyeIcon');
+        const superAdminEyeOffIcon = document.getElementById('superAdminEyeOffIcon');
+
+        superAdminPasswordToggle?.addEventListener('click', () => {
+            const shouldShowPassword = superAdminPasswordInput.type === 'password';
+
+            superAdminPasswordInput.type = shouldShowPassword ? 'text' : 'password';
+            superAdminPasswordToggle.setAttribute('aria-label', shouldShowPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+            superAdminPasswordToggle.setAttribute('aria-pressed', shouldShowPassword ? 'true' : 'false');
+            superAdminEyeIcon.classList.toggle('hidden', shouldShowPassword);
+            superAdminEyeOffIcon.classList.toggle('hidden', !shouldShowPassword);
+            superAdminPasswordInput.focus();
+        });
 
         let refreshingCsrf = false;
         const csrfLoginForm = document.querySelector('form');

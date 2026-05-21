@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -22,6 +21,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['created_by']);
             $table->dropColumn([
                 'phone',
                 'is_active',
@@ -29,7 +29,7 @@ return new class extends Migration
                 'session_id',
                 'google2fa_enabled',
                 'google2fa_secret',
-                'created_by'
+                'created_by',
             ]);
         });
     }

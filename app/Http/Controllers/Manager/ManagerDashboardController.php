@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Category;
 use App\Models\ActivityLog;
-use App\Models\CashRegisterClosure;
 use App\Services\CashRegisterService;
 use App\Services\SessionManager;
 use Illuminate\Support\Facades\DB;
@@ -34,45 +33,14 @@ class ManagerDashboardController extends Controller
             ->get();
 
         $sellerFinancials = $sellers->map(function (User $seller) use ($cashRegisterService) {
-            $todayClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                ->whereDate('business_date', today())
-                ->first();
-            $pendingClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                ->whereNull('opened_at')
-                ->latest('closed_at')
-                ->first();
-            $lastOpenedClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                ->whereNotNull('opened_at')
-                ->latest('opened_at')
-                ->first();
-            $currentSessionOpenedAt = $todayClosure?->opened_at;
-
-            if (!$currentSessionOpenedAt && $lastOpenedClosure?->opened_at?->isToday()) {
-                $currentSessionOpenedAt = $lastOpenedClosure->opened_at;
-            }
-
-            $todayRevenueQuery = Sale::where('seller_id', $seller->id)
-                ->whereDate('created_at', today());
-
-            if ($pendingClosure) {
-                $todayRevenueQuery->whereRaw('1 = 0');
-            } elseif ($currentSessionOpenedAt) {
-                $todayRevenueQuery->where('created_at', '>=', $currentSessionOpenedAt);
-            }
-
-            $yesterdayClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                ->whereDate('business_date', today()->subDay())
-                ->first();
-            $yesterdayRevenue = $yesterdayClosure?->amount
-                ?? Sale::where('seller_id', $seller->id)
-                    ->whereDate('created_at', today()->subDay())
-                    ->sum('total');
-
             return [
                 'seller' => $seller,
                 'cash_balance' => $cashRegisterService->balanceForSeller($seller),
-                'today_revenue' => (float) $todayRevenueQuery->sum('total'),
-                'yesterday_revenue' => (float) $yesterdayRevenue,
+                'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($seller),
+                'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
+                'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
+                'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
+                'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($seller),
             ];
         });
 
@@ -88,6 +56,9 @@ class ManagerDashboardController extends Controller
             'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
             'today_revenue' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->sum('total'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
+            'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
+            'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
+            'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
         ];
@@ -166,6 +137,9 @@ class ManagerDashboardController extends Controller
             'filtered_revenue' => (float) (clone $filteredSalesQuery)->sum('total'),
             'average_sale' => (float) (clone $filteredSalesQuery)->avg('total'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
+            'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
+            'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
+            'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
         ];
@@ -189,45 +163,14 @@ class ManagerDashboardController extends Controller
             ->orderBy('name')
             ->get()
             ->map(function (User $seller) use ($cashRegisterService) {
-                $todayClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereDate('business_date', today())
-                    ->first();
-                $pendingClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereNull('opened_at')
-                    ->latest('closed_at')
-                    ->first();
-                $lastOpenedClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereNotNull('opened_at')
-                    ->latest('opened_at')
-                    ->first();
-                $currentSessionOpenedAt = $todayClosure?->opened_at;
-
-                if (!$currentSessionOpenedAt && $lastOpenedClosure?->opened_at?->isToday()) {
-                    $currentSessionOpenedAt = $lastOpenedClosure->opened_at;
-                }
-
-                $todayRevenueQuery = Sale::where('seller_id', $seller->id)
-                    ->whereDate('created_at', today());
-
-                if ($pendingClosure) {
-                    $todayRevenueQuery->whereRaw('1 = 0');
-                } elseif ($currentSessionOpenedAt) {
-                    $todayRevenueQuery->where('created_at', '>=', $currentSessionOpenedAt);
-                }
-
-                $yesterdayClosure = CashRegisterClosure::where('seller_id', $seller->id)
-                    ->whereDate('business_date', today()->subDay())
-                    ->first();
-                $yesterdayRevenue = $yesterdayClosure?->amount
-                    ?? Sale::where('seller_id', $seller->id)
-                        ->whereDate('created_at', today()->subDay())
-                        ->sum('total');
-
                 return [
                     'seller' => $seller,
                     'cash_balance' => (float) $cashRegisterService->balanceForSeller($seller),
-                    'today_revenue' => (float) $todayRevenueQuery->sum('total'),
-                    'yesterday_revenue' => (float) $yesterdayRevenue,
+                    'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($seller),
+                    'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
+                    'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
+                    'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
+                    'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($seller),
                 ];
             });
     }
@@ -309,3 +252,4 @@ class ManagerDashboardController extends Controller
         return $pdf->download('ventes_manager_' . now()->format('Y-m-d_H-i-s') . '.pdf');
     }
 }
+

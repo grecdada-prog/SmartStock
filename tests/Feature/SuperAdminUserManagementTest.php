@@ -66,6 +66,51 @@ class SuperAdminUserManagementTest extends TestCase
         });
     }
 
+    public function test_generic_super_admin_user_creation_normalizes_phone_and_email(): void
+    {
+        Notification::fake();
+        [$superAdmin] = $this->createUsers();
+
+        $response = $this->actingAs($superAdmin)->post(route('superadmin.users.store'), [
+            'name' => 'Gestionnaire contact',
+            'email' => '  MANAGER.CONTACT@EXAMPLE.COM  ',
+            'phone' => '690 123 456',
+            'password' => 'Password@123',
+            'password_confirmation' => 'Password@123',
+            'role' => 'manager',
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('superadmin.users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'manager.contact@example.com',
+            'phone' => '690123456',
+        ]);
+    }
+
+    public function test_generic_super_admin_user_creation_rejects_invalid_contact_formats(): void
+    {
+        Notification::fake();
+        [$superAdmin] = $this->createUsers();
+
+        $response = $this->actingAs($superAdmin)->from(route('superadmin.users.create'))->post(route('superadmin.users.store'), [
+            'name' => 'Gestionnaire invalide',
+            'email' => 'manager..bad@example.com',
+            'phone' => '6901234567890123',
+            'password' => 'Password@123',
+            'password_confirmation' => 'Password@123',
+            'role' => 'manager',
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('superadmin.users.create'));
+        $response->assertSessionHasErrors(['email', 'phone']);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'manager..bad@example.com',
+        ]);
+    }
+
     public function test_super_admin_reset_password_sends_link_without_changing_password(): void
     {
         Notification::fake();

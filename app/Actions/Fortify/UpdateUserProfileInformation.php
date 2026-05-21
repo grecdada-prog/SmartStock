@@ -17,10 +17,17 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
      */
     public function update(User $user, array $input): void
     {
+        if (isset($input['email'])) {
+            $input['email'] = strtolower(trim((string) $input['email']));
+        }
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'email:rfc,filter', 'max:255', Rule::unique('users')->ignore($user->id), 'regex:/^(?!.*\.\.)[A-Z0-9](?:[A-Z0-9._%+\-]{0,62}[A-Z0-9])?@(?:[A-Z0-9](?:[A-Z0-9\-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,63}$/i'],
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
+        ], [
+            'email.email' => 'Le format de l\'email est invalide.',
+            'email.regex' => 'Le format de l\'email est invalide.',
         ])->validateWithBag('updateProfileInformation');
 
         if (isset($input['photo'])) {

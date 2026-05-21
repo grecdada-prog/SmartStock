@@ -3,7 +3,7 @@
 @section('title', 'Gestion du Stock')
 
 @section('content')
-<div id="manager-stock-page" data-silent-refresh x-data="{ showRestockModal: {{ $errors->any() ? 'true' : 'false' }} }" class="px-4 sm:px-6 lg:px-8">
+<div id="manager-stock-page" data-silent-refresh x-data="{ showRestockModal: {{ $errors->any() ? 'true' : 'false' }}, showAdjustModal: false }" class="px-4 sm:px-6 lg:px-8">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
@@ -23,12 +23,24 @@
                 </svg>
                 Historique
             </a>
+            <a href="{{ route('manager.stock.restocks') }}" class="inline-flex items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v14l-4-2-4 2-4-2-4 2V6a2 2 0 012-2z" />
+                </svg>
+                Approvisionnements
+            </a>
 
             <button type="button" @click="showRestockModal = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Réapprovisionner
+            </button>
+            <button type="button" @click="showAdjustModal = true" class="inline-flex items-center justify-center rounded-md border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Ajustement
             </button>
         </div>
     </div>
@@ -160,7 +172,7 @@
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Prix de vente</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Valeur</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Mouvements</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
@@ -171,6 +183,7 @@
                                             <div>
                                                 <div class="font-medium text-gray-900">{{ $product->name }}</div>
                                                 <div class="text-gray-500">SKU: {{ $product->sku }}</div>
+                                                <div class="text-xs text-gray-400">Ajoute le {{ $product->created_at->format('d/m/Y H:i') }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -196,10 +209,17 @@
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                                         {{ number_format($product->quantity * $product->purchase_price, 0, ',', ' ') }} FCFA
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ $product->stock_movements_count }} mouvement(s)
-                                        </span>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="{{ route('manager.stock.products.movements', $product) }}" class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                                                Details
+                                            </a>
+                                            <button type="button"
+                                                @click="showAdjustModal = true; $nextTick(() => prepareAdjustModal('{{ $product->id }}'))"
+                                                class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                                Ajuster
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -295,16 +315,11 @@
                 </div>
 
                 <div>
-                    <label for="modal_reference" class="block text-sm font-medium text-gray-700">Reference</label>
-                    <input type="text" name="reference" id="modal_reference" value="{{ old('reference') }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reference') border-red-300 @enderror">
-                    @error('reference')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-                </div>
-
-                <div>
-                    <label for="modal_reason" class="block text-sm font-medium text-gray-700">Raison / Notes</label>
-                    <textarea name="reason" id="modal_reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
-                    @error('reason')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                    <label for="modal_barcode" class="block text-sm font-medium text-gray-700">Code-barres du nouveau stock *</label>
+                    <input type="text" name="barcode" id="modal_barcode" required value="{{ old('barcode') }}" placeholder="6 9455 85 0039 13" pattern="\d \d{4} \d{2} \d{4} \d{2}" inputmode="numeric" maxlength="17" autocomplete="off" data-barcode-format
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
+                    <p class="mt-1 text-xs text-gray-500">Saisissez 13 chiffres, les espaces sont ajoutes automatiquement.</p>
+                    @error('barcode')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
@@ -314,9 +329,97 @@
             </form>
         </div>
     </div>
+
+    <div x-show="showAdjustModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" style="display: none;">
+        <div class="fixed inset-0 bg-gray-900/50" @click="showAdjustModal = false"></div>
+        <div class="relative mx-auto max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Ajuster un stock</h2>
+                    <p class="mt-1 text-sm text-gray-500">Corrigez la quantite disponible apres verification physique.</p>
+                </div>
+                <button type="button" @click="showAdjustModal = false" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                    <span class="sr-only">Fermer</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ route('manager.stock.adjust') }}" class="space-y-6 p-6">
+                @csrf
+
+                <div>
+                    <label for="adjust_product_id" class="block text-sm font-medium text-gray-700">Produit *</label>
+                    <select name="product_id" id="adjust_product_id" required onchange="updateAdjustModalProductInfo()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('product_id') border-red-300 @enderror">
+                        <option value="">Selectionner un produit</option>
+                        @foreach($restockProducts as $product)
+                            <option value="{{ $product->id }}"
+                                data-current-stock="{{ $product->quantity }}"
+                                data-unit="{{ $product->unit }}"
+                                {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                {{ $product->name }} ({{ $product->sku }}) - {{ $product->quantity }} {{ $product->unit }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div id="adjust-product-info" class="hidden rounded-md bg-gray-50 p-4 text-sm text-gray-700">
+                    <span class="font-medium">Stock actuel:</span> <span id="adjust-current-stock">-</span>
+                </div>
+
+                <div>
+                    <label for="adjust_new_quantity" class="block text-sm font-medium text-gray-700">Nouvelle quantite *</label>
+                    <input type="number" name="new_quantity" id="adjust_new_quantity" required min="0" step="1" value="{{ old('new_quantity') }}"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('new_quantity') border-red-300 @enderror">
+                    @error('new_quantity')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label for="adjust_reason" class="block text-sm font-medium text-gray-700">Raison *</label>
+                    <textarea name="reason" id="adjust_reason" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
+                    @error('reason')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
+                    <button type="button" @click="showAdjustModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="rounded-md border border-transparent bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Enregistrer l'ajustement</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
+function prepareAdjustModal(productId) {
+    const select = document.getElementById('adjust_product_id');
+    if (!select) return;
+
+    select.value = productId;
+    updateAdjustModalProductInfo();
+}
+
+function updateAdjustModalProductInfo() {
+    const select = document.getElementById('adjust_product_id');
+    const selectedOption = select.options[select.selectedIndex];
+    const productInfo = document.getElementById('adjust-product-info');
+    const quantityInput = document.getElementById('adjust_new_quantity');
+
+    if (!selectedOption.value) {
+        productInfo.classList.add('hidden');
+        if (quantityInput) quantityInput.value = '';
+        return;
+    }
+
+    const currentStock = selectedOption.getAttribute('data-current-stock');
+    const unit = selectedOption.getAttribute('data-unit');
+
+    document.getElementById('adjust-current-stock').textContent = currentStock + ' ' + unit;
+    if (quantityInput && !quantityInput.value) quantityInput.value = currentStock;
+    productInfo.classList.remove('hidden');
+}
+
 function updateStockModalProductInfo() {
     const select = document.getElementById('modal_restock_product_id');
     const selectedOption = select.options[select.selectedIndex];
@@ -363,7 +466,10 @@ function calculateStockModalNewStock() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', updateStockModalProductInfo);
+document.addEventListener('DOMContentLoaded', () => {
+    updateStockModalProductInfo();
+    updateAdjustModalProductInfo();
+});
 </script>
 
 @endsection

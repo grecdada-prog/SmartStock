@@ -113,15 +113,22 @@ class StockController extends Controller
      */
     public function restock(Request $request)
     {
+        if ($request->filled('barcode')) {
+            $request->merge([
+                'barcode' => $this->formatBarcode($request->barcode),
+            ]);
+        }
+
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
             'quantity' => ['required', 'integer', 'min:1'],
             'purchase_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'reason' => ['nullable', 'string', 'max:500'],
+            'barcode' => ['required', 'string', 'regex:/^\d \d{4} \d{2} \d{4} \d{2}$/', 'unique:stock_movements,barcode'],
         ], [
             'selling_price.gte' => 'Le prix de vente doit etre superieur ou egal au prix d achat.',
+            'barcode.regex' => 'Le code-barres doit respecter le format : 6 9455 85 0039 13.',
+            'barcode.unique' => 'Ce code-barres existe deja pour un autre stock.',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -144,8 +151,9 @@ class StockController extends Controller
                 'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'remaining_quantity' => $validated['quantity'],
-                'reference' => $validated['reference'] ?? null,
-                'reason' => $validated['reason'] ?? 'Réapprovisionnement',
+                'barcode' => $validated['barcode'],
+                'reference' => null,
+                'reason' => 'Réapprovisionnement',
                 'user_id' => auth()->id(),
             ]);
 
@@ -250,13 +258,59 @@ class StockController extends Controller
         }
 
         $movements = $query->latest()->paginate(20);
+        $selectedProduct = null;
+
+        if ($request->filled('product_id')) {
+            $selectedProduct = Product::where('created_by', auth()->id())->find($request->product_id);
+        }
 
         $products = Product::where('created_by', auth()->id())
             ->active()
             ->orderBy('name')
             ->get();
 
-        return view('manager.stock.movements', compact('movements', 'products'));
+        return view('manager.stock.movements', compact('movements', 'products', 'selectedProduct'));
+    }
+
+    /**
+     * Historique cible d'un produit.
+     */
+    public function productMovements(Product $product)
+    {
+        $this->authorize('view', $product);
+
+        return redirect()->route('manager.stock.movements', ['product_id' => $product->id]);
+    }
+
+    /**
+     * Historique dedie aux approvisionnements.
+     */
+    public function restocks()
+    {
+        $restocks = StockMovement::with(['product.category', 'user'])
+            ->where('type', 'in')
+            ->whereHas('product', function ($query) {
+                $query->where('created_by', auth()->id());
+            })
+            ->latest()
+            ->paginate(20);
+
+        return view('manager.stock.restocks', compact('restocks'));
+    }
+
+    /**
+     * Detail d'un approvisionnement.
+     */
+    public function showRestock(StockMovement $movement)
+    {
+        abort_unless($movement->type === 'in', 404);
+
+        $movement->load(['product.category', 'user']);
+        abort_if($movement->product === null, 404);
+
+        $this->authorize('view', $movement->product);
+
+        return view('manager.stock.restock-show', compact('movement'));
     }
 
     /**
@@ -315,4 +369,20 @@ class StockController extends Controller
 
         return back()->with('success', "Stock retiré avec succès pour {$product->name}.");
     }
+
+    private function formatBarcode(string $barcode): string
+    {
+        $digits = preg_replace('/\D+/', '', $barcode);
+
+        if (strlen($digits) !== 13) {
+            return preg_replace('/\s+/', ' ', trim($barcode));
+        }
+
+        return substr($digits, 0, 1)
+            . ' ' . substr($digits, 1, 4)
+            . ' ' . substr($digits, 5, 2)
+            . ' ' . substr($digits, 7, 4)
+            . ' ' . substr($digits, 11, 2);
+    }
 }
+

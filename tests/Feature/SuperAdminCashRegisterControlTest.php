@@ -7,6 +7,7 @@ use App\Models\CashRegisterClosure;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -29,6 +30,8 @@ class SuperAdminCashRegisterControlTest extends TestCase
     public function test_super_admin_can_force_close_a_seller_cash_register_with_reason(): void
     {
         [$superAdmin, $seller] = $this->createSuperAdminAndSeller();
+
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
 
         Sale::create([
             'invoice_number' => 'INV-TST-0001',
@@ -63,9 +66,14 @@ class SuperAdminCashRegisterControlTest extends TestCase
         $this->assertSame('Controle de fin de journee par le superadmin.', data_get($log->properties, 'reason'));
     }
 
-    public function test_super_admin_can_force_open_a_seller_cash_register_with_reason(): void
+    public function test_super_admin_cannot_open_a_seller_cash_register(): void
     {
-        [$superAdmin, $seller] = $this->createSuperAdminAndSeller();
+        $this->assertFalse(Route::has('superadmin.sellers.cash-register.open'));
+    }
+
+    public function test_seller_opening_is_traced_with_seller_actor(): void
+    {
+        [, $seller] = $this->createSuperAdminAndSeller();
 
         $closure = CashRegisterClosure::create([
             'seller_id' => $seller->id,
@@ -75,26 +83,18 @@ class SuperAdminCashRegisterControlTest extends TestCase
             'closed_at' => now(),
         ]);
 
-        $response = $this->actingAs($superAdmin)->post(route('superadmin.sellers.cash-register.open', $seller), [
-            'reason' => 'Correction apres verification du superviseur.',
-        ]);
+        $response = $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
 
-        $response->assertRedirect(route('superadmin.sellers.edit', $seller));
+        $response->assertRedirect();
 
         $closure->refresh();
 
         $this->assertNotNull($closure->opened_at);
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'seller_cash_register_force_opened',
-            'model' => 'CashRegisterClosure',
-            'model_id' => $closure->id,
+        $this->assertDatabaseHas('cash_register_closures', [
+            'id' => $closure->id,
+            'opened_by' => 'seller',
+            'opened_by_user_id' => $seller->id,
         ]);
-
-        $log = ActivityLog::where('action', 'seller_cash_register_force_opened')->latest()->first();
-
-        $this->assertSame($seller->id, data_get($log->properties, 'seller_id'));
-        $this->assertSame('Correction apres verification du superviseur.', data_get($log->properties, 'reason'));
     }
 
     private function createSuperAdminAndSeller(): array

@@ -20,7 +20,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-5">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
@@ -117,6 +117,18 @@
                         </dl>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <dt class="text-sm font-medium text-gray-500 truncate">Paiements mobiles</dt>
+                <dd>
+                    <x-money-toggle
+                        :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
+                        label="le solde des paiements mobiles" />
+                </dd>
+                <dd class="mt-1 text-sm text-gray-500">Orange Money + MTN Momo</dd>
             </div>
         </div>
     </div>

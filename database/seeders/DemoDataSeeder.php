@@ -17,10 +17,10 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         $superAdmin = User::firstOrCreate(
-            ['email' => 'nanguefyllias@gmai.com'],
+            ['email' => 'nanguefyllias@gmail.com'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('Password@123'),
+                'password' => Hash::make('Dorab237@berthol'),
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]

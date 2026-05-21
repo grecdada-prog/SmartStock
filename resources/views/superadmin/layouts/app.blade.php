@@ -87,9 +87,9 @@
                                         Profil
                                     </x-dropdown-link>
 
-                                    @if($user->google2fa_enabled ?? false)
+                                    @if(Auth::user()->google2fa_enabled)
                                         <x-dropdown-link href="{{ route('2fa.setup') }}">
-                                            Authentification 2FA
+                                            Desactiver 2FA
                                         </x-dropdown-link>
                                     @else
                                         <x-dropdown-link href="{{ route('2fa.setup') }}">
@@ -167,6 +167,10 @@
                     <div class="mt-3 space-y-1">
                         <x-responsive-nav-link href="{{ route('account.profile.show') }}" :active="request()->routeIs('account.profile.show')">
                             Profil
+                        </x-responsive-nav-link>
+
+                        <x-responsive-nav-link href="{{ route('2fa.setup') }}" :active="request()->routeIs('2fa.setup')">
+                            {{ Auth::user()->google2fa_enabled ? 'Desactiver 2FA' : 'Activer 2FA' }}
                         </x-responsive-nav-link>
 
                         <!-- Authentication -->

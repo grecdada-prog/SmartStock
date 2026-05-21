@@ -45,7 +45,7 @@ class ExportSmokeTest extends TestCase
         $this->seed(DemoDataSeeder::class);
         Excel::fake();
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
 
         $this->actingAs($superAdmin)->get(route('superadmin.users.export.excel'))->assertOk();
         Excel::assertDownloaded('utilisateurs_2026-04-25_10-30-00.xlsx');
@@ -74,7 +74,7 @@ class ExportSmokeTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DemoDataSeeder::class);
 
-        $superAdmin = User::where('email', 'nanguefyllias@gmai.com')->firstOrFail();
+        $superAdmin = User::where('email', 'nanguefyllias@gmail.com')->firstOrFail();
         $manager = User::where('email', 'bertholfyllias200@gmail.com')->firstOrFail();
 
         $superAdminRoutes = [

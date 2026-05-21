@@ -1,22 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\CustomLoginController;
-use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
-use App\Http\Controllers\SuperAdmin\SuperAdminUserController;
-use App\Http\Controllers\SuperAdmin\SuperAdminManagerController;
-use App\Http\Controllers\SuperAdmin\SuperAdminSellerController;
+use App\Http\Controllers\Manager\CategoryController;
 use App\Http\Controllers\Manager\ManagerDashboardController;
 use App\Http\Controllers\Manager\ManagerSellerController;
-use App\Http\Controllers\Manager\CategoryController;
 use App\Http\Controllers\Manager\ProductController;
-use App\Http\Controllers\Manager\StockController;
 use App\Http\Controllers\Manager\ReportController;
-use App\Http\Controllers\Seller\SellerDashboardController;
-use App\Http\Controllers\Seller\POSController;
+use App\Http\Controllers\Manager\StockController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\Seller\POSController;
+use App\Http\Controllers\Seller\SellerDashboardController;
+use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\SuperAdminManagerController;
+use App\Http\Controllers\SuperAdmin\SuperAdminSellerController;
+use App\Http\Controllers\SuperAdmin\SuperAdminUserController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CodeImprovementController;
 
 /*
 | Web Routes
@@ -26,12 +26,22 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::post('/improve-code', [CodeImprovementController::class, 'improve'])->name('improve.code');
+
+Route::get('/improve-code-view', function () {
+    return view('improve-code');
+})->name('improve.code.view');
+
 Route::get('/csrf-token', function () {
     $response = response()->json(['token' => csrf_token()]);
     $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
     return $response;
 })->name('csrf-token');
+
+Route::post('/payments/monetbil/callback', [POSController::class, 'monetbilCallback'])
+    ->middleware('throttle:120,1')
+    ->name('payments.monetbil.callback');
 
 // Routes d'authentification
 Route::get('/login', [CustomLoginController::class, 'showLogin'])->name('login');
@@ -122,7 +132,6 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth', 'role:supe
     Route::get('/sellers/{user}/edit', [SuperAdminSellerController::class, 'edit'])->name('sellers.edit');
     Route::post('/sellers/{user}/reassign-manager', [SuperAdminSellerController::class, 'reassignManager'])->middleware('throttle:10,60')->name('sellers.reassign-manager');
     Route::post('/sellers/{user}/cash-register/close', [SuperAdminSellerController::class, 'closeCashRegister'])->middleware('throttle:10,60')->name('sellers.cash-register.close');
-    Route::post('/sellers/{user}/cash-register/open', [SuperAdminSellerController::class, 'openCashRegister'])->middleware('throttle:10,60')->name('sellers.cash-register.open');
     Route::put('/sellers/{user}', [SuperAdminSellerController::class, 'update'])->name('sellers.update');
     Route::delete('/sellers/{user}', [SuperAdminSellerController::class, 'destroy'])->middleware('throttle:10,60')->name('sellers.destroy');
 
@@ -185,6 +194,9 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::post('/stock/adjust', [StockController::class, 'adjust'])->middleware('throttle:20,60')->name('stock.adjust');
     Route::post('/stock/remove', [StockController::class, 'remove'])->middleware('throttle:20,60')->name('stock.remove');
     Route::get('/stock/movements', [StockController::class, 'movements'])->name('stock.movements');
+    Route::get('/stock/products/{product}/movements', [StockController::class, 'productMovements'])->name('stock.products.movements');
+    Route::get('/stock/restocks/history', [StockController::class, 'restocks'])->name('stock.restocks');
+    Route::get('/stock/restocks/{movement}', [StockController::class, 'showRestock'])->name('stock.restocks.show');
 
     // Ventes
     Route::get('/sales', [ManagerDashboardController::class, 'sales'])->name('sales');
@@ -206,16 +218,24 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'role:seller'])->g
     // Dashboard
     Route::get('/dashboard', [SellerDashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/close-cash-register', [SellerDashboardController::class, 'closeCashRegister'])
-        ->middleware('throttle:5,60')
+        ->middleware('throttle:20,1')
         ->name('dashboard.close-cash-register');
     Route::post('/dashboard/open-cash-register', [SellerDashboardController::class, 'openCashRegister'])
-        ->middleware('throttle:5,60')
+        ->middleware('throttle:20,1')
         ->name('dashboard.open-cash-register');
 
     // Point de vente (POS)
     Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
     Route::get('/pos/products', [POSController::class, 'products'])->name('pos.products');
-    Route::post('/pos/sale', [POSController::class, 'processSale'])->name('pos.sale');
+    Route::post('/pos/sale', [POSController::class, 'processSale'])
+        ->middleware('throttle:30,1')
+        ->name('pos.sale');
+    Route::post('/pos/mobile-payment', [POSController::class, 'startMobilePayment'])
+        ->middleware('throttle:30,1')
+        ->name('pos.mobile-payment.start');
+    Route::post('/pos/mobile-payment/cancel', [POSController::class, 'cancelMobilePayment'])
+        ->middleware('throttle:30,1')
+        ->name('pos.mobile-payment.cancel');
     // Reçu de vente
     Route::get('/pos/{sale}/receipt', [POSController::class, 'printReceipt'])->name('pos.receipt');
 

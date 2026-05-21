@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
 use Laravel\Jetstream\Http\Livewire\TwoFactorAuthenticationForm;
 use Livewire\Livewire;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 class TwoFactorAuthenticationSettingsTest extends TestCase
@@ -72,5 +73,25 @@ class TwoFactorAuthenticationSettingsTest extends TestCase
         $component->call('disableTwoFactorAuthentication');
 
         $this->assertNull($user->fresh()->two_factor_secret);
+    }
+
+    public function test_custom_two_factor_activation_logs_user_out(): void
+    {
+        $google2fa = new Google2FA;
+        $secret = $google2fa->generateSecretKey();
+        $user = User::factory()->create([
+            'is_active' => true,
+            'google2fa_enabled' => false,
+            'google2fa_secret' => $secret,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('2fa.enable'), [
+            'one_time_password' => str_pad((string) $google2fa->getCurrentOtp($secret), 6, '0', STR_PAD_LEFT),
+        ]);
+
+        $response->assertRedirect(route('login', absolute: false));
+
+        $this->assertGuest();
+        $this->assertTrue($user->fresh()->google2fa_enabled);
     }
 }

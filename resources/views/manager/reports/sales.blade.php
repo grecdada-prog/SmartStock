@@ -14,11 +14,12 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Ventes filtrees</p><p class="mt-1 text-2xl font-semibold">{{ $stats['filtered_sales'] }}</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Recette filtree</p><p class="mt-1 text-2xl font-semibold">{{ number_format($stats['filtered_revenue'], 0, ',', ' ') }} FCFA</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Panier moyen</p><p class="mt-1 text-2xl font-semibold">{{ number_format($stats['average_sale'] ?? 0, 0, ',', ' ') }} FCFA</p></div>
         <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Recette du jour</p><div class="mt-1"><x-money-toggle :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'" label="la recette du jour" /></div></div>
+        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Paiements mobiles</p><div class="mt-1"><x-money-toggle :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'" label="le solde des paiements mobiles" /></div><p class="mt-1 text-xs text-gray-500">Orange Money + MTN Momo</p></div>
     </div>
 
     <form method="GET" data-auto-filter class="bg-white p-4 rounded-md shadow-sm border grid grid-cols-1 gap-4 md:grid-cols-5">

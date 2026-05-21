@@ -201,12 +201,14 @@
                                                     </button>
                                                 </form>
 
-                                                <form method="POST" action="{{ route('manager.sellers.cash-register.close', $seller) }}" x-on:modal-confirmed-close-cash-register.window="if(closeCashRegisterId === {{ $seller->id }}) $el.submit()">
-                                                    @csrf
-                                                    <button type="button" @click="closeCashRegisterId = {{ $seller->id }}; $dispatch('open-modal-close-cash-register')" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none">
-                                                        Cloturer la caisse
-                                                    </button>
-                                                </form>
+                                                @if(in_array($seller->id, $openCashRegisterSellerIds, true))
+                                                    <form method="POST" action="{{ route('manager.sellers.cash-register.close', $seller) }}" x-on:modal-confirmed-close-cash-register.window="if(closeCashRegisterId === {{ $seller->id }}) $el.submit()">
+                                                        @csrf
+                                                        <button type="button" @click="closeCashRegisterId = {{ $seller->id }}; $dispatch('open-modal-close-cash-register')" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none">
+                                                            Cloturer la caisse
+                                                        </button>
+                                                    </form>
+                                                @endif
 
                                                 @if(\App\Services\SessionManager::isUserOnline($seller->id))
                                                     <form method="POST" action="{{ route('manager.sellers.force-logout', $seller) }}">

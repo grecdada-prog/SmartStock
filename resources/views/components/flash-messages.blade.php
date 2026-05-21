@@ -40,6 +40,7 @@
                 x-show="show"
                 x-init="setTimeout(() => show = false, 5000)"
                 x-transition
+                data-flash-message
                 class="pointer-events-auto rounded-md border bg-white px-4 py-3 text-gray-900 shadow-lg {{ $tone['border'] }}"
                 role="alert"
             >
@@ -71,6 +72,7 @@
                     <button
                         type="button"
                         @click="show = false"
+                        data-flash-dismiss
                         class="-mr-1 -mt-1 rounded-md p-1.5 text-gray-400 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 {{ $tone['focus'] }}"
                         aria-label="Fermer le message"
                     >
@@ -82,4 +84,20 @@
             </div>
         @endforeach
     </div>
+
+    <script>
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-flash-dismiss]');
+
+            if (!button) {
+                return;
+            }
+
+            const message = button.closest('[data-flash-message]');
+
+            if (message) {
+                message.remove();
+            }
+        });
+    </script>
 @endif

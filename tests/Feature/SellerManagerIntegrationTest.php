@@ -31,6 +31,7 @@ class SellerManagerIntegrationTest extends TestCase
     public function test_seller_sale_updates_manager_sales_stock_movements_and_activity_history(): void
     {
         [$manager, $seller] = $this->createManagerAndSeller();
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
         $category = Category::create([
             'name' => 'Boissons',
             'created_by' => $manager->id,

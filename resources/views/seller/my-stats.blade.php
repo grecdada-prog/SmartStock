@@ -132,12 +132,8 @@
                     <span class="text-sm font-medium">{{ \App\Models\Sale::where('seller_id', auth()->id())->where('payment_method', 'cash')->count() }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Orange Money</span>
-                    <span class="text-sm font-medium">{{ \App\Models\Sale::where('seller_id', auth()->id())->where('payment_method', 'card')->count() }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">MTN Momo</span>
-                    <span class="text-sm font-medium">{{ \App\Models\Sale::where('seller_id', auth()->id())->where('payment_method', 'mobile_money')->count() }}</span>
+                    <span class="text-sm text-gray-600">Paiements mobiles</span>
+                    <span class="text-sm font-medium">{{ \App\Models\Sale::where('seller_id', auth()->id())->whereIn('payment_method', ['card', 'mobile_money'])->count() }}</span>
                 </div>
             </div>
         </div>
