@@ -16,7 +16,6 @@ use App\Http\Controllers\SuperAdmin\SuperAdminSellerController;
 use App\Http\Controllers\SuperAdmin\SuperAdminUserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CodeImprovementController;
 
 /*
 | Web Routes
@@ -25,12 +24,6 @@ use App\Http\Controllers\CodeImprovementController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
-
-Route::post('/improve-code', [CodeImprovementController::class, 'improve'])->name('improve.code');
-
-Route::get('/improve-code-view', function () {
-    return view('improve-code');
-})->name('improve.code.view');
 
 Route::get('/csrf-token', function () {
     $response = response()->json(['token' => csrf_token()]);
@@ -47,6 +40,9 @@ Route::post('/payments/monetbil/callback', [POSController::class, 'monetbilCallb
 Route::get('/login', [CustomLoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [CustomLoginController::class, 'login']);
 Route::post('/logout', [CustomLoginController::class, 'logout'])->name('logout');
+Route::post('/session/heartbeat', [CustomLoginController::class, 'heartbeat'])
+    ->middleware('auth')
+    ->name('session.heartbeat');
 
 // Login Super Admin
 Route::get('/superadmin/login', [CustomLoginController::class, 'showSuperAdminLogin'])->name('superadmin.login');
@@ -64,7 +60,6 @@ Route::get('/2fa/verify', [CustomLoginController::class, 'show2FAVerify'])
     ->middleware('throttle:10,1')
     ->name('2fa.verify');
 Route::post('/2fa/verify', [CustomLoginController::class, 'verify2FA'])
-    ->middleware('throttle:5,1')
     ->name('2fa.verify.post');
 
 // Profile routes (accessible par tous les utilisateurs authentifiés)
@@ -223,6 +218,9 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'role:seller'])->g
     Route::post('/dashboard/open-cash-register', [SellerDashboardController::class, 'openCashRegister'])
         ->middleware('throttle:20,1')
         ->name('dashboard.open-cash-register');
+    Route::post('/dashboard/manager-closure-notice/ack', [SellerDashboardController::class, 'acknowledgeManagerClosureNotice'])
+        ->middleware('throttle:20,1')
+        ->name('dashboard.manager-closure-notice.ack');
 
     // Point de vente (POS)
     Route::get('/pos', [POSController::class, 'index'])->name('pos.index');

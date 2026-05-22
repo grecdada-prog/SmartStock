@@ -11,6 +11,8 @@
     @endunless
     <title>@yield('title', 'Dashboard') - SmartStore</title>
     <x-favicon />
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -19,7 +21,7 @@
     <div class="flex min-h-screen flex-col" style="{{ $isModalFrame ? '' : 'padding-top: 4rem;' }}">
         @unless($isModalFrame)
         <!-- Navigation -->
-        <nav x-data="{ open: false }" class="fixed inset-x-0 top-0 z-40 border-b shadow-sm text-gray-800" style="@include('components.navbar-shell-style')">
+        <nav x-data="{ open: false }" class="smartstore-navbar-shell fixed inset-x-0 top-0 z-40 text-gray-800" style="@include('components.navbar-shell-style')">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex">
@@ -139,6 +141,35 @@
         @unless($isModalFrame)
             <x-flash-messages />
         @endunless
+
+        @php($managerClosureNotice = $isModalFrame ? null : \Illuminate\Support\Facades\Cache::get('seller_cash_register_closed_notice:'.Auth::id()))
+        @if($managerClosureNotice)
+            <div
+                x-data="{ open: true, acknowledging: false, close() { this.acknowledging = true; fetch('{{ route('seller.dashboard.manager-closure-notice.ack') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '', 'Accept': 'application/json' } }).finally(() => { this.open = false; this.acknowledging = false; }); } }"
+                x-show="open"
+                x-transition.opacity
+                class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 px-4"
+            >
+                <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
+                    <div class="border-b border-rose-100 bg-rose-50 px-6 py-5">
+                        <h2 class="text-lg font-extrabold text-gray-950">Caisse cloturee</h2>
+                    </div>
+                    <div class="px-6 py-5">
+                        <p class="text-sm font-medium text-gray-700">{{ $managerClosureNotice }}</p>
+                    </div>
+                    <div class="flex justify-end border-t border-gray-100 bg-gray-50 px-6 py-4">
+                        <button
+                            type="button"
+                            @click="close()"
+                            :disabled="acknowledging"
+                            class="inline-flex items-center justify-center rounded-md bg-rose-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
+                        >
+                            J'ai compris
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Page Content -->
         <main class="mx-auto w-full max-w-7xl flex-1 py-6 px-4 sm:px-6 lg:px-8">

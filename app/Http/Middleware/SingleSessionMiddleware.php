@@ -2,12 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ActivityLog;
+use App\Services\SessionManager as ActiveSessionManager;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-use App\Models\ActiveSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Symfony\Component\HttpFoundation\Response;
 
 class SingleSessionMiddleware
 {
@@ -17,40 +18,69 @@ class SingleSessionMiddleware
             $user = Auth::user();
             $currentSessionId = Session::getId();
 
-            // Vérifier s'il existe une session active différente
-            $activeSession = ActiveSession::where('user_id', $user->id)
-                ->where('session_id', '!=', $currentSessionId)
-                ->first();
+            if (ActiveSessionManager::isForcedLogoutSession($currentSessionId)) {
+                ActiveSessionManager::forgetForcedLogoutSession($currentSessionId);
 
-            if ($activeSession) {
-                // Supprimer l'ancienne session
-                ActiveSession::where('user_id', $user->id)
-                    ->where('session_id', '!=', $currentSessionId)
-                    ->delete();
-
-                // Logger cette activité
-                \App\Models\ActivityLog::log(
-                    'session_replaced',
-                    'Session précédente fermée - Nouvelle connexion détectée',
+                ActivityLog::log(
+                    'forced_logout_applied',
+                    'Session fermee par un administrateur',
                     'User',
                     $user->id
                 );
+
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                $message = 'Votre session a ete fermee par votre administrateur. Veuillez vous reconnecter.';
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                        'redirect' => route('login'),
+                    ], 401);
+                }
+
+                return redirect()->route('login')->with('message', $message);
             }
 
-            // Créer ou mettre à jour la session active
-            ActiveSession::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'session_id' => $currentSessionId
-                ],
-                [
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'last_activity' => now(),
-                ]
+            $activeSessionElsewhere = ActiveSessionManager::hasBlockingSession(
+                $user,
+                $currentSessionId,
+                $request->ip(),
+                $request->userAgent()
             );
 
-            // Mettre à jour l'activité de l'utilisateur
+            if ($activeSessionElsewhere) {
+                ActivityLog::log(
+                    'session_blocked',
+                    'Session fermee car le compte est deja ouvert ailleurs',
+                    'User',
+                    $user->id
+                );
+
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                $message = 'Ce compte est deja ouvert dans un autre navigateur. Deconnectez-le avant de vous reconnecter.';
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                        'redirect' => route('login'),
+                    ], 409);
+                }
+
+                return redirect()
+                    ->route('login')
+                    ->withErrors(['email' => $message]);
+            }
+
+            ActiveSessionManager::touch($user, $currentSessionId, $request->ip(), $request->userAgent());
+
             $user->updateLastActivity();
         }
 

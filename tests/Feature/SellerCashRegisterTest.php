@@ -6,6 +6,7 @@ use App\Models\CashRegisterClosure;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -36,7 +37,7 @@ class SellerCashRegisterTest extends TestCase
             ->get(route('seller.dashboard'))
             ->assertOk()
             ->assertSee("showToday ? '7 500 FCFA' : '******'", false)
-            ->assertSee('2 vente(s), toutes methodes');
+            ->assertSee('2 vente(s)');
 
         $response = $this->actingAs($seller)->post(route('seller.dashboard.close-cash-register'));
 
@@ -86,7 +87,7 @@ class SellerCashRegisterTest extends TestCase
         $response->assertOk()
             ->assertSee('0 FCFA')
             ->assertSee('Ouvrir la caisse')
-            ->assertSee('Journee de vente terminee');
+            ->assertSee('Solde Cash');
 
         $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
 
@@ -176,6 +177,82 @@ class SellerCashRegisterTest extends TestCase
             ->assertSee("showMobile ? '5 000 FCFA' : '******'", false);
     }
 
+    public function test_balances_remain_visible_after_reopening_cash_register(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $manager = User::findOrFail($seller->created_by);
+        $cashRegisterService = app(\App\Services\CashRegisterService::class);
+
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
+        $this->createSale($seller, 5000, 'cash', now());
+        $this->createSale($seller, 3000, 'mobile_money', now());
+        $this->actingAs($seller)->post(route('seller.dashboard.close-cash-register'));
+
+        $this->assertSame(5000.0, $cashRegisterService->balanceForSeller($seller));
+        $this->assertSame(3000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
+
+        $this->assertSame(5000.0, $cashRegisterService->balanceForSeller($seller));
+        $this->assertSame(3000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+
+        $this->actingAs($seller)
+            ->get(route('seller.dashboard'))
+            ->assertOk()
+            ->assertSee("showCash ? '5 000 FCFA' : '******'", false)
+            ->assertSee("showMobile ? '3 000 FCFA' : '******'", false);
+
+        $this->actingAs($manager)
+            ->get(route('manager.dashboard'))
+            ->assertOk()
+            ->assertSee("showCash ? '5 000 FCFA' : '******'", false)
+            ->assertSee("showMobile ? '3 000 FCFA' : '******'", false);
+
+        $this->actingAs($manager)
+            ->get(route('manager.sellers.index'))
+            ->assertOk()
+            ->assertSee('Total Solde Cash')
+            ->assertSee('Total Paiements mobiles')
+            ->assertSee('5 000 FCFA')
+            ->assertSee('3 000 FCFA');
+    }
+
+    public function test_yesterday_revenue_includes_all_payment_methods_on_dashboards(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $manager = User::findOrFail($seller->created_by);
+        $cashRegisterService = app(\App\Services\CashRegisterService::class);
+
+        $this->createSale($seller, 5000, 'cash', now()->subDay());
+        $this->createSale($seller, 3000, 'mobile_money', now()->subDay());
+        $this->createSale($seller, 2000, 'card', now()->subDay());
+
+        CashRegisterClosure::create([
+            'seller_id' => $seller->id,
+            'business_date' => today()->subDay(),
+            'amount' => 5000,
+            'closed_by' => 'manual',
+            'closed_at' => now()->subDay()->endOfDay(),
+        ]);
+
+        $this->assertSame(10000.0, $cashRegisterService->previousDayRevenueForSeller($seller));
+
+        $this->actingAs($seller)
+            ->get(route('seller.dashboard'))
+            ->assertOk()
+            ->assertSee("showYesterday ? '10 000 FCFA' : '******'", false);
+
+        $this->actingAs($manager)
+            ->get(route('manager.dashboard'))
+            ->assertOk()
+            ->assertSee("showYesterday ? '10 000 FCFA' : '******'", false);
+
+        $this->actingAs($manager)
+            ->get(route('manager.sales'))
+            ->assertOk()
+            ->assertSee('10 000 FCFA');
+    }
+
     public function test_cash_register_balance_recalculates_legacy_closures_from_cash_sales(): void
     {
         $seller = $this->createSellerWithManager();
@@ -210,12 +287,14 @@ class SellerCashRegisterTest extends TestCase
 
         $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
             'type' => 'add',
+            'balance_type' => 'cash',
             'amount' => 2000,
             'reason' => 'Depot',
         ])->assertRedirect();
 
         $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
             'type' => 'withdraw',
+            'balance_type' => 'cash',
             'amount' => 1000,
             'reason' => 'Retrait',
         ])->assertRedirect();
@@ -224,6 +303,7 @@ class SellerCashRegisterTest extends TestCase
             'seller_id' => $seller->id,
             'manager_id' => $manager->id,
             'type' => 'add',
+            'balance_type' => 'cash',
             'amount' => 2000,
         ]);
         $this->assertSame(6000.0, app(\App\Services\CashRegisterService::class)->balanceForSeller($seller));
@@ -245,12 +325,14 @@ class SellerCashRegisterTest extends TestCase
 
         $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
             'type' => 'withdraw',
+            'balance_type' => 'cash',
             'amount' => 3000,
             'reason' => 'Versement banque',
         ])->assertRedirect();
 
         $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
             'type' => 'withdraw',
+            'balance_type' => 'cash',
             'amount' => 2500,
             'reason' => 'Deuxieme retrait',
         ])->assertSessionHas('error');
@@ -259,6 +341,7 @@ class SellerCashRegisterTest extends TestCase
             'seller_id' => $seller->id,
             'manager_id' => $manager->id,
             'type' => 'withdraw',
+            'balance_type' => 'cash',
             'amount' => 3000,
         ]);
 
@@ -266,6 +349,50 @@ class SellerCashRegisterTest extends TestCase
             'user_id' => $manager->id,
             'action' => 'cash_balance_withdrawn',
             'model' => 'CashBalanceAdjustment',
+        ]);
+    }
+
+    public function test_manager_can_adjust_seller_mobile_money_balance(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $manager = User::findOrFail($seller->created_by);
+        $cashRegisterService = app(\App\Services\CashRegisterService::class);
+
+        $this->createSale($seller, 4000, 'mobile_money', now()->subMinute());
+
+        CashRegisterClosure::create([
+            'seller_id' => $seller->id,
+            'business_date' => today(),
+            'amount' => 0,
+            'closed_by' => 'manual',
+            'closed_at' => now(),
+        ]);
+
+        $this->assertSame(4000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+
+        $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
+            'type' => 'add',
+            'balance_type' => 'mobile_money',
+            'amount' => 1500,
+            'reason' => 'Correction mobile',
+        ])->assertRedirect();
+
+        $this->actingAs($manager)->post(route('manager.sellers.cash-balance', $seller), [
+            'type' => 'withdraw',
+            'balance_type' => 'mobile_money',
+            'amount' => 1000,
+            'reason' => 'Versement mobile',
+        ])->assertRedirect();
+
+        $this->assertSame(4500.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+        $this->assertSame(0.0, $cashRegisterService->balanceForSeller($seller));
+
+        $this->assertDatabaseHas('cash_balance_adjustments', [
+            'seller_id' => $seller->id,
+            'manager_id' => $manager->id,
+            'type' => 'withdraw',
+            'balance_type' => 'mobile_money',
+            'amount' => 1000,
         ]);
     }
 
@@ -286,6 +413,33 @@ class SellerCashRegisterTest extends TestCase
             ->get(route('manager.sellers.index'))
             ->assertOk()
             ->assertDontSee(route('manager.sellers.cash-register.close', $seller), false);
+    }
+
+    public function test_manager_closure_shows_seller_notice_until_acknowledged(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $manager = User::findOrFail($seller->created_by);
+
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
+
+        $this->actingAs($manager)
+            ->post(route('manager.sellers.cash-register.close', $seller))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertNotNull(Cache::get('seller_cash_register_closed_notice:'.$seller->id));
+
+        $this->actingAs($seller)
+            ->get(route('seller.dashboard'))
+            ->assertOk()
+            ->assertSee('Caisse cloturee')
+            ->assertSee('Ton gerant a cloture ta caisse');
+
+        $this->actingAs($seller)
+            ->post(route('seller.dashboard.manager-closure-notice.ack'))
+            ->assertNoContent();
+
+        $this->assertNull(Cache::get('seller_cash_register_closed_notice:'.$seller->id));
     }
 
     public function test_seller_dashboard_only_shows_requested_sections(): void
@@ -323,6 +477,7 @@ class SellerCashRegisterTest extends TestCase
     {
         Role::findOrCreate('manager');
         Role::findOrCreate('seller');
+        Role::findOrCreate('super_admin');
 
         $manager = User::factory()->create(['is_active' => true]);
         $manager->assignRole('manager');
@@ -338,7 +493,7 @@ class SellerCashRegisterTest extends TestCase
 
     private function createSale(User $seller, int $total, string $paymentMethod, $createdAt): Sale
     {
-        return Sale::create([
+        $sale = Sale::create([
             'invoice_number' => 'INV-'.uniqid(),
             'seller_id' => $seller->id,
             'subtotal' => $total,
@@ -346,8 +501,13 @@ class SellerCashRegisterTest extends TestCase
             'payment_method' => $paymentMethod,
             'amount_received' => $total,
             'change_given' => 0,
+        ]);
+
+        $sale->forceFill([
             'created_at' => $createdAt,
             'updated_at' => $createdAt,
-        ]);
+        ])->save();
+
+        return $sale;
     }
 }

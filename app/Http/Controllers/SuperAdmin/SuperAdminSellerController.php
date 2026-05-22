@@ -11,6 +11,7 @@ use App\Notifications\UserCreatedNotification;
 use App\Services\CashRegisterService;
 use App\Services\PasswordSetupLinkService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -294,6 +295,12 @@ class SuperAdminSellerController extends Controller
         }
 
         $closure = $cashRegisterService->closeForSeller($user, null, 'super_admin', $validated['reason']);
+
+        Cache::put(
+            'seller_cash_register_closed_notice:'.$user->id,
+            'Ton gerant a cloture ta caisse. Les ventes sont bloquees jusqu a la prochaine ouverture.',
+            now()->addHours(12)
+        );
 
         ActivityLog::log(
             'seller_cash_register_force_closed',

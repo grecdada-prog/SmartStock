@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Services\CashRegisterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class SellerDashboardController extends Controller
 {
@@ -32,7 +33,8 @@ class SellerDashboardController extends Controller
             'yesterday_cash_sales' => $yesterdayClosure
                 ? null
                 : $cashRegisterService->cashSalesCountForDate($user, today()->subDay()),
-            'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($user),
+            'yesterday_sales' => Sale::where('seller_id', $user->id)->whereDate('created_at', today()->subDay())->count(),
+            'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($user),
             'cash_balance' => $cashRegisterService->balanceForSeller($user),
             'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($user),
             'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($user),
@@ -72,6 +74,13 @@ class SellerDashboardController extends Controller
         $cashRegisterService->openForSeller(Auth::user());
 
         return back()->with('success', 'Caisse ouverte.');
+    }
+
+    public function acknowledgeManagerClosureNotice()
+    {
+        Cache::forget('seller_cash_register_closed_notice:'.Auth::id());
+
+        return response()->noContent();
     }
 
     public function products(Request $request)

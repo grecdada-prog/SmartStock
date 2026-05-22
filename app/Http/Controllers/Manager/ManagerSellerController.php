@@ -14,6 +14,7 @@ use App\Services\CashRegisterService;
 use App\Services\PasswordSetupLinkService;
 use App\Services\SessionManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -47,6 +48,7 @@ class ManagerSellerController extends Controller
             ->where('created_by', auth()->id())
             ->pluck('id');
         $cashBalances = $this->cashBalancesForSellers($sellerIds);
+        $mobileMoneyBalances = $this->mobileMoneyBalancesForSellers($sellerIds);
         $cashRegisterClosures = CashRegisterClosure::with(['seller', 'closedByUser', 'openedByUser'])
             ->whereIn('seller_id', $sellerIds)
             ->latest('closed_at')
@@ -63,7 +65,7 @@ class ManagerSellerController extends Controller
             ->pluck('seller_id')
             ->all();
 
-        return view('manager.sellers.index', compact('sellers', 'cashBalances', 'cashRegisterClosures', 'closedCashRegisterSellerIds', 'openCashRegisterSellerIds'));
+        return view('manager.sellers.index', compact('sellers', 'cashBalances', 'mobileMoneyBalances', 'cashRegisterClosures', 'closedCashRegisterSellerIds', 'openCashRegisterSellerIds'));
     }
 
     /**
@@ -101,6 +103,7 @@ class ManagerSellerController extends Controller
             'this_month_sales' => $user->sales()->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->count(),
             'this_month_revenue' => $user->sales()->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->sum('total'),
             'cash_balance' => $cashRegisterService->balanceForSeller($user),
+            'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($user),
         ];
 
         return view('manager.sellers.show', compact('user', 'stats', 'recentCashAdjustments'));
@@ -329,6 +332,12 @@ class ManagerSellerController extends Controller
             'Cloture forcee par le gerant '.auth()->user()->name
         );
 
+        Cache::put(
+            'seller_cash_register_closed_notice:'.$user->id,
+            'Ton gerant a cloture ta caisse. Les ventes sont bloquees jusqu a la prochaine ouverture.',
+            now()->addHours(12)
+        );
+
         return back()->with(
             'success',
             'Caisse cloturee.'
@@ -341,6 +350,7 @@ class ManagerSellerController extends Controller
 
         $validated = $request->validate([
             'type' => ['required', 'in:add,withdraw'],
+            'balance_type' => ['required', 'in:cash,mobile_money'],
             'amount' => ['required', 'numeric', 'min:1'],
             'reason' => ['nullable', 'string', 'max:255'],
         ]);
@@ -357,15 +367,16 @@ class ManagerSellerController extends Controller
                 auth()->user(),
                 $validated['type'],
                 (float) $validated['amount'],
-                $validated['reason'] ?? null
+                $validated['reason'] ?? null,
+                $validated['balance_type']
             );
         } catch (\InvalidArgumentException $exception) {
             return back()->with('error', $exception->getMessage())->withInput();
         }
 
-        $action = $validated['type'] === 'add' ? 'ajoutes' : 'retires';
+        $balanceLabel = $validated['balance_type'] === 'mobile_money' ? 'Paiements mobiles' : 'Cash';
 
-        return back()->with('success', $validated['type'] === 'add' ? 'Fonds ajoutes.' : 'Fonds retires.');
+        return back()->with('success', $validated['type'] === 'add' ? "Fonds {$balanceLabel} ajoutes." : "Fonds {$balanceLabel} retires.");
     }
 
     private function cashBalancesForSellers($sellerIds)
@@ -377,6 +388,20 @@ class ManagerSellerController extends Controller
             return [
                 $sellerId => $sellers->has($sellerId)
                     ? $cashRegisterService->balanceForSeller($sellers[$sellerId])
+                    : 0,
+            ];
+        });
+    }
+
+    private function mobileMoneyBalancesForSellers($sellerIds)
+    {
+        $cashRegisterService = app(CashRegisterService::class);
+        $sellers = User::whereIn('id', $sellerIds)->get()->keyBy('id');
+
+        return $sellerIds->mapWithKeys(function ($sellerId) use ($cashRegisterService, $sellers) {
+            return [
+                $sellerId => $sellers->has($sellerId)
+                    ? $cashRegisterService->mobileMoneyBalanceForSeller($sellers[$sellerId])
                     : 0,
             ];
         });

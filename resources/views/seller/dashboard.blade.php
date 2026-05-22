@@ -10,107 +10,43 @@
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 mb-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Recette du jour</p>
-                                <p class="mt-1 text-xs text-gray-500">Recette totale encaissee aujourd'hui</p>
-                            </div>
-                            <button type="button" @click="showToday = !showToday; if (showToday) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette du jour">
-                                <svg x-show="!showToday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
-                                </svg>
-                                <svg x-show="showToday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
-                                </svg>
-                            </button>
+                        <div class="money-amount-row">
+                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Recette du jour</p>
+                            <x-money-eye-button state="showToday" label="la recette du jour" refresh-on-show />
                         </div>
-                        <div class="mt-6">
-                            <p class="text-3xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                            <p class="mt-2 text-sm text-gray-500">{{ $stats['today_sales'] }} vente(s), toutes methodes</p>
-                        </div>
+                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                        <p class="mt-2 text-sm text-gray-500">{{ number_format($stats['today_sales']) }} vente(s)</p>
                     </div>
                 </div>
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Recette d'hier</p>
-                                <p class="mt-1 text-xs text-gray-500">Recette totale encaissee hier</p>
-                            </div>
-                            <button type="button" @click="showYesterday = !showYesterday; if (showYesterday) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer la recette d'hier">
-                                <svg x-show="!showYesterday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
-                                </svg>
-                                <svg x-show="showYesterday" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
-                                </svg>
-                            </button>
+                        <div class="money-amount-row">
+                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Recette d'hier</p>
+                            <x-money-eye-button state="showYesterday" label="la recette d'hier" refresh-on-show />
                         </div>
-                        <div class="mt-6">
-                            <p class="text-3xl font-semibold text-gray-900" x-text="showYesterday ? '{{ number_format($stats['yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                            <p class="mt-2 text-sm text-gray-500">
-                                @if($stats['yesterday_cash_sales'] === null)
-                                    Recette cloturee
-                                @else
-                                    {{ $stats['yesterday_cash_sales'] }} vente(s)
-                                @endif
-                            </p>
-                        </div>
+                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showYesterday ? '{{ number_format($stats['yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                        <p class="mt-2 text-sm text-gray-500">{{ number_format($stats['yesterday_sales']) }} vente(s)</p>
                     </div>
                 </div>
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Solde Cash</p>
-                                <p class="mt-1 text-xs text-gray-500">Caisse cumulee apres cloture, ajustee par le gerant</p>
-                            </div>
-                            <button type="button" @click="showCash = !showCash; if (showCash) window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }))" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer le solde cash">
-                                <svg x-show="!showCash" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
-                                </svg>
-                                <svg x-show="showCash" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
-                                </svg>
-                            </button>
+                        <div class="money-amount-row">
+                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Solde Cash</p>
+                            <x-money-eye-button state="showCash" label="le solde cash" refresh-on-show />
                         </div>
-                        <div class="mt-6">
-                            <p class="text-3xl font-semibold text-gray-900" x-text="showCash ? '{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                            <p class="mt-2 text-sm text-gray-500">
-                                @if($stats['cash_register_closed_today'])
-                                    Journee de vente terminee. Caisse fermee depuis le {{ $stats['cash_register_closed_at']->format('d/m/Y') }} a {{ $stats['cash_register_closed_at']->format('H:i') }}
-                                @elseif($stats['cash_register_is_open'])
-                                    Caisse ouverte le {{ $stats['cash_register_opened_at']->format('d/m/Y') }} a {{ $stats['cash_register_opened_at']->format('H:i') }}
-                                @else
-                                    Caisse non ouverte aujourd'hui
-                                @endif
-                            </p>
-                        </div>
+                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showCash ? '{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                     </div>
                 </div>
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Paiements mobiles</p>
-                                <p class="mt-1 text-xs text-gray-500">Orange Money et MTN Momo</p>
-                            </div>
-                            <button type="button" @click="showMobile = !showMobile" class="text-gray-400 hover:text-gray-700" aria-label="Afficher ou masquer les soldes mobiles">
-                                <svg x-show="!showMobile" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3m3-2A9.8 9.8 0 0112 5c5 0 9 4 10 7a11.7 11.7 0 01-4.1 5.1M3 3l18 18" />
-                                </svg>
-                                <svg x-show="showMobile" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
-                                </svg>
-                            </button>
+                        <div class="money-amount-row">
+                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Paiements mobiles</p>
+                            <x-money-eye-button state="showMobile" label="les soldes mobiles" />
                         </div>
-                        <div class="mt-6">
-                            <p class="text-3xl font-semibold text-gray-900" x-text="showMobile ? '{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                            <p class="mt-2 text-sm text-gray-500">Orange Money + MTN Momo</p>
-                        </div>
+                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showMobile ? '{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                     </div>
                 </div>
             </div>
@@ -118,13 +54,6 @@
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <a href="{{ route('seller.pos.index') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition">
                     <div>
-                        <span class="rounded-lg inline-flex p-3 bg-rose-50 text-rose-700 ring-4 ring-white">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="mt-8">
                         <h3 class="text-lg font-medium text-gray-900">
                             <span class="absolute inset-0" aria-hidden="true"></span>
                             Nouvelle Vente
@@ -162,6 +91,7 @@
                 @else
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
+                            <p class="text-xs font-bold uppercase tracking-normal text-green-700">Caisse ouverte</p>
                             <h3 class="text-base font-semibold text-red-900">Fermeture de caisse</h3>
                             <p class="mt-1 text-sm text-gray-600">Action importante : elle termine la journee de vente, transfere les especes dans le Solde Cash et les paiements mobiles dans leur solde dedie.</p>
                         </div>
@@ -197,16 +127,8 @@
                         </span>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">Cloturer la caisse</h3>
-                            <p class="mt-1 text-sm text-gray-600">
-                                La caisse sera verifiee avant la cloture.
-                            </p>
                         </div>
                     </div>
-                </div>
-                <div class="px-6 py-5">
-                    <p class="text-sm text-gray-600">
-                        Si elle est deja fermee, aucune nouvelle cloture ne sera effectuee.
-                    </p>
                 </div>
                 <div class="border-t border-gray-100 bg-gray-50 px-6 py-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                     <button

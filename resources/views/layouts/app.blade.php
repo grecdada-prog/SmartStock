@@ -15,7 +15,7 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -41,6 +41,35 @@
                         {{ $header }}
                     </div>
                 </header>
+            @endif
+
+            @php($managerClosureNotice = (! $isModalFrame && Auth::check() && Auth::user()->hasRole('seller')) ? \Illuminate\Support\Facades\Cache::get('seller_cash_register_closed_notice:'.Auth::id()) : null)
+            @if($managerClosureNotice)
+                <div
+                    x-data="{ open: true, acknowledging: false, close() { this.acknowledging = true; fetch('{{ route('seller.dashboard.manager-closure-notice.ack') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '', 'Accept': 'application/json' } }).finally(() => { this.open = false; this.acknowledging = false; }); } }"
+                    x-show="open"
+                    x-transition.opacity
+                    class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 px-4"
+                >
+                    <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
+                        <div class="border-b border-rose-100 bg-rose-50 px-6 py-5">
+                            <h2 class="text-lg font-extrabold text-gray-950">Caisse cloturee</h2>
+                        </div>
+                        <div class="px-6 py-5">
+                            <p class="text-sm font-medium text-gray-700">{{ $managerClosureNotice }}</p>
+                        </div>
+                        <div class="flex justify-end border-t border-gray-100 bg-gray-50 px-6 py-4">
+                            <button
+                                type="button"
+                                @click="close()"
+                                :disabled="acknowledging"
+                                class="inline-flex items-center justify-center rounded-md bg-rose-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70"
+                            >
+                                J'ai compris
+                            </button>
+                        </div>
+                    </div>
+                </div>
             @endif
 
             <!-- Page Content -->

@@ -74,7 +74,6 @@ function initPhoneInputs(root = document) {
         input.setAttribute('inputmode', 'tel');
         input.setAttribute('autocomplete', input.getAttribute('autocomplete') || 'tel');
         input.setAttribute('pattern', '[0-9 ]{11,19}');
-        input.setAttribute('title', 'Saisissez 9 a 15 chiffres.');
         input.removeAttribute('oninput');
 
         const syncValue = () => {
@@ -153,3 +152,45 @@ window.SmartStorePhoneInputs = {
 window.SmartStoreEmailInputs = {
     init: initEmailInputs,
 };
+
+function initSaleDetailsModals() {
+    if (window.SmartStoreSaleDetailsReady) {
+        return;
+    }
+
+    window.SmartStoreSaleDetailsReady = true;
+
+    const closeModal = (modal) => {
+        modal?.classList.add('hidden');
+    };
+
+    window.addEventListener('open-sale-modal', (event) => {
+        const saleId = Number(event.detail?.id);
+
+        if (!saleId) {
+            return;
+        }
+
+        document.getElementById(`sale-details-modal-${saleId}`)?.classList.remove('hidden');
+    });
+
+    document.addEventListener('click', (event) => {
+        const closeButton = event.target.closest('[data-sale-details-close]');
+
+        if (!closeButton) {
+            return;
+        }
+
+        closeModal(document.getElementById(`sale-details-modal-${closeButton.dataset.saleDetailsClose}`));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        document.querySelectorAll('[data-sale-details-modal]:not(.hidden)').forEach(closeModal);
+    });
+}
+
+initSaleDetailsModals();
