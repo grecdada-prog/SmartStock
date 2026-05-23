@@ -104,6 +104,24 @@
                                     <template x-for="(line, lineIndex) in item.priceLines" :key="lineIndex">
                                         <p x-text="formatPrice(line.price) + ' x ' + line.quantity"></p>
                                     </template>
+                                    <label
+                                        x-show="promotionEligible(item)"
+                                        class="mt-1 flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            x-model="item.applyPromotion"
+                                            @change="togglePromotion(index)"
+                                            class="h-3.5 w-3.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                                        >
+                                        <span>
+                                            Appliquer promo
+                                            <span x-text="formatPrice(item.activePromotion?.promotion_price || 0)"></span>
+                                        </span>
+                                    </label>
+                                    <p x-show="item.activePromotion && !promotionEligible(item)" class="text-[11px] text-gray-400">
+                                        Promo des <span x-text="item.activePromotion?.min_quantity"></span> articles.
+                                    </p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-1">
@@ -459,7 +477,7 @@ function posSystem() {
 
                 if (newQuantity <= existingItem.maxQuantity) {
                     existingItem.quantity = newQuantity;
-                    existingItem.priceLines = this.productPriceLines(existingItem, newQuantity);
+                    this.refreshCartItemPricing(existingItem);
                 } else {
                     this.showNotification('Stock insuffisant', 'error');
                 }
@@ -634,7 +652,7 @@ function posSystem() {
                 this.removeFromCart(index);
             } else if (newQuantity <= item.maxQuantity) {
                 item.quantity = newQuantity;
-                item.priceLines = this.productPriceLines(item, newQuantity);
+                this.refreshCartItemPricing(item);
                 this.calculateChange();
                 this.persistCart();
             } else {
@@ -650,10 +668,10 @@ function posSystem() {
                 this.removeFromCart(index);
             } else if (newQuantity <= item.maxQuantity) {
                 item.quantity = newQuantity;
-                item.priceLines = this.productPriceLines(item, newQuantity);
+                this.refreshCartItemPricing(item);
             } else {
                 item.quantity = item.maxQuantity;
-                item.priceLines = this.productPriceLines(item, item.maxQuantity);
+                this.refreshCartItemPricing(item);
                 this.showNotification('Stock insuffisant', 'error');
             }
 
@@ -769,10 +787,23 @@ function posSystem() {
             return Number(product.fifo_selling_price ?? product.selling_price ?? 0);
         },
 
-        productPriceLines(product, quantity) {
+        productPriceLines(product, quantity, applyPromotion = false) {
             let remaining = Math.max(0, Math.floor(Number(quantity || 0)));
             const lines = [];
             const batches = product.stockMovements || product.stock_movements || [];
+            const promotion = product.activePromotion || product.active_promotion || null;
+            const promotionApplies = applyPromotion && promotion && remaining >= Number(promotion.min_quantity || 0);
+
+            if (promotionApplies) {
+                const price = Number(promotion.promotion_price || 0);
+
+                return [{
+                    quantity: remaining,
+                    price,
+                    subtotal: remaining * price,
+                    promotion: true,
+                }];
+            }
 
             batches.forEach(batch => {
                 if (remaining <= 0) {
@@ -824,7 +855,35 @@ function posSystem() {
                 maxQuantity: product.quantity,
                 stockMovements: product.stock_movements || [],
                 priceLines: this.productPriceLines(product, safeQuantity),
+                activePromotion: product.active_promotion || product.activePromotion || null,
+                applyPromotion: false,
             };
+        },
+
+        promotionEligible(item) {
+            const promotion = item.activePromotion || null;
+
+            return Boolean(promotion) && Number(item.quantity || 0) >= Number(promotion.min_quantity || 0);
+        },
+
+        refreshCartItemPricing(item) {
+            if (!this.promotionEligible(item)) {
+                item.applyPromotion = false;
+            }
+
+            item.priceLines = this.productPriceLines(item, item.quantity, item.applyPromotion);
+        },
+
+        togglePromotion(index) {
+            const item = this.cart[index];
+
+            if (!item) {
+                return;
+            }
+
+            this.refreshCartItemPricing(item);
+            this.calculateChange();
+            this.persistCart();
         },
 
         persistCart() {
@@ -832,6 +891,7 @@ function posSystem() {
                 const payload = this.cart.map(item => ({
                     id: item.id,
                     quantity: item.quantity,
+                    applyPromotion: Boolean(item.applyPromotion),
                 }));
 
                 if (payload.length === 0) {
@@ -868,7 +928,11 @@ function posSystem() {
                             return null;
                         }
 
-                        return this.cartItemFromProduct(product, savedItem.quantity);
+                        const item = this.cartItemFromProduct(product, savedItem.quantity);
+                        item.applyPromotion = Boolean(savedItem.applyPromotion) && this.promotionEligible(item);
+                        this.refreshCartItemPricing(item);
+
+                        return item;
                     })
                     .filter(Boolean);
 
@@ -889,7 +953,11 @@ function posSystem() {
                         return null;
                     }
 
-                    return this.cartItemFromProduct(product, item.quantity);
+                    const refreshedItem = this.cartItemFromProduct(product, item.quantity);
+                    refreshedItem.applyPromotion = Boolean(item.applyPromotion) && this.promotionEligible(refreshedItem);
+                    this.refreshCartItemPricing(refreshedItem);
+
+                    return refreshedItem;
                 })
                 .filter(Boolean);
 
@@ -938,7 +1006,9 @@ function posSystem() {
                 items: this.cart.map(item => ({
                     product_id: item.id,
                     quantity: item.quantity,
-                    price: item.price
+                    price: item.price,
+                    apply_promotion: Boolean(item.applyPromotion && this.promotionEligible(item)),
+                    promotion_id: item.applyPromotion && this.promotionEligible(item) ? item.activePromotion?.id : null,
                 })),
                 payment_method: this.paymentMethod,
                 amount_received: this.paymentMethod === 'cash' ? this.amountReceived : this.cartTotal,

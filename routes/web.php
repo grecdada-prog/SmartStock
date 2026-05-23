@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Manager\CategoryController;
 use App\Http\Controllers\Manager\ManagerDashboardController;
 use App\Http\Controllers\Manager\ManagerSellerController;
+use App\Http\Controllers\Manager\ProductPromotionController;
 use App\Http\Controllers\Manager\ProductController;
 use App\Http\Controllers\Manager\ReportController;
 use App\Http\Controllers\Manager\StockController;
@@ -176,6 +177,10 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::get('/products/low-stock', [ProductController::class, 'lowStock'])->name('products.low-stock');
     Route::post('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->middleware('throttle:20,60')->name('products.toggle-status');
     Route::resource('products', ProductController::class);
+
+    // Promotions et reductions
+    Route::post('/promotions/{promotion}/toggle-status', [ProductPromotionController::class, 'toggleStatus'])->middleware('throttle:20,60')->name('promotions.toggle-status');
+    Route::resource('promotions', ProductPromotionController::class)->except(['show']);
 
     // Gestion du stock
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index');

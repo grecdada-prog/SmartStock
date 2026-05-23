@@ -12,15 +12,20 @@ class SaleItem extends Model
     protected $fillable = [
         'sale_id',
         'product_id',
+        'promotion_id',
         'quantity',
         'unit_price',
+        'original_unit_price',
         'subtotal',
+        'discount_amount',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
+        'original_unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
     ];
 
     // Relations
@@ -32,6 +37,11 @@ class SaleItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function promotion()
+    {
+        return $this->belongsTo(ProductPromotion::class, 'promotion_id');
     }
 
     // Events

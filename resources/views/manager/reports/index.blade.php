@@ -7,7 +7,6 @@
     <div class="reports-header">
         <div>
             <h1 class="reports-header__title">Rapports</h1>
-            <p class="reports-header__subtitle">Générez et consultez les rapports de votre activité commerciale.</p>
         </div>
     </div>
 

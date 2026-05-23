@@ -49,6 +49,18 @@ class Product extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    public function promotions()
+    {
+        return $this->hasMany(ProductPromotion::class);
+    }
+
+    public function activePromotion()
+    {
+        return $this->hasOne(ProductPromotion::class)
+            ->where('status', ProductPromotion::STATUS_ACTIVE)
+            ->latestOfMany();
+    }
+
     public function stockMovements()
     {
         return $this->hasMany(StockMovement::class);

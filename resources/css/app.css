@@ -580,7 +580,7 @@ table {
 .overflow-visible.shadow.ring-1:has(table),
 .bg-white.shadow.overflow-hidden:has(table),
 .reports-panel__body:has(table) {
-    max-height: clamp(18rem, calc(100vh - var(--smartstore-navbar-height) - 12rem), 34rem);
+    max-height: clamp(20rem, calc(100vh - var(--smartstore-navbar-height) - 8rem), 80vh);
     overflow: auto !important;
     overscroll-behavior: auto;
     scrollbar-gutter: stable;
@@ -594,7 +594,7 @@ table {
 }
 
 .overflow-x-auto:has(> table) {
-    max-height: clamp(18rem, calc(100vh - var(--smartstore-navbar-height) - 12rem), 34rem);
+    max-height: clamp(20rem, calc(100vh - var(--smartstore-navbar-height) - 8rem), 80vh);
     overflow: auto !important;
     overscroll-behavior: auto;
     scrollbar-gutter: stable;
@@ -605,7 +605,7 @@ table {
 .smartstore-page .overflow-x-auto > .inline-block > .overflow-hidden:has(table),
 .smartstore-page .overflow-x-auto > .overflow-hidden:has(table),
 .smartstore-page .overflow-x-auto:has(> table) {
-    max-height: clamp(16rem, calc(100vh - var(--smartstore-navbar-height) - 15rem), 32rem);
+    max-height: clamp(18rem, calc(100vh - var(--smartstore-navbar-height) - 12rem), 75vh);
 }
 
 table thead {
@@ -1159,4 +1159,80 @@ table th:last-child {
     border: 1px solid var(--reports-border);
     background: var(--reports-surface);
     padding: 0.25rem;
+}
+
+/* Optimize spacing for all page layouts - reduce unnecessary margins and padding */
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Reduce margin-top for filter and table sections */
+main > div > .mt-6 {
+    margin-top: 1rem !important;
+}
+
+main > div > .mt-4 {
+    margin-top: 0.75rem !important;
+}
+
+/* Optimize section padding */
+main .bg-white {
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06) !important;
+}
+
+/* Reduce padding in common containers */
+.p-4 {
+    padding: 0.75rem !important;
+}
+
+.p-5 {
+    padding: 0.875rem !important;
+}
+
+.p-6 {
+    padding: 1rem !important;
+}
+
+.px-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+.py-4 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+}
+
+.px-6 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+.py-6 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+/* Minimize header padding */
+header .max-w-7xl {
+    padding: 1rem;
+}
+
+/* Aggressive spacing reduction for table sections */
+.mt-6 {
+    margin-top: 1rem !important;
+}
+
+.mt-10 {
+    margin-top: 1.5rem !important;
+}
+
+/* Reduce padding in form containers and cards */
+.bg-white.shadow.rounded-lg {
+    padding: 0.75rem !important;
+}
+
+.bg-white.shadow {
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06) !important;
 }

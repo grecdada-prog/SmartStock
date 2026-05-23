@@ -7,7 +7,6 @@
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Vendeurs</h1>
-            <p class="mt-2 text-sm text-gray-700">Liste globale des vendeurs et de leur activité</p>
         </div>
     </div>
 

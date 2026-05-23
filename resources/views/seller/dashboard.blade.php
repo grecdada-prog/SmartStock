@@ -97,7 +97,6 @@
                         <div>
                             <p class="text-xs font-bold uppercase tracking-normal text-green-700">Caisse ouverte</p>
                             <h3 class="text-base font-semibold text-red-900">Fermeture de caisse</h3>
-                            <p class="mt-1 text-sm text-gray-600">Action importante : elle termine la journee de vente, transfere les especes dans le Solde Cash et les paiements mobiles dans leur solde dedie.</p>
                         </div>
                         <button
                             type="button"

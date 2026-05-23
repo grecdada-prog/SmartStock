@@ -80,6 +80,9 @@
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-gray-950">{{ $item->product->name ?? 'N/A' }}</p>
                             <p class="text-xs text-gray-500">{{ $item->quantity }} x {{ number_format($item->unit_price, 0, ',', ' ') }} FCFA</p>
+                            @if($item->promotion)
+                                <p class="text-xs font-semibold text-rose-600">Promo: {{ $item->promotion->name }}</p>
+                            @endif
                         </div>
                         <p class="shrink-0 text-sm font-bold text-gray-950">{{ number_format($item->subtotal, 0, ',', ' ') }} FCFA</p>
                     </div>

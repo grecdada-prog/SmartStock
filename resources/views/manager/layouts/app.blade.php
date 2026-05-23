@@ -46,6 +46,9 @@
                             <x-nav-link href="{{ route('manager.products.index') }}" :active="request()->routeIs('manager.products.*')">
                                 Produits
                             </x-nav-link>
+                            <x-nav-link href="{{ route('manager.promotions.index') }}" :active="request()->routeIs('manager.promotions.*')">
+                                Promotions
+                            </x-nav-link>
                             <x-nav-link href="{{ route('manager.stock.index') }}" :active="request()->routeIs('manager.stock.*')">
                                 Stock
                             </x-nav-link>
@@ -125,6 +128,9 @@
                     <x-responsive-nav-link href="{{ route('manager.products.index') }}" :active="request()->routeIs('manager.products.*')">
                         Produits
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link href="{{ route('manager.promotions.index') }}" :active="request()->routeIs('manager.promotions.*')">
+                        Promotions
+                    </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('manager.stock.index') }}" :active="request()->routeIs('manager.stock.*')">
                         Stock
                     </x-responsive-nav-link>
@@ -168,7 +174,7 @@
         @endunless
 
         <!-- Page Content -->
-        <main class="mx-auto w-full max-w-7xl flex-1 py-6 px-4 sm:px-6 lg:px-8">
+        <main class="mx-auto w-full max-w-7xl flex-1 py-4 px-2 sm:px-4 lg:px-6">
             @yield('content')
         </main>
         @unless($isModalFrame)

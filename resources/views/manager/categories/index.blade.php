@@ -9,7 +9,6 @@
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Catégories</h1>
-            <p class="mt-2 text-sm text-gray-700">Gérez les catégories de vos produits</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
 <a href="{{ route('manager.categories.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">

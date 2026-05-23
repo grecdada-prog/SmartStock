@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Product;
+use App\Models\ProductPromotion;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
@@ -66,6 +67,8 @@ class POSController extends Controller
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.price' => ['nullable', 'numeric', 'min:0'],
+            'items.*.apply_promotion' => ['nullable', 'boolean'],
+            'items.*.promotion_id' => ['nullable', 'exists:product_promotions,id'],
             'payment_method' => ['required', 'in:cash,card,mobile_money'],
             'amount_received' => ['required_if:payment_method,cash', 'nullable', 'numeric', 'min:0'],
             'customer_name' => ['nullable', 'string', 'max:255'],
@@ -96,10 +99,16 @@ class POSController extends Controller
                 $itemsData = [];
                 $requestedItems = collect($validated['items'])
                     ->groupBy('product_id')
-                    ->map(fn ($items, $productId) => [
-                        'product_id' => (int) $productId,
-                        'quantity' => (int) $items->sum('quantity'),
-                    ])
+                    ->map(function ($items, $productId) {
+                        $requestedPromotion = $items->firstWhere('apply_promotion', true);
+
+                        return [
+                            'product_id' => (int) $productId,
+                            'quantity' => (int) $items->sum('quantity'),
+                            'apply_promotion' => (bool) $items->contains(fn ($item) => (bool) ($item['apply_promotion'] ?? false)),
+                            'promotion_id' => $requestedPromotion['promotion_id'] ?? null,
+                        ];
+                    })
                     ->values();
 
                 // 1. Valider les stocks et calculer le total
@@ -118,13 +127,15 @@ class POSController extends Controller
                         throw new \Exception("Stock insuffisant pour '{$product->name}'. Disponible: {$product->quantity}");
                     }
 
-                    $allocations = $this->fifoAllocationsForSale($product, $item['quantity']);
+                    $promotion = $this->eligiblePromotionForSale($product, $item);
+                    $allocations = $this->fifoAllocationsForSale($product, $item['quantity'], $promotion);
                     $subtotal = collect($allocations)->sum('subtotal');
                     $totalAmount += $subtotal;
 
                     $itemsData[] = [
                         'product' => $product,
                         'quantity' => $item['quantity'],
+                        'promotion' => $promotion,
                         'allocations' => $allocations,
                         'subtotal' => $subtotal,
                     ];
@@ -168,9 +179,12 @@ class POSController extends Controller
                         SaleItem::create([
                             'sale_id' => $sale->id,
                             'product_id' => $itemData['product']->id,
+                            'promotion_id' => $allocation['promotion_id'],
                             'quantity' => $allocation['quantity'],
                             'unit_price' => $allocation['selling_price'],
+                            'original_unit_price' => $allocation['original_selling_price'],
                             'subtotal' => $allocation['subtotal'],
+                            'discount_amount' => $allocation['discount_amount'],
                         ]);
 
                         if ($allocation['batch']) {
@@ -190,7 +204,7 @@ class POSController extends Controller
                             'purchase_price' => $allocation['purchase_price'],
                             'selling_price' => $allocation['selling_price'],
                             'reference' => "Vente #{$sale->invoice_number}",
-                            'reason' => 'Vente enregistree via POS | Lots: '.$allocation['batch_code'].':'.$allocation['quantity'],
+                            'reason' => 'Vente enregistree via POS | Lots: '.$allocation['batch_code'].':'.$allocation['quantity'].$allocation['promotion_reason'],
                         ]);
 
                         $runningQuantityBefore = $lineQuantityAfter;
@@ -252,6 +266,10 @@ class POSController extends Controller
             return 'Le montant recu ne couvre pas le total de la vente.';
         }
 
+        if (str_contains($message, 'Promotion')) {
+            return $message;
+        }
+
         return 'La vente n\'a pas pu etre enregistree. Verifiez le panier et reessayez.';
     }
 
@@ -308,6 +326,7 @@ class POSController extends Controller
             ->selectSub($fifoSellingPrice, 'fifo_selling_price')
             ->with([
                 'category',
+                'activePromotion',
                 'stockMovements' => fn ($query) => $query
                     ->where('type', 'in')
                     ->where('remaining_quantity', '>', 0)
@@ -317,7 +336,32 @@ class POSController extends Controller
             ->orderBy('name');
     }
 
-    private function fifoAllocationsForSale(Product $product, int $quantity): array
+    private function eligiblePromotionForSale(Product $product, array $item): ?ProductPromotion
+    {
+        if (! ($item['apply_promotion'] ?? false)) {
+            return null;
+        }
+
+        $promotionId = $item['promotion_id'] ?? null;
+
+        $promotion = ProductPromotion::where('manager_id', auth()->user()->created_by)
+            ->where('product_id', $product->id)
+            ->where('status', ProductPromotion::STATUS_ACTIVE)
+            ->when($promotionId, fn ($query) => $query->where('id', $promotionId))
+            ->first();
+
+        if (! $promotion) {
+            throw new \Exception("Promotion invalide pour '{$product->name}'.");
+        }
+
+        if ($item['quantity'] < $promotion->min_quantity) {
+            throw new \Exception("Promotion non applicable pour '{$product->name}'. Quantite minimum: {$promotion->min_quantity}");
+        }
+
+        return $promotion;
+    }
+
+    private function fifoAllocationsForSale(Product $product, int $quantity, ?ProductPromotion $promotion = null): array
     {
         $remainingToConsume = $quantity;
         $allocations = [];
@@ -336,8 +380,10 @@ class POSController extends Controller
             }
 
             $taken = min($remainingToConsume, $batch->remaining_quantity);
-            $sellingPrice = (float) ($batch->selling_price ?? $product->selling_price);
+            $originalSellingPrice = (float) ($batch->selling_price ?? $product->selling_price);
+            $sellingPrice = $promotion ? (float) $promotion->promotion_price : $originalSellingPrice;
             $purchasePrice = (float) ($batch->purchase_price ?? $product->purchase_price);
+            $discountAmount = max(0, $originalSellingPrice - $sellingPrice) * $taken;
 
             $allocations[] = [
                 'batch' => $batch,
@@ -345,15 +391,21 @@ class POSController extends Controller
                 'quantity' => $taken,
                 'purchase_price' => $purchasePrice,
                 'selling_price' => $sellingPrice,
+                'original_selling_price' => $promotion ? $originalSellingPrice : null,
                 'subtotal' => $taken * $sellingPrice,
+                'discount_amount' => $discountAmount,
+                'promotion_id' => $promotion?->id,
+                'promotion_reason' => $promotion ? " | Promotion: {$promotion->name}" : '',
             ];
 
             $remainingToConsume -= $taken;
         }
 
         if ($remainingToConsume > 0) {
-            $sellingPrice = (float) $product->selling_price;
+            $originalSellingPrice = (float) $product->selling_price;
+            $sellingPrice = $promotion ? (float) $promotion->promotion_price : $originalSellingPrice;
             $purchasePrice = (float) $product->purchase_price;
+            $discountAmount = max(0, $originalSellingPrice - $sellingPrice) * $remainingToConsume;
 
             $allocations[] = [
                 'batch' => null,
@@ -361,7 +413,11 @@ class POSController extends Controller
                 'quantity' => $remainingToConsume,
                 'purchase_price' => $purchasePrice,
                 'selling_price' => $sellingPrice,
+                'original_selling_price' => $promotion ? $originalSellingPrice : null,
                 'subtotal' => $remainingToConsume * $sellingPrice,
+                'discount_amount' => $discountAmount,
+                'promotion_id' => $promotion?->id,
+                'promotion_reason' => $promotion ? " | Promotion: {$promotion->name}" : '',
             ];
         }
 
@@ -426,7 +482,7 @@ class POSController extends Controller
         // Vérifier que la vente appartient au vendeur
         $this->authorize('view', $sale);
 
-        $sale->load(['items.product', 'seller']);
+        $sale->load(['items.product', 'items.promotion', 'seller']);
 
         return view('seller.sales.show', compact('sale'));
     }
@@ -439,7 +495,7 @@ class POSController extends Controller
         // Vérifier que la vente appartient au vendeur
         $this->authorize('printReceipt', $sale);
 
-        $sale->load(['items.product', 'seller']);
+        $sale->load(['items.product', 'items.promotion', 'seller']);
 
         return view('seller.pos.receipt', compact('sale'));
     }

@@ -100,6 +100,8 @@ class RolePageSmokeTest extends TestCase
             ['manager.products.show', $product],
             ['manager.products.edit', $product],
             ['manager.products.low-stock'],
+            ['manager.promotions.index'],
+            ['manager.promotions.create'],
             ['manager.stock.index'],
             ['manager.stock.low-stock'],
             ['manager.stock.restock'],

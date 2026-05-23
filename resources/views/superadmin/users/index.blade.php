@@ -7,7 +7,6 @@
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Tous les Utilisateurs</h1>
-            <p class="mt-2 text-sm text-gray-700">Liste complète de tous les utilisateurs du système</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
             <x-export-buttons
@@ -84,7 +83,7 @@
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 
+                                        <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5
                                             {{ $user->hasRole('super_admin') ? 'bg-purple-100 text-purple-800' : '' }}
                                             {{ $user->hasRole('manager') ? 'bg-blue-100 text-blue-800' : '' }}
                                             {{ $user->hasRole('seller') ? 'bg-rose-100 text-rose-800' : '' }}">

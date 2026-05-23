@@ -8,11 +8,7 @@
         <div class="smartstore-sticky-inner">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="text-sm font-medium text-rose-600">Super administration</p>
             <h1 class="mt-1 text-2xl font-semibold text-gray-900">Dashboard</h1>
-            <p class="mt-2 max-w-3xl text-sm text-gray-600">
-                Vue claire des utilisateurs, ventes, caisses et alertes du projet.
-            </p>
         </div>
         <a href="{{ route('superadmin.statistics') }}"
            class="inline-flex w-fit items-center justify-center rounded-md border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50">
@@ -103,8 +99,7 @@
         <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm lg:col-span-2">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900">Pouvoirs rapides</h2>
-                    <p class="mt-1 text-sm text-gray-500">Actions utiles, sans encombrer le dashboard.</p>
+                    <h2 class="text-base font-semibold text-gray-900">Actions rapides</h2>
                 </div>
             </div>
             <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">

@@ -9,7 +9,6 @@
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Tous les Produits</h1>
-            <p class="mt-2 text-sm text-gray-700">Vue d'ensemble de tous les produits du système</p>
         </div>
     </div>
 
