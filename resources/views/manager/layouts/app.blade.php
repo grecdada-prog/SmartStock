@@ -23,17 +23,17 @@
         <!-- Navigation -->
         <nav x-data="{ open: false }" class="smartstore-navbar-shell fixed inset-x-0 top-0 z-40 text-gray-800" style="@include('components.navbar-shell-style')">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex h-14 justify-between">
-                    <div class="flex min-w-0 flex-1 items-center">
-                        <!-- Logo -->
-                        <div class="shrink-0 flex items-center">
-                            <a href="{{ route('manager.dashboard') }}">
-                                <x-application-mark class="block h-9 w-auto" />
-                            </a>
-                        </div>
+                <div class="flex h-14 items-center justify-between">
+                    <!-- Logo Section (Left) -->
+                    <div class="shrink-0 flex items-center">
+                        <a href="{{ route('manager.dashboard') }}">
+                            <x-application-mark class="block h-9 w-auto" />
+                        </a>
+                    </div>
 
-<!-- Navigation Links -->
-                        <div class="hidden min-w-0 items-center gap-3 overflow-x-auto sm:ml-10 sm:flex">
+                    <!-- Navigation Links Section (Center) -->
+                    <div class="hidden flex-1 justify-center sm:flex">
+                        <div class="flex items-center gap-2 overflow-x-auto">
                             <x-nav-link href="{{ route('manager.dashboard') }}" :active="request()->routeIs('manager.dashboard')">
                                 Dashboard
                             </x-nav-link>
@@ -58,9 +58,10 @@
                         </div>
                     </div>
 
-                    <div class="hidden shrink-0 sm:ml-6 sm:flex sm:items-center">
+                    <!-- Profile Section (Right) -->
+                    <div class="hidden shrink-0 sm:flex sm:items-center">
                         <!-- Settings Dropdown -->
-                        <div class="ml-3 relative">
+                        <div class="relative">
                             <x-dropdown align="right" width="48">
                                 <x-slot name="trigger">
                                     <button class="flex min-h-8 items-center rounded-md px-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:text-gray-950 focus:outline-none focus:ring-2 focus:ring-[#e80033] focus:ring-offset-2">
@@ -97,8 +98,8 @@
                         </div>
                     </div>
 
-                    <!-- Hamburger -->
-                    <div class="-mr-2 flex items-center sm:hidden">
+                    <!-- Hamburger (Mobile) -->
+                    <div class="flex items-center sm:hidden">
                         <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-rose-50 focus:outline-none focus:bg-rose-50 focus:text-gray-700 transition duration-150 ease-in-out">
                             <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                 <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
