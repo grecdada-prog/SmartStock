@@ -9,7 +9,6 @@ use App\Models\Category;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -46,14 +45,21 @@ class ProductController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('sku', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $barcodeSearch = preg_replace('/\D+/', '', $search);
+
+            $query->where(function($q) use ($search, $barcodeSearch) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('barcode', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+
+                if ($barcodeSearch !== '') {
+                    $q->orWhereRaw("REPLACE(barcode, ' ', '') like ?", ['%' . $barcodeSearch . '%']);
+                }
             });
         }
 
-        $products = $query->latest()->paginate(20);
+        $products = $query->latest()->get();
 
         // Catégories pour le filtre
         $categories = $this->availableCategoriesQuery()
@@ -89,12 +95,15 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'barcode' => ['nullable', 'string', 'regex:/^\d+$/', 'unique:products,barcode'],
             'category_id' => ['required', 'exists:categories,id'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
         ], [
             'sku.unique' => 'Ce code SKU existe déjà.',
+            'barcode.regex' => 'Le code-barres doit contenir uniquement des chiffres.',
+            'barcode.unique' => 'Ce code-barres existe deja pour un autre produit.',
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
@@ -110,6 +119,7 @@ class ProductController extends Controller
         $product = Product::create([
             'name' => $validated['name'],
             'sku' => $this->generateSku($validated['name']),
+            'barcode' => ($validated['barcode'] ?? null) ?: null,
             'description' => null,
             'category_id' => $validated['category_id'],
             'purchase_price' => 0,
@@ -173,14 +183,12 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:100', Rule::unique('products')->ignore($product->id)],
             'description' => ['nullable', 'string', 'max:1000'],
             'category_id' => ['required', 'exists:categories,id'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
         ], [
-            'sku.unique' => 'Ce code SKU existe déjà.',
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
@@ -197,7 +205,6 @@ class ProductController extends Controller
 
         $product->update([
             'name' => $validated['name'],
-            'sku' => $validated['sku'],
             'description' => $validated['description'] ?? null,
             'category_id' => $validated['category_id'],
             'alert_quantity' => $validated['alert_quantity'],
@@ -283,7 +290,7 @@ class ProductController extends Controller
             ->lowStock()
             ->active()
             ->orderBy('quantity', 'asc')
-            ->paginate(20);
+            ->get();
 
         return view('manager.products.low-stock', compact('products'));
     }
@@ -316,5 +323,6 @@ class ProductController extends Controller
 
         return $sku;
     }
+
 }
 

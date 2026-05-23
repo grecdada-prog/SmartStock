@@ -4,30 +4,19 @@ import './silent-refresh';
 import './modal-links';
 import './inactivity-logout';
 
-const BARCODE_DIGIT_LIMIT = 13;
 const PHONE_DIGIT_LIMIT = 15;
 
-function formatStockBarcode(value) {
-    const digits = String(value || '').replace(/\D/g, '').slice(0, BARCODE_DIGIT_LIMIT);
-    const groups = [
-        digits.slice(0, 1),
-        digits.slice(1, 5),
-        digits.slice(5, 7),
-        digits.slice(7, 11),
-        digits.slice(11, 13),
-    ].filter(Boolean);
-
-    return groups.join(' ');
+function formatProductBarcode(value) {
+    return String(value || '').replace(/\D/g, '');
 }
 
 function initBarcodeInputs(root = document) {
     root.querySelectorAll('[data-barcode-format]:not([data-barcode-ready])').forEach((input) => {
         input.dataset.barcodeReady = 'true';
-        input.setAttribute('maxlength', '17');
         input.setAttribute('autocomplete', 'off');
 
         const syncValue = () => {
-            input.value = formatStockBarcode(input.value);
+            input.value = formatProductBarcode(input.value);
         };
 
         input.addEventListener('beforeinput', (event) => {
@@ -39,13 +28,7 @@ function initBarcodeInputs(root = document) {
                 return;
             }
 
-            const selectedDigits = input.value
-                .slice(input.selectionStart || 0, input.selectionEnd || 0)
-                .replace(/\D/g, '').length;
-            const currentDigits = input.value.replace(/\D/g, '').length;
-            const incomingDigits = event.data.replace(/\D/g, '').length;
-
-            if (currentDigits - selectedDigits + incomingDigits > BARCODE_DIGIT_LIMIT) {
+            if (event.data.replace(/\d/g, '').length > 0) {
                 event.preventDefault();
             }
         });
@@ -141,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.SmartStoreBarcodeInputs = {
     init: initBarcodeInputs,
-    format: formatStockBarcode,
+    format: formatProductBarcode,
 };
 
 window.SmartStorePhoneInputs = {

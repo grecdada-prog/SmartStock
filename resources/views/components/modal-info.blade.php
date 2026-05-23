@@ -4,14 +4,14 @@
      x-on:open-modal-{{ $id }}.window="show = true"
      x-show="show"
      x-cloak
-     class="fixed inset-0 z-50 overflow-y-auto"
+     class="fixed inset-0 z-50"
      aria-labelledby="modal-title"
      role="dialog"
      aria-modal="true"
      style="display: none;">
 
     <!-- Background overlay -->
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="flex min-h-screen items-center justify-center px-4 py-6">
         <div x-show="show"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -19,12 +19,9 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+             class="fixed inset-0 bg-gray-900/50 transition-opacity"
              aria-hidden="true"
              @click="show = false"></div>
-
-        <!-- Center modal -->
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
         <div x-show="show"
              x-transition:enter="ease-out duration-300"
@@ -33,34 +30,30 @@
              x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+             class="relative flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white text-left shadow-xl transform transition-all">
 
-            <div class="absolute top-0 right-0 pt-4 pr-4">
+            <div class="shrink-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900" id="modal-title">
+                    {{ $title }}
+                </h3>
                 <button type="button"
                         @click="show = false"
-                        class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
+                        class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
                     <span class="sr-only">Fermer</span>
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <div class="sm:flex sm:items-start">
-                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
-                        {{ $title }}
-                    </h3>
-                    <div class="mt-2">
-                        {{ $slot }}
-                    </div>
-                </div>
+            <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                {{ $slot }}
             </div>
 
-            <div class="mt-5 sm:mt-6">
+            <div class="shrink-0 border-t border-gray-200 bg-white px-6 py-4">
                 <button type="button"
                         @click="show = false"
-                        class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 sm:text-sm">
+                        class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
                     Fermer
                 </button>
             </div>

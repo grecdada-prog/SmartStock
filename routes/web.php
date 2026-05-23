@@ -32,10 +32,6 @@ Route::get('/csrf-token', function () {
     return $response;
 })->name('csrf-token');
 
-Route::post('/payments/monetbil/callback', [POSController::class, 'monetbilCallback'])
-    ->middleware('throttle:120,1')
-    ->name('payments.monetbil.callback');
-
 // Routes d'authentification
 Route::get('/login', [CustomLoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [CustomLoginController::class, 'login']);
@@ -228,12 +224,6 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'role:seller'])->g
     Route::post('/pos/sale', [POSController::class, 'processSale'])
         ->middleware('throttle:30,1')
         ->name('pos.sale');
-    Route::post('/pos/mobile-payment', [POSController::class, 'startMobilePayment'])
-        ->middleware('throttle:30,1')
-        ->name('pos.mobile-payment.start');
-    Route::post('/pos/mobile-payment/cancel', [POSController::class, 'cancelMobilePayment'])
-        ->middleware('throttle:30,1')
-        ->name('pos.mobile-payment.cancel');
     // Reçu de vente
     Route::get('/pos/{sale}/receipt', [POSController::class, 'printReceipt'])->name('pos.receipt');
 

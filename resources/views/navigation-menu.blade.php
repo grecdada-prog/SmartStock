@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="fixed inset-x-0 top-0 z-40 border-b shadow-sm text-gray-800" style="@include('components.navbar-shell-style')">
+<nav x-data="{ open: false }" class="smartstore-navbar-shell fixed inset-x-0 top-0 z-40 text-gray-800" style="@include('components.navbar-shell-style')">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">

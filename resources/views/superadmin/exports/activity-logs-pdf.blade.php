@@ -2,51 +2,21 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logs d'Activité</title>
+    <title>Logs d'activite</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: left;
-        }
-        th {
-            background-color: #10b981;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
-        .action-type {
-            font-weight: bold;
-            color: #1f2937;
-        }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #111827; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        th { background-color: #ff0033; color: white; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
+        .action-type { font-weight: bold; color: #1f2937; }
     </style>
 </head>
 <body>
-    <h1>Logs d'Activité</h1>
+    <x-smartstore-pdf-logo title="Logs d'activite" :subtitle="'Export: ' . now()->format('d/m/Y H:i')" />
     <p><strong>Date d'export:</strong> {{ now()->format('d/m/Y H:i') }}</p>
-    <p><strong>Nombre total d'activités:</strong> {{ $logs->count() }}</p>
+    <p><strong>Nombre total d'activites:</strong> {{ $logs->count() }}</p>
 
     <table>
         <thead>
@@ -74,7 +44,7 @@
     </table>
 
     <div class="footer">
-        <p>Document généré par SmartStore - {{ now()->format('d/m/Y à H:i') }}</p>
+        <p>Document genere par SmartStore - {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>
 </html>

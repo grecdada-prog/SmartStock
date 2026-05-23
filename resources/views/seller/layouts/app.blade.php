@@ -18,13 +18,13 @@
 </head>
 <body class="font-sans antialiased bg-gray-50">
     @php($isModalFrame = request()->boolean('modal'))
-    <div class="flex min-h-screen flex-col" style="{{ $isModalFrame ? '' : 'padding-top: 4rem;' }}">
+    <div class="flex min-h-screen flex-col" style="{{ $isModalFrame ? '' : 'padding-top: var(--smartstore-navbar-height);' }}">
         @unless($isModalFrame)
         <!-- Navigation -->
         <nav x-data="{ open: false }" class="smartstore-navbar-shell fixed inset-x-0 top-0 z-40 text-gray-800" style="@include('components.navbar-shell-style')">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex">
+                <div class="flex h-14 justify-between">
+                    <div class="flex min-w-0 flex-1 items-center">
                         <!-- Logo -->
                         <div class="shrink-0 flex items-center">
                             <a href="{{ route('seller.dashboard') }}">
@@ -33,7 +33,7 @@
                         </div>
 
                         <!-- Navigation Links -->
-                        <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                        <div class="hidden min-w-0 items-center gap-3 overflow-x-auto sm:ml-10 sm:flex">
                             <x-nav-link href="{{ route('seller.dashboard') }}" :active="request()->routeIs('seller.dashboard')">
                                 Dashboard
                             </x-nav-link>
@@ -46,12 +46,12 @@
                         </div>
                     </div>
 
-                    <div class="hidden sm:flex sm:items-center sm:ml-6">
+                    <div class="hidden shrink-0 sm:ml-6 sm:flex sm:items-center">
                         <!-- Settings Dropdown -->
                         <div class="ml-3 relative">
                             <x-dropdown align="right" width="48">
                                 <x-slot name="trigger">
-                                    <button class="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none focus:text-gray-900 transition duration-150 ease-in-out">
+                                    <button class="flex min-h-8 items-center rounded-md px-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:text-gray-950 focus:outline-none focus:ring-2 focus:ring-[#e80033] focus:ring-offset-2">
                                         <div>{{ Auth::user()->name }}</div>
                                         <div class="ml-1">
                                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">

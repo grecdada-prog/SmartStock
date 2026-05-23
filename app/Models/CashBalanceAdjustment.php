@@ -13,6 +13,7 @@ class CashBalanceAdjustment extends Model
         'seller_id',
         'manager_id',
         'type',
+        'balance_type',
         'amount',
         'reason',
     ];

@@ -4,6 +4,8 @@
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
@@ -13,16 +15,11 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-rose-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Aujourd'hui</dt>
                             <dd class="flex items-baseline">
@@ -41,12 +38,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Ce mois</dt>
                             <dd class="flex items-baseline">
@@ -65,12 +57,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Total Ventes</dt>
                             <dd class="flex items-baseline">
@@ -89,12 +76,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Produits Disponibles</dt>
                             <dd class="flex items-baseline">
@@ -111,6 +93,8 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
         </div>
     </div>
 

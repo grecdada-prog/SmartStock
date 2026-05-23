@@ -31,6 +31,10 @@
                         <dd class="mt-1 text-sm text-gray-900">{{ $product->sku }}</dd>
                     </div>
                     <div>
+                        <dt class="text-sm font-medium text-gray-500">Code-barres</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $product->barcode ?? '-' }}</dd>
+                    </div>
+                    <div>
                         <dt class="text-sm font-medium text-gray-500">Catégorie</dt>
                         <dd class="mt-1 text-sm text-gray-900">{{ $product->category->name ?? 'N/A' }}</dd>
                     </div>

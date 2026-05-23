@@ -21,28 +21,9 @@
                 window.SmartStoreMoneyVisibility[this.key] = value;
             });
         },
-        toggle() {
-            this.visible = !this.visible;
-
-            if (this.visible) {
-                window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }));
-            }
-        },
     }"
-    class="flex min-w-0 max-w-full items-start justify-between gap-2"
+    class="money-amount-row"
 >
-    <span class="{{ $valueClass }} min-w-0 break-words leading-tight" x-text="visible ? @js($amount) : '******'"></span>
-    <button
-        type="button"
-        @click="toggle()"
-        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-50 hover:text-gray-700"
-        :aria-label="visible ? 'Masquer {{ $label }}' : 'Afficher {{ $label }}'"
-    >
-        <svg x-show="!visible" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" />
-        </svg>
-        <svg x-show="visible" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-10-7 0.4-1.2 1.2-2.3 2.2-3.3M3 3l18 18" />
-        </svg>
-    </button>
+    <span class="{{ $valueClass }} min-w-0 max-w-full leading-tight" x-text="visible ? @js($amount) : '******'"></span>
+    <x-money-eye-button state="visible" :label="$label" refresh-on-show />
 </div>

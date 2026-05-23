@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <title>Rapport des ventes</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #111827; }
-        h1 { font-size: 20px; margin-bottom: 4px; }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #111827; }
         table { width: 100%; border-collapse: collapse; margin-top: 16px; }
         th, td { border: 1px solid #d1d5db; padding: 6px; text-align: left; }
-        th { background: #f3f4f6; }
+        th { background: #ff0033; color: #ffffff; }
+        tr:nth-child(even) { background: #f9fafb; }
     </style>
 </head>
 <body>
-    <h1>Rapport des ventes</h1>
+    <x-smartstore-pdf-logo
+        title="Rapport des ventes"
+        :subtitle="'Manager: ' . $manager->name . ' - Export: ' . now()->format('d/m/Y H:i')"
+    />
     <p>Manager: {{ $manager->name }} - Export: {{ now()->format('d/m/Y H:i') }}</p>
     <p>
         Ventes: {{ $stats['total_sales'] }} |

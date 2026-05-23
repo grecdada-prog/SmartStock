@@ -96,9 +96,7 @@
         </ul>
     </div>
 
-    <!-- Pagination -->
     <div class="mt-6">
-        {{ $logs->links() }}
     </div>
 </div>
 @endsection

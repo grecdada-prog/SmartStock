@@ -174,9 +174,7 @@
         </div>
     </div>
 
-    <!-- Pagination -->
     <div class="mt-6">
-        {{ $users->links() }}
     </div>
 
     <!-- Modales de confirmation de suppression (inline pour supporter le nom dynamique) -->
@@ -184,7 +182,7 @@
         @if($user->id !== auth()->id())
             <div x-show="deleteModal === {{ $user->id }}"
                  x-cloak
-                 class="fixed inset-0 z-50 overflow-y-auto"
+                 class="fixed inset-0 z-50"
                  style="display: none;">
 
                 <!-- Overlay -->
@@ -193,7 +191,7 @@
                 <!-- Modal -->
                 <div class="flex items-center justify-center min-h-screen px-4">
                     <div @click.away="deleteModal = null"
-                         class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+                         class="bg-white rounded-lg shadow-xl transform transition-all sm:max-w-lg sm:w-full"
                          x-show="deleteModal === {{ $user->id }}"
                          x-transition>
 

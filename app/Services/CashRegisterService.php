@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Schema;
 class CashRegisterService
 {
     private const CASH_PAYMENT_METHOD = 'cash';
+    public const CASH_BALANCE_TYPE = 'cash';
+    public const MOBILE_MONEY_BALANCE_TYPE = 'mobile_money';
     public const ORANGE_MONEY_PAYMENT_METHOD = 'card';
     public const MTN_MOMO_PAYMENT_METHOD = 'mobile_money';
 
@@ -64,7 +66,9 @@ class CashRegisterService
                 return $existingClosure;
             }
 
-            $amount = 0;
+            // Calculer correctement la recette en cash depuis le début du jour
+            $dayStart = Carbon::createFromFormat('Y-m-d', $businessDate)->startOfDay();
+            $amount = $this->cashRevenueForDate($seller, $businessDate, $dayStart);
 
             $closure = CashRegisterClosure::create($this->closureAuditAttributes([
                 'seller_id' => $seller->id,
@@ -72,6 +76,7 @@ class CashRegisterService
                 'amount' => $amount,
                 'closed_by' => $closedBy,
                 'closed_at' => now(),
+                'opened_at' => $dayStart,
             ], $actorId));
 
             ActivityLog::log(
@@ -174,14 +179,15 @@ class CashRegisterService
 
     public function balanceForSeller(User $seller): float
     {
-        $closedRevenue = CashRegisterClosure::where('seller_id', $seller->id)
-            ->whereNull('opened_at')
+        $closedRevenue = $this->balanceClosuresForSeller($seller)
             ->get()
             ->sum(fn (CashRegisterClosure $closure) => $this->cashRevenueForClosure($closure));
         $manualAdditions = CashBalanceAdjustment::where('seller_id', $seller->id)
+            ->where('balance_type', self::CASH_BALANCE_TYPE)
             ->where('type', 'add')
             ->sum('amount');
         $manualWithdrawals = CashBalanceAdjustment::where('seller_id', $seller->id)
+            ->where('balance_type', self::CASH_BALANCE_TYPE)
             ->where('type', 'withdraw')
             ->sum('amount');
 
@@ -228,14 +234,16 @@ class CashRegisterService
         return (float) $this->currentDaySalesQuery($seller)->sum('total');
     }
 
-    public function previousDayCashRevenueForSeller(User $seller): float
+    public function previousDayRevenueForSeller(User $seller): float
     {
         $businessDate = today()->subDay();
-        $closure = CashRegisterClosure::where('seller_id', $seller->id)
-            ->whereDate('business_date', $businessDate)
-            ->first();
 
-        return (float) ($closure?->amount ?? $this->cashRevenueForDate($seller, $businessDate));
+        return (float) $this->salesQueryForDate($seller, $businessDate)->sum('total');
+    }
+
+    public function previousDayCashRevenueForSeller(User $seller): float
+    {
+        return $this->previousDayRevenueForSeller($seller);
     }
 
     public function currentSessionOpenedAt(User $seller, ?CashRegisterClosure $todayClosure = null): ?Carbon
@@ -266,8 +274,7 @@ class CashRegisterService
 
     public function paymentBalanceForSeller(User $seller, string $paymentMethod): float
     {
-        return CashRegisterClosure::where('seller_id', $seller->id)
-            ->whereNull('opened_at')
+        return $this->balanceClosuresForSeller($seller)
             ->get()
             ->sum(fn (CashRegisterClosure $closure) => $this->paymentRevenueForClosure($closure, $paymentMethod));
     }
@@ -284,13 +291,29 @@ class CashRegisterService
 
     public function mobileMoneyBalanceForSeller(User $seller): float
     {
-        return CashRegisterClosure::where('seller_id', $seller->id)
-            ->whereNull('opened_at')
+        $closedRevenue = $this->balanceClosuresForSeller($seller)
             ->get()
             ->sum(fn (CashRegisterClosure $closure) => $this->paymentRevenueForClosure($closure, [
                 self::ORANGE_MONEY_PAYMENT_METHOD,
                 self::MTN_MOMO_PAYMENT_METHOD,
             ]));
+        $manualAdditions = CashBalanceAdjustment::where('seller_id', $seller->id)
+            ->where('balance_type', self::MOBILE_MONEY_BALANCE_TYPE)
+            ->where('type', 'add')
+            ->sum('amount');
+        $manualWithdrawals = CashBalanceAdjustment::where('seller_id', $seller->id)
+            ->where('balance_type', self::MOBILE_MONEY_BALANCE_TYPE)
+            ->where('type', 'withdraw')
+            ->sum('amount');
+
+        return (float) $closedRevenue + (float) $manualAdditions - (float) $manualWithdrawals;
+    }
+
+    private function balanceClosuresForSeller(User $seller)
+    {
+        return CashRegisterClosure::where('seller_id', $seller->id)
+            ->whereNotNull('closed_at')
+            ->where('closed_by', '!=', 'not_closed');
     }
 
     private function salesQueryForDate(User $seller, Carbon|string $date, ?Carbon $from = null)
@@ -340,24 +363,31 @@ class CashRegisterService
         return (float) $query->sum('total');
     }
 
-    public function adjustBalance(User $seller, User $manager, string $type, float $amount, ?string $reason = null): CashBalanceAdjustment
+    public function adjustBalance(User $seller, User $manager, string $type, float $amount, ?string $reason = null, string $balanceType = self::CASH_BALANCE_TYPE): CashBalanceAdjustment
     {
-        return DB::transaction(function () use ($seller, $manager, $type, $amount, $reason) {
-            if ($type === 'withdraw' && $this->balanceForSeller($seller) < $amount) {
-                throw new \InvalidArgumentException('Le montant a retirer depasse le Solde Cash disponible.');
+        return DB::transaction(function () use ($seller, $manager, $type, $amount, $reason, $balanceType) {
+            $balanceType = $this->normalizeBalanceType($balanceType);
+            $balanceLabel = $this->balanceTypeLabel($balanceType);
+            $availableBalance = $balanceType === self::MOBILE_MONEY_BALANCE_TYPE
+                ? $this->mobileMoneyBalanceForSeller($seller)
+                : $this->balanceForSeller($seller);
+
+            if ($type === 'withdraw' && $availableBalance < $amount) {
+                throw new \InvalidArgumentException('Le montant a retirer depasse le '.$balanceLabel.' disponible.');
             }
 
             $adjustment = CashBalanceAdjustment::create([
                 'seller_id' => $seller->id,
                 'manager_id' => $manager->id,
                 'type' => $type,
+                'balance_type' => $balanceType,
                 'amount' => $amount,
                 'reason' => $reason,
             ]);
 
             ActivityLog::log(
-                $type === 'add' ? 'cash_balance_added' : 'cash_balance_withdrawn',
-                ($type === 'add' ? 'Ajout' : 'Retrait').' Solde Cash vendeur '.$seller->name.' : '.number_format($amount, 0, ',', ' ').' FCFA',
+                $type === 'add' ? $balanceType.'_balance_added' : $balanceType.'_balance_withdrawn',
+                ($type === 'add' ? 'Ajout' : 'Retrait').' '.$balanceLabel.' vendeur '.$seller->name.' : '.number_format($amount, 0, ',', ' ').' FCFA',
                 'CashBalanceAdjustment',
                 $adjustment->id,
                 [
@@ -365,6 +395,8 @@ class CashRegisterService
                     'seller_name' => $seller->name,
                     'manager_id' => $manager->id,
                     'manager_name' => $manager->name,
+                    'balance_type' => $balanceType,
+                    'balance_label' => $balanceLabel,
                     'amount' => $amount,
                     'reason' => $reason,
                     'alert_superadmin' => $type === 'withdraw',
@@ -373,6 +405,20 @@ class CashRegisterService
 
             return $adjustment;
         });
+    }
+
+    private function normalizeBalanceType(string $balanceType): string
+    {
+        return $balanceType === self::MOBILE_MONEY_BALANCE_TYPE
+            ? self::MOBILE_MONEY_BALANCE_TYPE
+            : self::CASH_BALANCE_TYPE;
+    }
+
+    public function balanceTypeLabel(string $balanceType): string
+    {
+        return $balanceType === self::MOBILE_MONEY_BALANCE_TYPE
+            ? 'Solde Paiements mobiles'
+            : 'Solde Cash';
     }
 
     public function closeTodayForAllSellers(): int

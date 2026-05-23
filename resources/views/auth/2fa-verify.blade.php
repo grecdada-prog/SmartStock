@@ -94,6 +94,7 @@
     <script>
         const input = document.getElementById('one_time_password');
         const form = document.getElementById('twoFactorForm');
+        const submitButton = form.querySelector('button[type="submit"]');
         let isSubmitting = false;
 
         async function refreshCsrfToken() {
@@ -128,19 +129,24 @@
 
         form.addEventListener('submit', async function(event) {
             if (isSubmitting) {
+                event.preventDefault();
                 return;
             }
 
             event.preventDefault();
             isSubmitting = true;
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-60', 'cursor-not-allowed');
+            input.readOnly = true;
+
             await refreshCsrfToken();
-            form.requestSubmit();
+            form.submit();
         });
 
         input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
 
-            if (this.value.length === 6) {
+            if (this.value.length === 6 && !isSubmitting) {
                 form.requestSubmit();
             }
         });

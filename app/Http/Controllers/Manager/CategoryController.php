@@ -30,7 +30,7 @@ class CategoryController extends Controller
             });
         }
 
-        $categories = $query->latest()->paginate(20);
+        $categories = $query->latest()->get();
 
         return view('manager.categories.index', compact('categories'));
     }

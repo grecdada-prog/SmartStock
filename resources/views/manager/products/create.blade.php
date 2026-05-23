@@ -21,6 +21,12 @@
                         @error('name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
+                    <div class="sm:col-span-2">
+                        <label for="barcode" class="block text-sm font-medium text-gray-700">Code-barres</label>
+                        <input type="text" name="barcode" id="barcode" value="{{ old('barcode') }}" placeholder="11012035024090" pattern="\d+" inputmode="numeric" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
+                        @error('barcode')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+
                     <div>
                         <label for="category_id" class="block text-sm font-medium text-gray-700">Categorie *</label>
                         <select name="category_id" id="category_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">

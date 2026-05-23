@@ -1,1 +1,1 @@
-position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 40; background: linear-gradient(90deg, #fff7f8 0%, #fff1f2 52%, #ffe4e6 100%); border-bottom: 1px solid rgba(225, 29, 72, 0.18); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 40; background: #ffffff; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08); padding-top: 0.25rem; padding-bottom: 0.25rem;

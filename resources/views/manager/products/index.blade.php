@@ -4,6 +4,8 @@
 
 @section('content')
 <div id="manager-products-page" data-silent-refresh x-data="{ showCreateProduct: {{ $errors->any() ? 'true' : 'false' }} }" class="px-4 sm:px-6 lg:px-8">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Produits</h1>
@@ -27,11 +29,11 @@
     </div>
 
     <!-- Filtres -->
-    <div class="sticky top-20 z-20 mt-6 bg-white shadow rounded-lg p-4">
+    <div class="bg-white shadow rounded-lg p-4">
         <form method="GET" data-auto-filter action="{{ route('manager.products.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou code-barres..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700">Catégorie</label>
@@ -61,6 +63,8 @@
             </div>
         </form>
     </div>
+        </div>
+    </div>
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
@@ -88,6 +92,7 @@
                                             <div>
                                                 <div class="font-medium text-gray-900">{{ $product->name }}</div>
                                                 <div class="text-gray-500">SKU: {{ $product->sku }}</div>
+                                                <div class="text-gray-500">Code-barres: {{ $product->barcode ?? '-' }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -180,15 +185,13 @@
         </div>
     </div>
 
-    <!-- Pagination -->
     <div class="mt-6">
-        {{ $products->links() }}
     </div>
 
-    <div x-show="showCreateProduct" x-cloak class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" style="display: none;">
+    <div x-show="showCreateProduct" x-cloak class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6" style="display: none;">
         <div class="fixed inset-0 bg-gray-900/50" @click="showCreateProduct = false"></div>
-        <div class="relative mx-auto max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl">
-            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div class="relative mx-auto flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+            <div class="shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
                 <h2 class="text-lg font-semibold text-gray-900">Nouveau produit</h2>
                 <button type="button" @click="showCreateProduct = false" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
                     <span class="sr-only">Fermer</span>
@@ -198,13 +201,18 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('manager.products.store') }}" class="space-y-5 p-6">
+            <form method="POST" action="{{ route('manager.products.store') }}" class="min-h-0 flex-1 overflow-y-auto space-y-5 p-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <label for="modal_name" class="block text-sm font-medium text-gray-700">Nom du produit *</label>
                         <input type="text" name="name" id="modal_name" required value="{{ old('name') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="modal_barcode" class="block text-sm font-medium text-gray-700">Code-barres</label>
+                        <input type="text" name="barcode" id="modal_barcode" value="{{ old('barcode') }}" placeholder="11012035024090" pattern="\d+" inputmode="numeric" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
+                        @error('barcode')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="modal_category_id" class="block text-sm font-medium text-gray-700">Categorie *</label>
@@ -235,7 +243,7 @@
                         <label for="modal_is_active" class="ml-2 block text-sm text-gray-900">Produit actif</label>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 border-t border-gray-200 pt-5">
+                <div class="sticky bottom-0 -mx-6 -mb-6 flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
                     <button type="button" @click="showCreateProduct = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
                     <button type="submit" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Créer le produit</button>
                 </div>

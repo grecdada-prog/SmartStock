@@ -4,6 +4,8 @@
 
 @section('content')
 <div id="manager-stock-page" data-silent-refresh x-data="{ showRestockModal: {{ $errors->any() ? 'true' : 'false' }}, showAdjustModal: false }" class="px-4 sm:px-6 lg:px-8">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
@@ -11,12 +13,6 @@
             <p class="mt-2 text-sm text-gray-700">Vue d'ensemble de votre inventaire</p>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap items-center gap-3">
-            <button type="button" onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-md border border-rose-600 bg-white px-4 py-2 text-sm font-medium text-rose-700 shadow-sm hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Actualiser
-            </button>
             <a href="{{ route('manager.stock.movements') }}" class="inline-flex items-center justify-center rounded-md border border-purple-600 bg-white px-4 py-2 text-sm font-medium text-purple-600 shadow-sm hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -36,26 +32,15 @@
                 </svg>
                 Réapprovisionner
             </button>
-            <button type="button" @click="showAdjustModal = true" class="inline-flex items-center justify-center rounded-md border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Ajustement
-            </button>
         </div>
     </div>
 
     <!-- Stats Cards -->
-    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Total Produits</dt>
                             <dd class="flex items-baseline">
@@ -70,12 +55,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Stock Faible</dt>
                             <dd class="flex items-baseline">
@@ -90,12 +70,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Rupture de Stock</dt>
                             <dd class="flex items-baseline">
@@ -107,36 +82,20 @@
             </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Valeur Stock</dt>
-                            <dd>
-                                <x-money-toggle
-                                    :amount="number_format($stats['total_value'], 0, ',', ' ') . ' FCFA'"
-                                    label="la valeur du stock"
-                                    value-class="text-xl font-semibold text-gray-900" />
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <x-money-stat-card
+            title="Valeur Stock"
+            :amount="number_format($stats['total_value'], 0, ',', ' ') . ' FCFA'"
+            label="la valeur du stock"
+            value-class="text-xl font-semibold text-gray-900"
+        />
     </div>
 
     <!-- Filtres -->
-    <div class="sticky top-20 z-20 mt-6 bg-white shadow rounded-lg p-4">
+    <div class="bg-white shadow rounded-lg p-4">
         <form method="GET" data-auto-filter action="{{ route('manager.stock.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou code-barres..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700">Catégorie</label>
@@ -157,6 +116,8 @@
                 </select>
             </div>
         </form>
+    </div>
+        </div>
     </div>
 
     <!-- Table -->
@@ -183,6 +144,7 @@
                                             <div>
                                                 <div class="font-medium text-gray-900">{{ $product->name }}</div>
                                                 <div class="text-gray-500">SKU: {{ $product->sku }}</div>
+                                                <div class="text-gray-500">Code-barres: {{ $product->barcode ?? '-' }}</div>
                                                 <div class="text-xs text-gray-400">Ajoute le {{ $product->created_at->format('d/m/Y H:i') }}</div>
                                             </div>
                                         </div>
@@ -236,20 +198,18 @@
         </div>
     </div>
 
-    <!-- Pagination -->
     <div class="mt-6">
-        {{ $products->links() }}
     </div>
 
-    <div x-show="showRestockModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" style="display: none;">
+    <div x-show="showRestockModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 overflow-y-auto" style="display: none;">
         <div class="fixed inset-0 bg-gray-900/50" @click="showRestockModal = false"></div>
-        <div class="relative mx-auto max-w-4xl overflow-hidden rounded-lg bg-white shadow-xl">
-            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div class="relative mx-auto w-full max-w-4xl max-h-[calc(100vh-3rem)] rounded-lg bg-white shadow-xl flex flex-col my-6">
+            <div class="sticky top-0 z-10 flex flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">Reapprovisionner le stock</h2>
                     <p class="mt-1 text-sm text-gray-500">Les prix saisis sont des prix unitaires pour chaque article du lot.</p>
                 </div>
-                <button type="button" @click="showRestockModal = false" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                <button type="button" @click="showRestockModal = false" class="flex-shrink-0 rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
                     <span class="sr-only">Fermer</span>
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -257,7 +217,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('manager.stock.restock.store') }}" class="space-y-6 p-6">
+            <form id="restock-form" method="POST" action="{{ route('manager.stock.restock.store') }}" class="overflow-y-auto flex-1 space-y-6 p-6">
                 @csrf
 
                 <div>
@@ -297,14 +257,14 @@
 
                     <div>
                         <label for="modal_purchase_price" class="block text-sm font-medium text-gray-700">Prix d'achat unitaire *</label>
-                        <input type="number" name="purchase_price" id="modal_purchase_price" required value="{{ old('purchase_price') }}" min="0" step="0.01"
+                        <input type="number" name="purchase_price" id="modal_purchase_price" required value="{{ old('purchase_price') }}" min="0" step="0.01" oninput="suggestModalSellingPrice()"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('purchase_price') border-red-300 @enderror">
                         @error('purchase_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
                     <div>
                         <label for="modal_selling_price" class="block text-sm font-medium text-gray-700">Prix de vente unitaire *</label>
-                        <input type="number" name="selling_price" id="modal_selling_price" required value="{{ old('selling_price') }}" min="0" step="0.01"
+                        <input type="number" name="selling_price" id="modal_selling_price" required value="{{ old('selling_price') }}" min="0" step="0.01" oninput="markModalSellingPriceEdited()"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('selling_price') border-red-300 @enderror">
                         @error('selling_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
@@ -313,32 +273,24 @@
                 <div id="modal-new-stock-display" class="hidden rounded-md bg-rose-50 p-4 text-sm text-rose-800">
                     <span class="font-medium">Nouveau stock:</span> <span id="modal-new-stock">-</span>
                 </div>
-
-                <div>
-                    <label for="modal_barcode" class="block text-sm font-medium text-gray-700">Code-barres du nouveau stock *</label>
-                    <input type="text" name="barcode" id="modal_barcode" required value="{{ old('barcode') }}" placeholder="6 9455 85 0039 13" pattern="\d \d{4} \d{2} \d{4} \d{2}" inputmode="numeric" maxlength="17" autocomplete="off" data-barcode-format
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
-                    <p class="mt-1 text-xs text-gray-500">Saisissez 13 chiffres, les espaces sont ajoutes automatiquement.</p>
-                    @error('barcode')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-                </div>
-
-                <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
-                    <button type="button" @click="showRestockModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Reapprovisionner</button>
-                </div>
             </form>
+
+            <div class="sticky bottom-0 flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4 flex-shrink-0">
+                <button type="button" @click="showRestockModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+                <button type="submit" form="restock-form" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Reapprovisionner</button>
+            </div>
         </div>
     </div>
 
-    <div x-show="showAdjustModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto px-4 py-6" style="display: none;">
+    <div x-show="showAdjustModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 overflow-y-auto" style="display: none;">
         <div class="fixed inset-0 bg-gray-900/50" @click="showAdjustModal = false"></div>
-        <div class="relative mx-auto max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div class="relative mx-auto w-full max-w-2xl max-h-[calc(100vh-3rem)] rounded-lg bg-white shadow-xl flex flex-col my-6">
+            <div class="sticky top-0 z-10 flex flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">Ajuster un stock</h2>
                     <p class="mt-1 text-sm text-gray-500">Corrigez la quantite disponible apres verification physique.</p>
                 </div>
-                <button type="button" @click="showAdjustModal = false" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                <button type="button" @click="showAdjustModal = false" class="flex-shrink-0 rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
                     <span class="sr-only">Fermer</span>
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -346,7 +298,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('manager.stock.adjust') }}" class="space-y-6 p-6">
+            <form id="adjust-form" method="POST" action="{{ route('manager.stock.adjust') }}" class="overflow-y-auto flex-1 space-y-6 p-6">
                 @csrf
 
                 <div>
@@ -381,17 +333,19 @@
                     <textarea name="reason" id="adjust_reason" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('reason') border-red-300 @enderror">{{ old('reason') }}</textarea>
                     @error('reason')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
-
-                <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
-                    <button type="button" @click="showAdjustModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="rounded-md border border-transparent bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Enregistrer l'ajustement</button>
-                </div>
             </form>
+
+            <div class="sticky bottom-0 flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4 flex-shrink-0">
+                <button type="button" @click="showAdjustModal = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+                <button type="submit" form="adjust-form" class="rounded-md border border-transparent bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Enregistrer l'ajustement</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+let modalSellingPriceEdited = false;
+
 function prepareAdjustModal(productId) {
     const select = document.getElementById('adjust_product_id');
     if (!select) return;
@@ -443,10 +397,33 @@ function updateStockModalProductInfo() {
     }
     if (!document.getElementById('modal_selling_price').value) {
         document.getElementById('modal_selling_price').value = selectedOption.getAttribute('data-selling-price') || 0;
+        modalSellingPriceEdited = false;
     }
 
     productInfo.classList.remove('hidden');
     calculateStockModalNewStock();
+}
+
+function markModalSellingPriceEdited() {
+    modalSellingPriceEdited = true;
+}
+
+function suggestModalSellingPrice() {
+    const purchaseInput = document.getElementById('modal_purchase_price');
+    const sellingInput = document.getElementById('modal_selling_price');
+
+    if (!purchaseInput || !sellingInput || modalSellingPriceEdited) {
+        return;
+    }
+
+    const purchasePrice = Number(purchaseInput.value || 0);
+
+    if (purchasePrice <= 0) {
+        sellingInput.value = '';
+        return;
+    }
+
+    sellingInput.value = (purchasePrice * 1.25).toFixed(2);
 }
 
 function calculateStockModalNewStock() {

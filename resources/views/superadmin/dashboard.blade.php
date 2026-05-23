@@ -4,6 +4,8 @@
 
 @section('content')
 <div class="space-y-8">
+    <div class="smartstore-sticky-zone">
+        <div class="smartstore-sticky-inner">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="text-sm font-medium text-rose-600">Super administration</p>
@@ -18,7 +20,7 @@
         </a>
     </div>
 
-    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <section class="smartstore-sticky-cards grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <a href="{{ route('superadmin.users.index') }}" class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm transition hover:border-rose-200 hover:shadow-md">
             <div class="flex items-start justify-between gap-4">
                 <div>
@@ -39,45 +41,42 @@
             </div>
         </a>
 
-        <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-            <p class="text-sm font-medium text-gray-500">Recette du jour</p>
-            <div class="mt-2">
-                <x-money-toggle
-                    :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'"
-                    label="la recette du jour"
-                    value-class="text-2xl font-semibold text-gray-900" />
-            </div>
-            <p class="mt-2 text-sm text-gray-500">{{ $stats['today_sales'] }} vente(s) aujourd'hui</p>
-        </div>
+        <x-money-stat-card
+            class="border border-gray-100 shadow-sm"
+            title="Recette du jour"
+            :amount="number_format($stats['total_current_day_revenue'], 0, ',', ' ') . ' FCFA'"
+            label="la recette du jour"
+            :footer="number_format($stats['today_sales']) . ' vente(s)'"
+        />
 
-        <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-            <p class="text-sm font-medium text-gray-500">Solde Cash</p>
-            <div class="mt-2">
-                <x-money-toggle
-                    :amount="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'"
-                    label="le solde cash"
-                    value-class="text-2xl font-semibold text-gray-900" />
+        <div class="money-stat-card rounded-lg border border-gray-100 bg-white p-5 shadow-sm" x-data="{ showCashCard: false }">
+            <div class="money-amount-row">
+                <p class="min-w-0 flex-1 pr-2 text-sm font-medium text-gray-500">Solde Cash</p>
+                <x-money-eye-button state="showCashCard" label="le solde cash et la recette d'hier" refresh-on-show />
             </div>
+            <p class="mt-2 text-2xl font-semibold text-gray-900">
+                <x-money-value
+                    state="showCashCard"
+                    :amount="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'" />
+            </p>
             <div class="mt-2 flex items-center gap-1 text-sm text-gray-500">
-                <x-money-toggle
-                    :amount="number_format($stats['total_yesterday_revenue'], 0, ',', ' ') . ' FCFA'"
-                    label="la recette d'hier"
-                    value-class="text-sm font-semibold text-rose-600" />
+                <x-money-value
+                    state="showCashCard"
+                    class="text-sm font-semibold text-rose-600"
+                    :amount="number_format($stats['total_yesterday_revenue'], 0, ',', ' ') . ' FCFA'" />
                 <span>hier</span>
             </div>
         </div>
 
-        <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">
-            <p class="text-sm font-medium text-gray-500">Paiements mobiles</p>
-            <div class="mt-2">
-                <x-money-toggle
-                    :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
-                    label="le solde des paiements mobiles"
-                    value-class="text-2xl font-semibold text-gray-900" />
-            </div>
-            <p class="mt-2 text-sm text-gray-500">Orange Money et MTN Momo</p>
-        </div>
+        <x-money-stat-card
+            class="border border-gray-100 shadow-sm"
+            title="Paiements mobiles"
+            :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
+            label="le solde des paiements mobiles"
+        />
     </section>
+        </div>
+    </div>
 
     <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm">

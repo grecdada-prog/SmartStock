@@ -46,7 +46,7 @@ class SuperAdminUserController extends Controller
             });
         }
 
-        $users = $query->latest()->paginate(20);
+        $users = $query->latest()->get();
 
         return view('superadmin.users.index', compact('users'));
     }
@@ -71,7 +71,7 @@ class SuperAdminUserController extends Controller
             });
         }
 
-        $managers = $query->latest()->paginate(20);
+        $managers = $query->latest()->get();
 
         return view('superadmin.users.managers', compact('managers'));
     }
@@ -97,7 +97,7 @@ class SuperAdminUserController extends Controller
             });
         }
 
-        $sellers = $query->latest()->paginate(20);
+        $sellers = $query->latest()->get();
 
         return view('superadmin.users.sellers', compact('sellers'));
     }

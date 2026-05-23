@@ -4,6 +4,8 @@
 
 @section('content')
 <div id="manager-low-stock-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Produits en Stock Faible</h1>
@@ -20,12 +22,7 @@
         <!-- Alert Banner -->
         <div class="mt-6 rounded-md bg-orange-50 p-4">
             <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
+                <div>
                     <h3 class="text-sm font-medium text-orange-800">Attention : {{ $products->count() }} produit(s) en stock faible</h3>
                     <div class="mt-2 text-sm text-orange-700">
                         <p>Ces produits ont atteint ou dépassé leur seuil d'alerte. Pensez à réapprovisionner rapidement.</p>
@@ -34,6 +31,8 @@
             </div>
         </div>
     @endif
+        </div>
+    </div>
 
     <!-- Table -->
     <div class="mt-6 flex flex-col">
@@ -110,10 +109,7 @@
                                 <tr>
                                     <td colspan="6" class="px-3 py-8 text-center text-sm text-gray-500">
                                         <div class="flex flex-col items-center">
-                                            <svg class="h-12 w-12 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <p class="mt-2 text-lg font-medium text-gray-900">Excellent !</p>
+                                            <p class="text-lg font-medium text-gray-900">Excellent !</p>
                                             <p class="mt-1 text-sm text-gray-500">Aucun produit n'est en stock faible pour le moment.</p>
                                         </div>
                                     </td>
@@ -126,12 +122,6 @@
         </div>
     </div>
 
-    <!-- Pagination -->
-    @if($products->hasPages())
-    <div class="mt-6">
-        {{ $products->links() }}
-    </div>
-    @endif
 </div>
 
 @endsection

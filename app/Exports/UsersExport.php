@@ -4,10 +4,11 @@ namespace App\Exports;
 
 use App\Models\User;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
@@ -40,7 +41,7 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%');
+                    ->orWhere('email', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -50,15 +51,21 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     public function headings(): array
     {
         return [
-            'ID',
-            'Nom',
-            'Email',
-            'Téléphone',
-            'Rôle',
-            'Statut',
-            'Créé par',
-            'Date de création',
-            'Dernière mise à jour',
+            ['SmartStore'],
+            ['Export des utilisateurs'],
+            ['Genere le ' . now()->format('d/m/Y H:i')],
+            [],
+            [
+                'ID',
+                'Nom',
+                'Email',
+                'Telephone',
+                'Role',
+                'Statut',
+                'Cree par',
+                'Date de creation',
+                'Derniere mise a jour',
+            ],
         ];
     }
 
@@ -80,7 +87,12 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => ['font' => ['bold' => true, 'size' => 12]],
+            1 => ['font' => ['bold' => true, 'size' => 18, 'color' => ['rgb' => 'FF0033']]],
+            2 => ['font' => ['bold' => true, 'size' => 13]],
+            5 => [
+                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FF0033']],
+            ],
         ];
     }
 }

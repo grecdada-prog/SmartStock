@@ -4,6 +4,8 @@
 
 @section('content')
 <div id="manager-categories-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Catégories</h1>
@@ -20,7 +22,7 @@
     </div>
 
     <!-- Filtres -->
-    <div class="mt-6 bg-white shadow rounded-lg p-4">
+    <div class="bg-white shadow rounded-lg p-4">
         <form method="GET" data-auto-filter action="{{ route('manager.categories.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
@@ -35,6 +37,8 @@
                 </select>
             </div>
         </form>
+    </div>
+        </div>
     </div>
 
     <!-- Table -->
@@ -141,9 +145,7 @@
         </div>
     </div>
 
-    <!-- Pagination -->
     <div class="mt-6">
-        {{ $categories->links() }}
     </div>
 </div>
 

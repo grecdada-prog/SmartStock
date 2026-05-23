@@ -20,7 +20,9 @@ function createModal() {
         <div class="smartstore-link-modal__panel" role="dialog" aria-modal="true" aria-labelledby="smartstore-link-modal-title">
             <div class="smartstore-link-modal__header">
                 <h2 id="smartstore-link-modal-title">Modification</h2>
-                <button type="button" class="smartstore-link-modal__close" data-smartstore-modal-close aria-label="Fermer">&times;</button>
+                <button type="button" class="smartstore-link-modal__close" data-smartstore-modal-close aria-label="Fermer">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <iframe class="smartstore-link-modal__frame" title="Contenu SmartStore"></iframe>
         </div>
@@ -43,65 +45,73 @@ function createModal() {
         .smartstore-link-modal__backdrop {
             position: absolute;
             inset: 0;
-            background: rgba(15, 23, 42, .48);
+            background: rgba(15, 23, 42, .50);
         }
         .smartstore-link-modal__panel {
             position: relative;
             display: flex;
-            width: min(920px, 100%);
-            max-height: min(86vh, 860px);
-            min-height: 560px;
+            width: min(768px, 100%);
+            max-height: calc(100vh - 2rem);
             flex-direction: column;
             overflow: hidden;
-            border-radius: .75rem;
-            background: #f8fafc;
-            box-shadow: 0 24px 70px rgba(15, 23, 42, .25);
+            border-radius: .5rem;
+            background: #ffffff;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
         }
         .smartstore-link-modal__header {
             display: flex;
+            flex: 0 0 auto;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            border-bottom: 1px solid #d9e8df;
-            background: #eef8f1;
-            padding: .85rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: #ffffff;
+            padding: 1rem 1.25rem;
         }
         .smartstore-link-modal__header h2 {
             margin: 0;
-            color: #163725;
-            font-size: 1rem;
+            color: #111827;
+            font-size: 1.125rem;
             font-weight: 700;
         }
         .smartstore-link-modal__close {
             display: inline-flex;
-            height: 2rem;
-            width: 2rem;
+            height: 2.25rem;
+            width: 2.25rem;
             align-items: center;
             justify-content: center;
             border: 0;
             border-radius: .375rem;
             background: transparent;
-            color: #334155;
+            color: #6b7280;
             cursor: pointer;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             line-height: 1;
         }
         .smartstore-link-modal__close:hover {
-            background: rgba(22, 101, 52, .1);
+            background: #f3f4f6;
+            color: #374151;
         }
         .smartstore-link-modal__frame {
             width: 100%;
-            flex: 1;
+            min-height: 0;
+            height: calc(100vh - 7rem);
+            flex: 1 1 auto;
             border: 0;
-            background: #f8fafc;
+            background: #ffffff;
         }
         @media (max-width: 640px) {
             #smartstore-link-modal {
                 padding: .5rem;
             }
             .smartstore-link-modal__panel {
-                max-height: 94vh;
-                min-height: 72vh;
+                max-height: calc(100vh - 1rem);
+            }
+            .smartstore-link-modal__header {
+                padding: .875rem 1rem;
+            }
+            .smartstore-link-modal__frame {
+                height: calc(100vh - 5.75rem);
             }
         }
     `;
@@ -117,6 +127,10 @@ function modalTitleFor(url) {
 
     if (path.includes('/receipt') || path.includes('/invoice') || path.includes('/facture') || path.includes('/recu')) {
         return 'Facture';
+    }
+
+    if (path.includes('/edit')) {
+        return 'Modifier le produit';
     }
 
     return 'Modification';

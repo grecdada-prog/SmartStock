@@ -128,7 +128,8 @@ class RolePageSmokeTest extends TestCase
 
         $this->actingAs($manager)
             ->get(route('manager.stock.index'))
-            ->assertSee('Actualiser')
+            ->assertDontSee('Actualiser')
+            ->assertDontSee('Ajustement')
             ->assertDontSee('Auto-refresh');
 
         $this->actingAs($manager)

@@ -17,7 +17,7 @@
         <form method="GET" data-auto-filter action="{{ route('seller.products') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom, SKU..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou code-barres..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
             </div>
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700">Catégorie</label>
@@ -61,6 +61,7 @@
                                             <div class="ml-4">
                                                 <div class="font-medium text-gray-900">{{ $product->name }}</div>
                                                 <div class="text-gray-500">{{ $product->sku }}</div>
+                                                <div class="text-gray-500">Code-barres: {{ $product->barcode ?? '-' }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -99,12 +100,6 @@
         </div>
     </div>
 
-    <!-- Pagination -->
-    @if($products->hasPages())
-    <div class="mt-6">
-        {{ $products->links() }}
-    </div>
-    @endif
 </div>
 
 @endsection

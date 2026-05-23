@@ -51,14 +51,14 @@
 
                     <div>
                         <label for="purchase_price" class="block text-sm font-medium text-gray-700">Prix d'achat unitaire *</label>
-                        <input type="number" name="purchase_price" id="purchase_price" required value="{{ old('purchase_price') }}" min="0" step="0.01"
+                        <input type="number" name="purchase_price" id="purchase_price" required value="{{ old('purchase_price') }}" min="0" step="0.01" oninput="suggestSellingPrice()"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('purchase_price') border-red-300 @enderror">
                         @error('purchase_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
                     <div>
                         <label for="selling_price" class="block text-sm font-medium text-gray-700">Prix de vente unitaire *</label>
-                        <input type="number" name="selling_price" id="selling_price" required value="{{ old('selling_price') }}" min="0" step="0.01"
+                        <input type="number" name="selling_price" id="selling_price" required value="{{ old('selling_price') }}" min="0" step="0.01" oninput="markSellingPriceEdited()"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('selling_price') border-red-300 @enderror">
                         @error('selling_price')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
@@ -66,13 +66,6 @@
 
                 <div id="new-stock-display" class="hidden rounded-md bg-rose-50 p-4 text-sm text-rose-800">
                     <span class="font-medium">Nouveau stock:</span> <span id="new-stock">-</span>
-                </div>
-
-                <div>
-                    <label for="barcode" class="block text-sm font-medium text-gray-700">Code-barres du nouveau stock *</label>
-                    <input type="text" name="barcode" id="barcode" required value="{{ old('barcode') }}" placeholder="6 9455 85 0039 13" pattern="\d \d{4} \d{2} \d{4} \d{2}" inputmode="numeric" maxlength="17" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
-                    <p class="mt-1 text-xs text-gray-500">Saisissez 13 chiffres, les espaces sont ajoutes automatiquement.</p>
-                    @error('barcode')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-gray-200 pt-6">
@@ -85,6 +78,8 @@
 </div>
 
 <script>
+let sellingPriceEdited = false;
+
 function updateProductInfo() {
     const select = document.getElementById('product_id');
     const selectedOption = select.options[select.selectedIndex];
@@ -107,9 +102,32 @@ function updateProductInfo() {
     }
     if (!document.getElementById('selling_price').value) {
         document.getElementById('selling_price').value = selectedOption.getAttribute('data-selling-price') || 0;
+        sellingPriceEdited = false;
     }
     productInfo.classList.remove('hidden');
     calculateNewStock();
+}
+
+function markSellingPriceEdited() {
+    sellingPriceEdited = true;
+}
+
+function suggestSellingPrice() {
+    const purchaseInput = document.getElementById('purchase_price');
+    const sellingInput = document.getElementById('selling_price');
+
+    if (!purchaseInput || !sellingInput || sellingPriceEdited) {
+        return;
+    }
+
+    const purchasePrice = Number(purchaseInput.value || 0);
+
+    if (purchasePrice <= 0) {
+        sellingInput.value = '';
+        return;
+    }
+
+    sellingInput.value = (purchasePrice * 1.25).toFixed(2);
 }
 
 function calculateNewStock() {

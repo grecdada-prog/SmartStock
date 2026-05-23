@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\CashRegisterClosure;
-use App\Models\MobilePaymentTransaction;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
@@ -212,7 +211,7 @@ class SellerPosSaleTest extends TestCase
         $this->assertSame(0, Sale::count());
     }
 
-    public function test_mobile_payment_start_keeps_sale_pending_until_monetbil_callback(): void
+    public function test_mobile_payment_records_sale_immediately_without_external_api(): void
     {
         $seller = $this->createSellerWithManager();
         $category = Category::create([
@@ -221,7 +220,7 @@ class SellerPosSaleTest extends TestCase
         ]);
         $product = Product::create([
             'name' => 'Jus',
-            'sku' => 'JUS-MONETBIL-001',
+            'sku' => 'JUS-MOBILE-001',
             'category_id' => $category->id,
             'purchase_price' => 50,
             'selling_price' => 100,
@@ -232,7 +231,7 @@ class SellerPosSaleTest extends TestCase
             'created_by' => $seller->created_by,
         ]);
 
-        $response = $this->actingAs($seller)->postJson(route('seller.pos.mobile-payment.start'), [
+        $response = $this->actingAs($seller)->postJson(route('seller.pos.sale'), [
             'items' => [
                 [
                     'product_id' => $product->id,
@@ -243,62 +242,7 @@ class SellerPosSaleTest extends TestCase
             'customer_phone' => '690100300',
         ]);
 
-        $response->assertAccepted()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('operator_label', 'Orange Money')
-            ->assertJsonPath('awaiting_callback', true);
-
-        $this->assertSame(0, Sale::count());
-        $this->assertDatabaseHas('products', [
-            'id' => $product->id,
-            'quantity' => 5,
-        ]);
-        $this->assertSame(MobilePaymentTransaction::STATUS_PENDING, MobilePaymentTransaction::firstOrFail()->status);
-    }
-
-    public function test_monetbil_success_callback_records_mobile_sale(): void
-    {
-        $seller = $this->createSellerWithManager();
-        $category = Category::create([
-            'name' => 'Boissons',
-            'created_by' => $seller->created_by,
-        ]);
-        $product = Product::create([
-            'name' => 'Jus',
-            'sku' => 'JUS-CALLBACK-001',
-            'category_id' => $category->id,
-            'purchase_price' => 50,
-            'selling_price' => 100,
-            'quantity' => 5,
-            'alert_quantity' => 2,
-            'unit' => 'pcs',
-            'is_active' => true,
-            'created_by' => $seller->created_by,
-        ]);
-
-        $transaction = MobilePaymentTransaction::create([
-            'seller_id' => $seller->id,
-            'payment_ref' => 'MB-CALLBACK-OK',
-            'status' => MobilePaymentTransaction::STATUS_PENDING,
-            'operator' => 'CM_ORANGEMONEY',
-            'phone' => '690100300',
-            'amount' => 200,
-            'cart_payload' => [
-                'items' => [
-                    [
-                        'product_id' => $product->id,
-                        'quantity' => 2,
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->postJson(route('payments.monetbil.callback'), [
-            'service' => config('services.monetbil.service_key'),
-            'payment_ref' => $transaction->payment_ref,
-            'amount' => 200,
-            'status' => 'success',
-        ])->assertOk()
+        $response->assertOk()
             ->assertJsonPath('success', true);
 
         $this->assertSame(1, Sale::count());
@@ -311,62 +255,6 @@ class SellerPosSaleTest extends TestCase
             'id' => $product->id,
             'quantity' => 3,
         ]);
-        $this->assertSame(MobilePaymentTransaction::STATUS_SUCCESS, $transaction->fresh()->status);
-    }
-
-    public function test_monetbil_insufficient_funds_callback_does_not_record_sale(): void
-    {
-        $seller = $this->createSellerWithManager();
-        $category = Category::create([
-            'name' => 'Boissons',
-            'created_by' => $seller->created_by,
-        ]);
-        $product = Product::create([
-            'name' => 'Jus',
-            'sku' => 'JUS-CALLBACK-FAILED-001',
-            'category_id' => $category->id,
-            'purchase_price' => 50,
-            'selling_price' => 100,
-            'quantity' => 5,
-            'alert_quantity' => 2,
-            'unit' => 'pcs',
-            'is_active' => true,
-            'created_by' => $seller->created_by,
-        ]);
-
-        $transaction = MobilePaymentTransaction::create([
-            'seller_id' => $seller->id,
-            'payment_ref' => 'MB-CALLBACK-KO',
-            'status' => MobilePaymentTransaction::STATUS_PENDING,
-            'operator' => 'CM_MTNMOBILEMONEY',
-            'phone' => '670100300',
-            'amount' => 200,
-            'cart_payload' => [
-                'items' => [
-                    [
-                        'product_id' => $product->id,
-                        'quantity' => 2,
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->postJson(route('payments.monetbil.callback'), [
-            'service' => config('services.monetbil.service_key'),
-            'payment_ref' => $transaction->payment_ref,
-            'amount' => 200,
-            'status' => 'failed',
-            'message' => 'insufficient funds',
-        ])->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->assertSame(0, Sale::count());
-        $this->assertDatabaseHas('products', [
-            'id' => $product->id,
-            'quantity' => 5,
-        ]);
-        $this->assertSame(MobilePaymentTransaction::STATUS_FAILED, $transaction->fresh()->status);
-        $this->assertSame('Fonds insuffisants sur le compte mobile.', $transaction->fresh()->failure_reason);
     }
 
     public function test_seller_can_refresh_available_products_for_pos(): void
@@ -383,6 +271,7 @@ class SellerPosSaleTest extends TestCase
         $visibleProduct = Product::create([
             'name' => 'Jus orange',
             'sku' => 'JUS-001',
+            'barcode' => '6 9455 85 0039 13',
             'category_id' => $category->id,
             'purchase_price' => 100,
             'selling_price' => 200,
@@ -425,7 +314,56 @@ class SellerPosSaleTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonCount(1, 'products')
             ->assertJsonPath('products.0.id', $visibleProduct->id)
+            ->assertJsonPath('products.0.barcode', '6 9455 85 0039 13')
             ->assertJsonPath('products.0.quantity', 4);
+    }
+
+    public function test_seller_product_search_uses_barcode_not_sku(): void
+    {
+        $seller = $this->createSellerWithManager();
+
+        $category = Category::create([
+            'name' => 'Epicerie',
+            'created_by' => $seller->created_by,
+        ]);
+
+        Product::create([
+            'name' => 'Seller Barcode Target',
+            'sku' => 'SELLER-BARCODE-SKU',
+            'barcode' => '6 9455 85 0039 13',
+            'category_id' => $category->id,
+            'purchase_price' => 100,
+            'selling_price' => 200,
+            'quantity' => 5,
+            'alert_quantity' => 1,
+            'unit' => 'piece',
+            'is_active' => true,
+            'created_by' => $seller->created_by,
+        ]);
+
+        Product::create([
+            'name' => 'Seller Sku Only Target',
+            'sku' => 'SELLER-SKU-ONLY',
+            'category_id' => $category->id,
+            'purchase_price' => 100,
+            'selling_price' => 200,
+            'quantity' => 5,
+            'alert_quantity' => 1,
+            'unit' => 'piece',
+            'is_active' => true,
+            'created_by' => $seller->created_by,
+        ]);
+
+        $this->actingAs($seller)
+            ->get(route('seller.products', ['search' => '6945585003913']))
+            ->assertOk()
+            ->assertSee('Seller Barcode Target')
+            ->assertDontSee('Seller Sku Only Target');
+
+        $this->actingAs($seller)
+            ->get(route('seller.products', ['search' => 'SELLER-SKU-ONLY']))
+            ->assertOk()
+            ->assertDontSee('Seller Sku Only Target');
     }
 
     public function test_pos_product_list_displays_oldest_available_batch_price(): void

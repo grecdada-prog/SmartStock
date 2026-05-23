@@ -34,6 +34,10 @@ return [
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
 
+    'presence_timeout_seconds' => (int) env('SESSION_PRESENCE_TIMEOUT_SECONDS', 45),
+
+    'same_client_reconnect_seconds' => (int) env('SESSION_SAME_CLIENT_RECONNECT_SECONDS', 8),
+
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
     /*

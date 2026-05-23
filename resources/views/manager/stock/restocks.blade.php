@@ -4,6 +4,8 @@
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-900">Historique des approvisionnements</h1>
@@ -12,6 +14,8 @@
         <a href="{{ route('manager.stock.index') }}" class="mt-4 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 sm:mt-0">
             Retour au stock
         </a>
+    </div>
+        </div>
     </div>
 
     <div class="mt-6 overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
@@ -52,7 +56,7 @@
                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
                                 {{ $movement->remaining_quantity !== null ? $movement->remaining_quantity.' '.($movement->product->unit ?? '') : '-' }}
                             </td>
-                            <td class="px-3 py-4 text-sm text-gray-600">{{ $movement->barcode ?? '-' }}</td>
+                            <td class="px-3 py-4 text-sm text-gray-600">{{ $movement->product->barcode ?? '-' }}</td>
                             <td class="whitespace-nowrap px-3 py-4 text-sm">
                                 <a href="{{ route('manager.stock.restocks.show', $movement) }}" class="inline-flex rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100">
                                     Details
@@ -69,8 +73,5 @@
         </div>
     </div>
 
-    @if($restocks->hasPages())
-        <div class="mt-6">{{ $restocks->links() }}</div>
-    @endif
 </div>
 @endsection

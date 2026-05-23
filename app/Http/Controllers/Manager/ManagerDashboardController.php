@@ -40,7 +40,7 @@ class ManagerDashboardController extends Controller
                 'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
                 'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
                 'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
-                'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($seller),
+                'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($seller),
             ];
         });
 
@@ -61,6 +61,7 @@ class ManagerDashboardController extends Controller
             'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
+            'yesterday_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today()->subDay())->count(),
         ];
 
         // Vendeurs en ligne
@@ -128,7 +129,7 @@ class ManagerDashboardController extends Controller
         }
 
         $filteredSalesQuery = clone $query;
-        $sales = $query->latest()->paginate(20);
+        $sales = $query->latest()->get();
         $sellerFinancials = $this->sellerFinancials();
 
         // Statistiques des ventes
@@ -142,6 +143,8 @@ class ManagerDashboardController extends Controller
             'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
+            'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
+            'yesterday_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today()->subDay())->count(),
         ];
 
         // Liste des vendeurs pour le filtre
@@ -170,7 +173,7 @@ class ManagerDashboardController extends Controller
                     'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
                     'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
                     'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
-                    'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($seller),
+                    'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($seller),
                 ];
             });
     }

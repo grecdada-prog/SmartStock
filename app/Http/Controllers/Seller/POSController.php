@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
-use App\Models\MobilePaymentTransaction;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
 use App\Services\CashRegisterService;
-use App\Services\Payments\MonetbilPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -83,12 +81,13 @@ class POSController extends Controller
             'payment_method.in' => 'Méthode de paiement invalide.',
         ]);
 
-        if ($validated['payment_method'] !== 'cash') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Demarrez le paiement mobile depuis le flux Monetbil.',
-            ], 409);
+        if ($validated['payment_method'] !== 'cash' && ! $this->operatorForCameroonPhone($validated['customer_phone'] ?? null)) {
+            throw ValidationException::withMessages([
+                'customer_phone' => 'Numero non reconnu pour Orange Money ou MTN Momo Cameroun.',
+            ]);
         }
+
+        $validated['payment_method'] = $this->normalizePaymentMethod($validated['payment_method'], $validated['customer_phone'] ?? null);
 
         try {
             // Traiter la vente dans une transaction
@@ -233,187 +232,6 @@ class POSController extends Controller
         }
     }
 
-    public function startMobilePayment(Request $request, MonetbilPaymentService $monetbil)
-    {
-        $seller = auth()->user();
-
-        if (! app(CashRegisterService::class)->isOpenForSeller($seller)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'La caisse n\'est pas ouverte. Ouvrez la caisse depuis le dashboard avant de commencer les ventes.',
-            ], 423);
-        }
-
-        $this->normalizeContactInputs($request, ['customer_phone'], []);
-
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'payment_method' => ['required', 'in:mobile_money'],
-            'customer_name' => ['nullable', 'string', 'max:255'],
-            'customer_phone' => ['required', ...$this->phoneRules()],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ], [
-            'customer_phone.required' => 'Le numero de telephone est obligatoire pour le paiement mobile.',
-            'customer_phone.regex' => 'Le numero de telephone doit contenir 9 a 15 chiffres.',
-        ]);
-
-        $operator = $monetbil->operatorForCameroonPhone($validated['customer_phone']);
-
-        if (! $operator) {
-            throw ValidationException::withMessages([
-                'customer_phone' => 'Numero non reconnu pour Orange Money ou MTN Momo Cameroun.',
-            ]);
-        }
-
-        try {
-            $snapshot = $this->cartSnapshot($seller, $validated['items']);
-            $paymentRef = $monetbil->newPaymentReference();
-
-            $transaction = MobilePaymentTransaction::create([
-                'seller_id' => $seller->id,
-                'payment_ref' => $paymentRef,
-                'status' => MobilePaymentTransaction::STATUS_PENDING,
-                'operator' => $operator,
-                'phone' => $validated['customer_phone'],
-                'amount' => $snapshot['total'],
-                'customer_name' => $validated['customer_name'] ?? null,
-                'cart_payload' => [
-                    'items' => $validated['items'],
-                    'notes' => $validated['notes'] ?? null,
-                ],
-            ]);
-
-            $providerPayload = [
-                'payment_ref' => $paymentRef,
-                'amount' => $snapshot['total'],
-                'phone' => $validated['customer_phone'],
-                'operator' => $operator,
-                'currency' => config('services.monetbil.currency', 'XAF'),
-                'country' => config('services.monetbil.country', 'CM'),
-                'item_ref' => 'POS-'.$seller->id.'-'.$transaction->id,
-                'user' => (string) $seller->id,
-                'first_name' => $validated['customer_name'] ?? $seller->name,
-                'notify_url' => route('payments.monetbil.callback'),
-            ];
-
-            if ($monetbil->enabled()) {
-                $providerResponse = $monetbil->placePayment($providerPayload);
-                $transaction->update([
-                    'payment_id' => data_get($providerResponse, 'paymentId'),
-                    'status' => MobilePaymentTransaction::STATUS_ACCEPTED,
-                    'provider_payload' => $providerResponse,
-                ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Demande de paiement envoyee au client.',
-                'payment_ref' => $transaction->payment_ref,
-                'payment_id' => $transaction->payment_id,
-                'operator' => $transaction->operator,
-                'operator_label' => $monetbil->operatorLabel($transaction->operator),
-                'amount' => $transaction->amount,
-                'awaiting_callback' => true,
-                'monetbil_enabled' => $monetbil->enabled(),
-            ], 202);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $this->friendlySaleError($e),
-            ], 422);
-        }
-    }
-
-    public function cancelMobilePayment(Request $request)
-    {
-        $validated = $request->validate([
-            'payment_ref' => ['required', 'string'],
-        ]);
-
-        $transaction = MobilePaymentTransaction::where('seller_id', auth()->id())
-            ->where('payment_ref', $validated['payment_ref'])
-            ->firstOrFail();
-
-        if ($transaction->isOpen()) {
-            $transaction->update([
-                'status' => MobilePaymentTransaction::STATUS_CANCELED,
-                'canceled_at' => now(),
-                'failure_reason' => 'Transaction annulee par le vendeur.',
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaction mobile annulee. Le panier est conserve.',
-        ]);
-    }
-
-    public function monetbilCallback(Request $request, MonetbilPaymentService $monetbil)
-    {
-        $notification = $monetbil->normalizeNotification($request->all());
-
-        $transaction = MobilePaymentTransaction::query()
-            ->when($notification['payment_ref'] !== '', fn ($query) => $query->where('payment_ref', $notification['payment_ref']))
-            ->when($notification['payment_ref'] === '' && $notification['payment_id'] !== '', fn ($query) => $query->where('payment_id', $notification['payment_id']))
-            ->first();
-
-        if (! $transaction) {
-            return response()->json(['success' => false, 'message' => 'Transaction inconnue.'], 404);
-        }
-
-        if (! $transaction->isOpen()) {
-            return response()->json(['success' => true, 'message' => 'Transaction deja traitee.']);
-        }
-
-        if ($notification['successful']) {
-            try {
-                $sale = $this->createSaleFromCartPayload(
-                    $transaction->seller,
-                    data_get($transaction->cart_payload, 'items', []),
-                    $monetbil->paymentMethodForOperator($transaction->operator),
-                    $transaction->amount,
-                    $transaction->customer_name,
-                    $transaction->phone,
-                    data_get($transaction->cart_payload, 'notes')
-                );
-
-                $transaction->update([
-                    'sale_id' => $sale->id,
-                    'status' => MobilePaymentTransaction::STATUS_SUCCESS,
-                    'provider_payload' => $notification['raw'],
-                    'confirmed_at' => now(),
-                ]);
-
-                return response()->json(['success' => true, 'message' => 'Paiement confirme. Vente enregistree.']);
-            } catch (\Exception $e) {
-                $transaction->update([
-                    'status' => MobilePaymentTransaction::STATUS_FAILED,
-                    'provider_payload' => $notification['raw'],
-                    'failure_reason' => $this->friendlySaleError($e),
-                    'failed_at' => now(),
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Paiement confirme, mais la vente n a pas pu etre enregistree. Verifiez le stock.',
-                ]);
-            }
-        }
-
-        if ($notification['failed']) {
-            $transaction->update([
-                'status' => MobilePaymentTransaction::STATUS_FAILED,
-                'provider_payload' => $notification['raw'],
-                'failure_reason' => $notification['failure_reason'],
-                'failed_at' => now(),
-            ]);
-        }
-
-        return response()->json(['success' => true, 'message' => 'Notification recue.']);
-    }
-
     private function friendlySaleError(\Exception $e): string
     {
         $message = $e->getMessage();
@@ -437,154 +255,40 @@ class POSController extends Controller
         return 'La vente n\'a pas pu etre enregistree. Verifiez le panier et reessayez.';
     }
 
-    private function cartSnapshot($seller, array $items): array
+    private function normalizePaymentMethod(string $paymentMethod, ?string $customerPhone = null): string
     {
-        $totalAmount = 0;
-        $requestedItems = collect($items)
-            ->groupBy('product_id')
-            ->map(fn ($group, $productId) => [
-                'product_id' => (int) $productId,
-                'quantity' => (int) $group->sum('quantity'),
-            ])
-            ->values();
-
-        foreach ($requestedItems as $item) {
-            $product = Product::where('created_by', $seller->created_by)
-                ->findOrFail($item['product_id']);
-
-            if (! $product->is_active) {
-                throw new \Exception("Le produit '{$product->name}' n'est plus disponible.");
-            }
-
-            if ($product->quantity < $item['quantity']) {
-                throw new \Exception("Stock insuffisant pour '{$product->name}'. Disponible: {$product->quantity}");
-            }
-
-            $totalAmount += collect($this->fifoAllocationsForSale($product, $item['quantity']))->sum('subtotal');
+        if ($paymentMethod !== 'mobile_money') {
+            return $paymentMethod;
         }
 
-        return [
-            'items' => $requestedItems->all(),
-            'total' => $totalAmount,
-        ];
+        return $this->operatorForCameroonPhone($customerPhone) === 'orange'
+            ? 'card'
+            : 'mobile_money';
     }
 
-    private function createSaleFromCartPayload($seller, array $items, string $paymentMethod, float|int|string|null $amountReceived = null, ?string $customerName = null, ?string $customerPhone = null, ?string $notes = null): Sale
+    private function operatorForCameroonPhone(?string $phone): ?string
     {
-        return DB::transaction(function () use ($seller, $items, $paymentMethod, $amountReceived, $customerName, $customerPhone, $notes) {
-            $totalAmount = 0;
-            $itemsData = [];
-            $requestedItems = collect($items)
-                ->groupBy('product_id')
-                ->map(fn ($group, $productId) => [
-                    'product_id' => (int) $productId,
-                    'quantity' => (int) $group->sum('quantity'),
-                ])
-                ->values();
+        $digits = preg_replace('/\D+/', '', (string) $phone);
 
-            foreach ($requestedItems as $item) {
-                $product = Product::where('created_by', $seller->created_by)
-                    ->lockForUpdate()
-                    ->findOrFail($item['product_id']);
+        if (str_starts_with($digits, '237') && strlen($digits) > 9) {
+            $digits = substr($digits, 3);
+        }
 
-                if (! $product->is_active) {
-                    throw new \Exception("Le produit '{$product->name}' n'est plus disponible.");
-                }
+        if (strlen($digits) !== 9) {
+            return null;
+        }
 
-                if ($product->quantity < $item['quantity']) {
-                    throw new \Exception("Stock insuffisant pour '{$product->name}'. Disponible: {$product->quantity}");
-                }
+        $prefix = (int) substr($digits, 0, 3);
 
-                $allocations = $this->fifoAllocationsForSale($product, $item['quantity']);
-                $subtotal = collect($allocations)->sum('subtotal');
-                $totalAmount += $subtotal;
+        if (($prefix >= 650 && $prefix <= 654) || ($prefix >= 670 && $prefix <= 679) || ($prefix >= 680 && $prefix <= 683)) {
+            return 'mtn';
+        }
 
-                $itemsData[] = [
-                    'product' => $product,
-                    'quantity' => $item['quantity'],
-                    'allocations' => $allocations,
-                ];
-            }
+        if (($prefix >= 655 && $prefix <= 659) || ($prefix >= 685 && $prefix <= 689) || ($prefix >= 690 && $prefix <= 699)) {
+            return 'orange';
+        }
 
-            $amountReceived = $amountReceived ?? $totalAmount;
-
-            if ($paymentMethod === 'cash' && $amountReceived < $totalAmount) {
-                throw new \Exception('Le montant recu doit couvrir le total de la vente.');
-            }
-
-            $sale = Sale::create([
-                'seller_id' => $seller->id,
-                'invoice_number' => $this->generateInvoiceNumber(),
-                'subtotal' => $totalAmount,
-                'total' => $totalAmount,
-                'payment_method' => $paymentMethod,
-                'amount_received' => $amountReceived,
-                'change_given' => max(0, (float) $amountReceived - $totalAmount),
-                'customer_name' => $customerName,
-                'customer_phone' => $customerPhone,
-                'notes' => $notes,
-            ]);
-
-            foreach ($itemsData as $itemData) {
-                $quantityBefore = $itemData['product']->quantity;
-                $quantityAfter = $quantityBefore - $itemData['quantity'];
-
-                $itemData['product']->update([
-                    'quantity' => $quantityAfter,
-                ]);
-
-                $runningQuantityBefore = $quantityBefore;
-
-                foreach ($itemData['allocations'] as $allocation) {
-                    $lineQuantityAfter = $runningQuantityBefore - $allocation['quantity'];
-
-                    SaleItem::create([
-                        'sale_id' => $sale->id,
-                        'product_id' => $itemData['product']->id,
-                        'quantity' => $allocation['quantity'],
-                        'unit_price' => $allocation['selling_price'],
-                        'subtotal' => $allocation['subtotal'],
-                    ]);
-
-                    if ($allocation['batch']) {
-                        $allocation['batch']->update([
-                            'remaining_quantity' => $allocation['batch']->remaining_quantity - $allocation['quantity'],
-                        ]);
-                    }
-
-                    StockMovement::create([
-                        'product_id' => $itemData['product']->id,
-                        'user_id' => $seller->id,
-                        'type' => 'out',
-                        'quantity' => $allocation['quantity'],
-                        'quantity_before' => $runningQuantityBefore,
-                        'quantity_after' => $lineQuantityAfter,
-                        'purchase_price' => $allocation['purchase_price'],
-                        'selling_price' => $allocation['selling_price'],
-                        'reference' => "Vente #{$sale->invoice_number}",
-                        'reason' => 'Vente enregistree via POS | Lots: '.$allocation['batch_code'].':'.$allocation['quantity'],
-                    ]);
-
-                    $runningQuantityBefore = $lineQuantityAfter;
-                }
-            }
-
-            ActivityLog::log(
-                'sale_created',
-                "Vente creee : #{$sale->invoice_number} - Total: ".number_format($totalAmount, 0, ',', ' ').' FCFA',
-                'Sale',
-                $sale->id,
-                [
-                    'invoice_number' => $sale->invoice_number,
-                    'seller_id' => $seller->id,
-                    'total' => $totalAmount,
-                    'items_count' => count($itemsData),
-                    'payment_method' => $paymentMethod,
-                ]
-            );
-
-            return $sale;
-        });
+        return null;
     }
 
     private function availableProductsForManager(int $managerId)
@@ -693,7 +397,7 @@ class POSController extends Controller
             });
         }
 
-        $sales = $query->latest()->paginate(20);
+        $sales = $query->latest()->get();
 
         // Statistiques
         $stats = [

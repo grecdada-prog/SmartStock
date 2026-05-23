@@ -59,7 +59,7 @@
                 </div>
                 <div class="p-5">
                     <dt class="text-sm font-medium text-gray-500">Code-barres</dt>
-                    <dd class="mt-1 text-sm font-semibold text-gray-900">{{ $movement->barcode ?? '-' }}</dd>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900">{{ $movement->product->barcode ?? '-' }}</dd>
                 </div>
             </dl>
 

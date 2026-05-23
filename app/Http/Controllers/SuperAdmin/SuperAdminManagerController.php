@@ -36,7 +36,7 @@ class SuperAdminManagerController extends Controller
             });
         }
 
-        $managers = $query->latest()->paginate(20);
+        $managers = $query->latest()->get();
 
         return view('superadmin.managers.index', compact('managers'));
     }

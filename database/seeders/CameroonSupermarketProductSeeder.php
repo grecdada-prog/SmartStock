@@ -43,12 +43,12 @@ class CameroonSupermarketProductSeeder extends Seeder
         });
 
         $products = [
-            ['Boissons', 'Eau Supermont 1.5L', 'CM-SUP-001', 250, 350, 72, 12, 'bouteille'],
-            ['Boissons', 'Eau Tangui 1.5L', 'CM-SUP-002', 250, 350, 80, 12, 'bouteille'],
-            ['Boissons', 'Top Grenadine 50cl', 'CM-SUP-003', 300, 500, 48, 10, 'bouteille'],
-            ['Boissons', 'Top Orange 50cl', 'CM-SUP-004', 300, 500, 45, 10, 'bouteille'],
-            ['Boissons', 'Djino Cocktail 50cl', 'CM-SUP-005', 350, 600, 36, 8, 'bouteille'],
-            ['Boissons', 'Jus Planet Pomme 1L', 'CM-SUP-006', 750, 1100, 24, 6, 'brique'],
+            ['Boissons', 'Eau Supermont 1.5L', 'CM-SUP-001', 250, 350, 72, 12, 'bouteille', '11012035024090'],
+            ['Boissons', 'Eau Tangui 1.5L', 'CM-SUP-002', 250, 350, 80, 12, 'bouteille', '6970155170122'],
+            ['Boissons', 'Top Grenadine 50cl', 'CM-SUP-003', 300, 500, 48, 10, 'bouteille', '6972288593281'],
+            ['Boissons', 'Top Orange 50cl', 'CM-SUP-004', 300, 500, 45, 10, 'bouteille', '8718182020144'],
+            ['Boissons', 'Djino Cocktail 50cl', 'CM-SUP-005', 350, 600, 36, 8, 'bouteille', '6971249524005'],
+            ['Boissons', 'Jus Planet Pomme 1L', 'CM-SUP-006', 750, 1100, 24, 6, 'brique', '6174000037053'],
             ['Boissons', 'Malta Guinness 33cl', 'CM-SUP-007', 450, 650, 40, 8, 'bouteille'],
             ['Boissons', 'Cafe soluble Nescafe 50g', 'CM-SUP-008', 950, 1300, 18, 5, 'pot'],
             ['Epicerie', 'Riz parfume 5kg', 'CM-SUP-009', 4200, 5200, 30, 6, 'sac'],
@@ -105,11 +105,14 @@ class CameroonSupermarketProductSeeder extends Seeder
             ['Cosmetiques', 'Huile corporelle 250ml', 'CM-SUP-060', 1100, 1600, 22, 5, 'flacon'],
         ];
 
-        foreach ($products as [$category, $name, $sku, $purchasePrice, $sellingPrice, $quantity, $alertQuantity, $unit]) {
+        foreach ($products as $productData) {
+            [$category, $name, $sku, $purchasePrice, $sellingPrice, $quantity, $alertQuantity, $unit, $barcode] = array_pad($productData, 9, null);
+
             Product::updateOrCreate(
                 ['sku' => $sku],
                 [
                     'name' => $name,
+                    'barcode' => $barcode,
                     'description' => "Produit de supermarche courant au Cameroun.",
                     'category_id' => $categories[$category],
                     'purchase_price' => $purchasePrice,

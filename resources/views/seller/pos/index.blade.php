@@ -3,7 +3,7 @@
 @section('title', 'Point de Vente')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="posSystem()">
+<div class="px-4 sm:px-6 lg:px-8" x-data="posSystem()" data-pos-scanner-zone>
     <div class="mb-4">
         <h1 class="text-2xl font-semibold text-gray-900">Point de Vente</h1>
         <p class="mt-1 text-sm text-gray-700">Enregistrez vos ventes rapidement</p>
@@ -22,7 +22,8 @@
                                 type="text"
                                 x-model="searchQuery"
                                 @input="searchProducts()"
-                                placeholder="Rechercher un produit (nom ou code SKU)..."
+                                @keydown.enter.prevent.stop="addProductFromSearchBarcode()"
+                                placeholder="Rechercher un produit (nom ou code-barres)..."
                                 class="block w-full rounded-md border-gray-300 py-2 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                             >
                         </div>
@@ -138,7 +139,6 @@
                         <div class="flex justify-between text-lg font-semibold">
                             <span>Total:</span>
                             <span class="text-rose-600" x-text="formatPrice(cartTotal)"></span>
-                        </div>
                     </div>
                 </div>
 
@@ -190,18 +190,37 @@
                             placeholder="Nom du client (optionnel)"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                         >
+                        <div
+                            class="flex min-h-11 overflow-hidden rounded-md border bg-white shadow-sm focus-within:ring-1"
+                            :class="paymentMethod !== 'cash' && mobileOperator && !mobilePaymentReady ? 'border-red-500 focus-within:border-red-500 focus-within:ring-red-500' : 'border-gray-300 focus-within:border-rose-500 focus-within:ring-rose-500'"
+                        >
+                            <div
+                                x-show="paymentMethod !== 'cash' && mobileOperator"
+                                class="flex shrink-0 items-center gap-2 border-r border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-900"
+                            >
+                                <span
+                                    class="h-3.5 w-3.5 rounded-full ring-1 ring-gray-900/20"
+                                    :style="'background-color: ' + mobileOperatorColor"
+                                    aria-hidden="true"
+                                ></span>
+                                <span x-text="mobileOperatorLabel"></span>
+                            </div>
                         <input
                             type="tel"
                             x-model="customerPhone"
                             data-phone-format
                             @smartstore:phone-formatted="customerPhone = $event.target.value"
-                            :placeholder="paymentMethod === 'cash' ? 'Telephone (optionnel)' : 'Numero telephone obligatoire'"
+                            :placeholder="paymentMethod === 'cash' ? 'Telephone (optionnel)' : 'Entrez le numero de telephone'"
                             :required="paymentMethod !== 'cash'"
                             placeholder="Téléphone (optionnel)"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
+                            class="min-w-0 flex-1 border-0 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-0"
                         >
-                        <p x-show="paymentMethod !== 'cash'" class="text-xs" :class="mobileOperator ? 'text-gray-500' : 'text-red-600'">
-                            <span x-text="mobileOperator ? ('Operateur detecte : ' + mobileOperatorLabel) : 'Numero Orange Money ou MTN Momo Cameroun obligatoire.'"></span>
+                        </div>
+                        <p x-show="paymentMethod !== 'cash' && !mobileOperator" class="text-xs text-gray-500">
+                            Entrez le numero de telephone du client.
+                        </p>
+                        <p x-show="paymentMethod !== 'cash' && mobileOperator && !mobilePaymentReady" class="text-xs text-red-600">
+                            Numero invalide - 9 chiffres requis.
                         </p>
                     </div>
 
@@ -209,7 +228,7 @@
                     <div class="space-y-2 pt-2">
                         <button
                             @click="processSale()"
-                            :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0) || (paymentMethod !== 'cash' && (!customerPhone.trim() || !mobileOperator))"
+                            :disabled="processing || cart.length === 0 || (paymentMethod === 'cash' && change < 0) || (paymentMethod !== 'cash' && !mobilePaymentReady)"
                             class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg x-show="!processing" class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,13 +243,6 @@
                         <p x-show="paymentMethod === 'cash' && cart.length > 0 && change < 0" class="text-sm text-red-600 text-center">
                             Montant recu insuffisant.
                         </p>
-                        <p x-show="paymentMethod !== 'cash' && cart.length > 0 && !customerPhone.trim()" class="text-sm text-red-600 text-center">
-                            Renseignez le numero de telephone pour ce paiement.
-                        </p>
-                        <p x-show="paymentMethod !== 'cash' && cart.length > 0 && customerPhone.trim() && !mobileOperator" class="text-sm text-red-600 text-center">
-                            Numero non reconnu pour Orange Money ou MTN Momo Cameroun.
-                        </p>
-
                         <button
                             @click="clearCart()"
                             :disabled="processing"
@@ -299,53 +311,6 @@
         </div>
     </div>
 
-    <!-- Modal attente paiement mobile -->
-    <div
-        x-show="mobilePaymentWaiting"
-        x-cloak
-        x-transition.opacity
-        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4 py-6"
-        role="dialog"
-        aria-modal="true"
-    >
-        <div
-            x-show="mobilePaymentWaiting"
-            x-transition
-            @click.outside.stop
-            class="w-full max-w-md rounded-lg bg-white p-5 shadow-2xl"
-        >
-            <div class="flex items-start gap-3">
-                <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100">
-                    <svg class="h-6 w-6 animate-spin text-rose-600" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                </div>
-                <div class="min-w-0">
-                    <h3 class="text-base font-semibold text-gray-900">Confirmation du paiement</h3>
-                    <p class="mt-1 text-sm text-gray-600">
-                        Demande envoyee par USSD au <span class="font-semibold" x-text="customerPhone"></span>.
-                    </p>
-                    <p class="mt-2 text-sm text-gray-600">
-                        <span x-text="mobileOperatorLabel"></span> attend la validation du client.
-                    </p>
-                    <p x-show="mobilePaymentMessage" class="mt-3 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700" x-text="mobilePaymentMessage"></p>
-                </div>
-            </div>
-
-            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button
-                    type="button"
-                    @click="cancelMobilePayment()"
-                    :disabled="mobilePaymentCanceling"
-                    class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-wait disabled:opacity-60"
-                >
-                    <span x-text="mobilePaymentCanceling ? 'Annulation...' : 'Annuler la transaction'"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Notification locale POS -->
     <div
         x-show="showToast"
@@ -398,10 +363,6 @@ function posSystem() {
         customerName: '',
         customerPhone: '',
         showCustomerInfo: false,
-        mobilePaymentWaiting: false,
-        mobilePaymentCanceling: false,
-        mobilePaymentRef: '',
-        mobilePaymentMessage: '',
 
         // UI
         processing: false,
@@ -411,12 +372,26 @@ function posSystem() {
         saleCompleted: false,
         lastReceiptUrl: '',
         lastInvoiceNumber: '',
+        barcodeScanBuffer: '',
+        barcodeScanStartedAt: 0,
+        barcodeScanLastKeyAt: 0,
+        barcodeScanField: null,
+        barcodeScanFieldValueBefore: '',
+        barcodeScanHandler: null,
+        cartStorageKey: 'smartstore:pos-cart:{{ auth()->id() }}',
 
         init() {
+            this.restoreCart();
             this.$watch('selectedCategory', () => this.filterProducts());
             this.$watch('customerPhone', () => this.detectMobileOperator());
-            window.addEventListener('smartstock:mobile-payment-confirmed', (event) => this.handleMobilePaymentConfirmed(event.detail || {}));
-            window.addEventListener('smartstock:mobile-payment-failed', (event) => this.handleMobilePaymentFailed(event.detail || {}));
+            this.barcodeScanHandler = (event) => this.handleBarcodeScanKeydown(event);
+            window.addEventListener('keydown', this.barcodeScanHandler, true);
+        },
+
+        destroy() {
+            if (this.barcodeScanHandler) {
+                window.removeEventListener('keydown', this.barcodeScanHandler, true);
+            }
         },
 
         searchProducts() {
@@ -434,9 +409,11 @@ function posSystem() {
             // Filtre par recherche
             if (this.searchQuery.length > 0) {
                 const query = this.searchQuery.toLowerCase();
+                const barcodeQuery = this.normalizeBarcode(this.searchQuery);
                 products = products.filter(p =>
                     p.name.toLowerCase().includes(query) ||
-                    p.sku.toLowerCase().includes(query)
+                    String(p.barcode || '').toLowerCase().includes(query) ||
+                    (barcodeQuery.length > 0 && this.normalizeBarcode(p.barcode).includes(barcodeQuery))
                 );
             }
 
@@ -459,6 +436,7 @@ function posSystem() {
                 }
 
                 this.allProducts = data.products;
+                this.syncCartWithProducts();
                 this.filterProducts();
             } catch (error) {
                 this.showNotification('Impossible de rafraichir le stock', 'error');
@@ -491,24 +469,161 @@ function posSystem() {
                     return;
                 }
 
-                this.cart.push({
-                    id: product.id,
-                    name: product.name,
-                    sku: product.sku,
-                    price: this.productDisplayPrice(product),
-                    quantity: requestedQuantity,
-                    maxQuantity: product.quantity,
-                    stockMovements: product.stock_movements || [],
-                    priceLines: this.productPriceLines(product, requestedQuantity),
-                });
+                this.cart.push(this.cartItemFromProduct(product, requestedQuantity));
             }
 
             this.calculateChange();
+            this.persistCart();
+        },
+
+        addProductFromSearchBarcode() {
+            const normalizedSearch = this.normalizeBarcode(this.searchQuery);
+
+            if (!normalizedSearch) {
+                return false;
+            }
+
+            const product = this.findProductByBarcode(normalizedSearch);
+
+            if (!product) {
+                return false;
+            }
+
+            this.addToCart(product, 1);
+            this.searchQuery = '';
+            this.filterProducts();
+
+            return true;
+        },
+
+        handleBarcodeScanKeydown(event) {
+            if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) {
+                return;
+            }
+
+            const now = Date.now();
+            const scanGapMs = 500;
+            const scanEndGapMs = 1000;
+            const minimumScanDigits = 8;
+
+            if (event.key === 'Enter') {
+                const bufferedBarcode = this.normalizeBarcode(this.barcodeScanBuffer);
+                const bufferedProduct = this.findProductByBarcode(bufferedBarcode);
+                const isRecentBufferedInput = this.barcodeScanBuffer.length >= minimumScanDigits
+                    && now - this.barcodeScanLastKeyAt <= scanEndGapMs;
+                const isScan = Boolean(bufferedProduct) || isRecentBufferedInput;
+                const activeValue = this.editableScanTarget(event.target) ? event.target.value : '';
+                const activeBarcode = this.normalizeBarcode(activeValue);
+
+                if (!isScan && activeBarcode && this.findProductByBarcode(activeBarcode)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.resetBarcodeScan();
+
+                    if (event.target === document.activeElement) {
+                        event.target.value = '';
+                        event.target.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+
+                    this.addProductByScannedBarcode(activeBarcode);
+                    return;
+                }
+
+                if (isScan) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const scannedBarcode = bufferedBarcode;
+                    this.restoreFocusedFieldAfterScan();
+                    this.resetBarcodeScan();
+                    this.addProductByScannedBarcode(scannedBarcode);
+                    return;
+                }
+
+                this.resetBarcodeScan();
+                return;
+            }
+
+            if (/^\d$/.test(event.key)) {
+                if (!this.barcodeScanBuffer || now - this.barcodeScanLastKeyAt > scanGapMs) {
+                    this.barcodeScanBuffer = '';
+                    this.barcodeScanStartedAt = now;
+                    this.barcodeScanField = this.editableScanTarget(event.target) ? event.target : null;
+                    this.barcodeScanFieldValueBefore = this.barcodeScanField ? this.barcodeScanField.value : '';
+                }
+
+                this.barcodeScanBuffer += event.key;
+                this.barcodeScanLastKeyAt = now;
+                return;
+            }
+
+            if (event.key.length === 1) {
+                this.resetBarcodeScan();
+            }
+        },
+
+        editableScanTarget(target) {
+            if (!target) {
+                return false;
+            }
+
+            if (target.isContentEditable) {
+                return true;
+            }
+
+            return ['INPUT', 'TEXTAREA'].includes(target.tagName);
+        },
+
+        restoreFocusedFieldAfterScan() {
+            const field = this.barcodeScanField;
+
+            if (!field || field !== document.activeElement || field.value === this.barcodeScanFieldValueBefore) {
+                return;
+            }
+
+            field.value = this.barcodeScanFieldValueBefore;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        },
+
+        resetBarcodeScan() {
+            this.barcodeScanBuffer = '';
+            this.barcodeScanStartedAt = 0;
+            this.barcodeScanLastKeyAt = 0;
+            this.barcodeScanField = null;
+            this.barcodeScanFieldValueBefore = '';
+        },
+
+        normalizeBarcode(value) {
+            return String(value || '').replace(/\D/g, '');
+        },
+
+        addProductByScannedBarcode(scannedBarcode) {
+            const normalizedScan = this.normalizeBarcode(scannedBarcode);
+            const product = this.findProductByBarcode(normalizedScan);
+
+            if (!product) {
+                this.showNotification('Aucun produit trouve pour ce code-barres', 'error');
+                return;
+            }
+
+            this.addToCart(product, 1);
+        },
+
+        findProductByBarcode(barcode) {
+            const normalizedBarcode = this.normalizeBarcode(barcode);
+
+            if (!normalizedBarcode) {
+                return null;
+            }
+
+            return this.allProducts.find(item => this.normalizeBarcode(item.barcode) === normalizedBarcode) || null;
         },
 
         removeFromCart(index) {
             this.cart.splice(index, 1);
             this.calculateChange();
+            this.persistCart();
         },
 
         updateQuantity(index, delta) {
@@ -521,6 +636,7 @@ function posSystem() {
                 item.quantity = newQuantity;
                 item.priceLines = this.productPriceLines(item, newQuantity);
                 this.calculateChange();
+                this.persistCart();
             } else {
                 this.showNotification('Stock insuffisant', 'error');
             }
@@ -542,6 +658,7 @@ function posSystem() {
             }
 
             this.calculateChange();
+            this.persistCart();
         },
 
         isInCart(productId) {
@@ -578,6 +695,32 @@ function posSystem() {
             return 'Paiement mobile';
         },
 
+        get mobileOperatorColor() {
+            if (this.mobileOperator === 'CM_ORANGEMONEY') {
+                return '#f97316';
+            }
+
+            if (this.mobileOperator === 'CM_MTNMOBILEMONEY') {
+                return '#facc15';
+            }
+
+            return 'transparent';
+        },
+
+        get mobilePhoneDigits() {
+            let digits = String(this.customerPhone || '').replace(/\D/g, '');
+
+            if (digits.length > 3 && digits.startsWith('237')) {
+                digits = digits.slice(3);
+            }
+
+            return digits;
+        },
+
+        get mobilePaymentReady() {
+            return this.mobilePhoneDigits.length === 9 && Boolean(this.mobileOperator);
+        },
+
         detectMobileOperator() {
             return this.mobileOperator;
         },
@@ -585,11 +728,11 @@ function posSystem() {
         operatorForCameroonPhone(phone) {
             let digits = String(phone || '').replace(/\D/g, '');
 
-            if (digits.length === 12 && digits.startsWith('237')) {
+            if (digits.length > 3 && digits.startsWith('237')) {
                 digits = digits.slice(3);
             }
 
-            if (digits.length !== 9 || !digits.startsWith('6')) {
+            if (digits.length < 3 || !digits.startsWith('6')) {
                 return null;
             }
 
@@ -666,6 +809,94 @@ function posSystem() {
             return lines;
         },
 
+        cartItemFromProduct(product, quantity) {
+            const safeQuantity = Math.max(1, Math.min(
+                Math.floor(Number(quantity || 1)),
+                Math.max(1, Math.floor(Number(product.quantity || 1)))
+            ));
+
+            return {
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                price: this.productDisplayPrice(product),
+                quantity: safeQuantity,
+                maxQuantity: product.quantity,
+                stockMovements: product.stock_movements || [],
+                priceLines: this.productPriceLines(product, safeQuantity),
+            };
+        },
+
+        persistCart() {
+            try {
+                const payload = this.cart.map(item => ({
+                    id: item.id,
+                    quantity: item.quantity,
+                }));
+
+                if (payload.length === 0) {
+                    window.localStorage.removeItem(this.cartStorageKey);
+                    return;
+                }
+
+                window.localStorage.setItem(this.cartStorageKey, JSON.stringify(payload));
+            } catch (error) {
+                console.warn('POS cart persistence unavailable:', error);
+            }
+        },
+
+        restoreCart() {
+            try {
+                const rawCart = window.localStorage.getItem(this.cartStorageKey);
+
+                if (!rawCart) {
+                    return;
+                }
+
+                const savedCart = JSON.parse(rawCart);
+
+                if (!Array.isArray(savedCart)) {
+                    window.localStorage.removeItem(this.cartStorageKey);
+                    return;
+                }
+
+                this.cart = savedCart
+                    .map(savedItem => {
+                        const product = this.allProducts.find(item => item.id === savedItem.id);
+
+                        if (!product || product.quantity <= 0) {
+                            return null;
+                        }
+
+                        return this.cartItemFromProduct(product, savedItem.quantity);
+                    })
+                    .filter(Boolean);
+
+                this.calculateChange();
+                this.persistCart();
+            } catch (error) {
+                window.localStorage.removeItem(this.cartStorageKey);
+                console.warn('POS cart restore failed:', error);
+            }
+        },
+
+        syncCartWithProducts() {
+            this.cart = this.cart
+                .map(item => {
+                    const product = this.allProducts.find(product => product.id === item.id);
+
+                    if (!product || product.quantity <= 0) {
+                        return null;
+                    }
+
+                    return this.cartItemFromProduct(product, item.quantity);
+                })
+                .filter(Boolean);
+
+            this.calculateChange();
+            this.persistCart();
+        },
+
         clearCart() {
             this.cart = [];
             this.amountReceived = '';
@@ -676,10 +907,7 @@ function posSystem() {
             this.saleCompleted = false;
             this.lastReceiptUrl = '';
             this.lastInvoiceNumber = '';
-            this.mobilePaymentWaiting = false;
-            this.mobilePaymentCanceling = false;
-            this.mobilePaymentRef = '';
-            this.mobilePaymentMessage = '';
+            this.persistCart();
         },
 
         async processSale() {
@@ -701,11 +929,6 @@ function posSystem() {
             if (this.paymentMethod !== 'cash' && !this.customerPhone.trim()) {
                 this.showCustomerInfo = true;
                 this.showNotification('Renseignez le numero de telephone', 'error');
-                return;
-            }
-
-            if (this.paymentMethod !== 'cash') {
-                await this.startMobilePayment();
                 return;
             }
 
@@ -760,111 +983,6 @@ function posSystem() {
             }
         },
 
-        async startMobilePayment() {
-            if (!this.mobileOperator) {
-                this.showNotification('Numero non reconnu pour Orange Money ou MTN Momo Cameroun.', 'error');
-                return;
-            }
-
-            this.processing = true;
-            this.mobilePaymentMessage = '';
-
-            const paymentData = {
-                items: this.cart.map(item => ({
-                    product_id: item.id,
-                    quantity: item.quantity,
-                })),
-                payment_method: 'mobile_money',
-                customer_name: this.customerName || null,
-                customer_phone: this.customerPhone ? this.customerPhone.replace(/\D/g, '') : null,
-                _token: '{{ csrf_token() }}'
-            };
-
-            try {
-                const response = await fetch('{{ route("seller.pos.mobile-payment.start") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-
-                const data = await this.parseJsonResponse(response);
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Paiement mobile echoue.');
-                }
-
-                this.mobilePaymentRef = data.payment_ref || '';
-                this.mobilePaymentMessage = data.monetbil_enabled
-                    ? 'Le client doit confirmer la demande sur son telephone.'
-                    : 'Integration prete : Monetbil est desactive dans la configuration, aucun USSD reel n est envoye.';
-                this.mobilePaymentWaiting = true;
-            } catch (error) {
-                this.showNotification(error.message || 'Paiement mobile echoue.', 'error');
-            } finally {
-                this.processing = false;
-            }
-        },
-
-        async cancelMobilePayment() {
-            if (!this.mobilePaymentRef) {
-                this.mobilePaymentWaiting = false;
-                return;
-            }
-
-            this.mobilePaymentCanceling = true;
-
-            try {
-                const response = await fetch('{{ route("seller.pos.mobile-payment.cancel") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        payment_ref: this.mobilePaymentRef,
-                        _token: '{{ csrf_token() }}'
-                    })
-                });
-                const data = await this.parseJsonResponse(response);
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Annulation impossible.');
-                }
-
-                this.mobilePaymentWaiting = false;
-                this.mobilePaymentRef = '';
-                this.mobilePaymentMessage = '';
-                this.showNotification(data.message || 'Transaction mobile annulee.', 'error');
-            } catch (error) {
-                this.showNotification(error.message || 'Annulation impossible.', 'error');
-            } finally {
-                this.mobilePaymentCanceling = false;
-            }
-        },
-
-        handleMobilePaymentConfirmed(data) {
-            this.mobilePaymentWaiting = false;
-            this.mobilePaymentRef = '';
-            this.mobilePaymentMessage = '';
-            this.lastReceiptUrl = data.sale_id ? '{{ route("seller.pos.receipt", ":id") }}'.replace(':id', data.sale_id) : '';
-            this.lastInvoiceNumber = data.invoice_number || '';
-            this.saleCompleted = true;
-            this.clearCartAfterSale();
-            window.dispatchEvent(new CustomEvent('smartstore:refresh-now'));
-        },
-
-        handleMobilePaymentFailed(data) {
-            this.mobilePaymentWaiting = false;
-            this.mobilePaymentRef = '';
-            this.mobilePaymentMessage = '';
-            this.showNotification(data.message || 'Paiement mobile echoue.', 'error');
-        },
-
         async parseJsonResponse(response) {
             let data = {};
 
@@ -899,10 +1017,7 @@ function posSystem() {
             this.customerPhone = '';
             this.showCustomerInfo = false;
             this.paymentMethod = 'cash';
-            this.mobilePaymentWaiting = false;
-            this.mobilePaymentCanceling = false;
-            this.mobilePaymentRef = '';
-            this.mobilePaymentMessage = '';
+            this.persistCart();
         },
 
         openReceipt() {

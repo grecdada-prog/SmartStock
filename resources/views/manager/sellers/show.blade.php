@@ -51,12 +51,12 @@
         </div>
     </div>
 
-    <div class="mt-6 overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-lg" x-data="{ cashType: '{{ old('type', 'withdraw') }}' }">
+    <div class="mt-6 overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-lg" x-data="{ cashType: '{{ old('type', 'withdraw') }}', balanceType: '{{ old('balance_type', 'cash') }}' }">
         <div class="border-b border-gray-100 bg-gray-50 px-5 py-4 sm:px-8">
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">Ajouter / Retirer des fonds</h2>
-                    <p class="mt-1 text-sm text-gray-500">Mouvement manuel sur le Solde Cash de ce vendeur.</p>
+                    <p class="mt-1 text-sm text-gray-500">Mouvement manuel sur le Solde Cash ou le Solde Paiements mobiles de ce vendeur.</p>
                 </div>
                 <span class="mt-2 inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200 sm:mt-0">
                     Action sensible
@@ -66,8 +66,17 @@
 
         <div class="grid grid-cols-1 gap-8 p-5 lg:grid-cols-12 lg:p-8">
             <div class="lg:col-span-5 xl:col-span-4">
-                <h3 class="text-base font-semibold text-gray-900">Solde Cash</h3>
-                <p class="mt-2 break-words text-3xl font-semibold text-gray-900">{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA</p>
+                <h3 class="text-base font-semibold text-gray-900">Soldes disponibles</h3>
+                <div class="mt-3 grid gap-3">
+                    <div class="rounded-md border border-gray-200 bg-white p-4">
+                        <p class="text-sm text-gray-500">Solde Cash</p>
+                        <p class="mt-1 break-words text-2xl font-semibold text-gray-900">{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA</p>
+                    </div>
+                    <div class="rounded-md border border-gray-200 bg-white p-4">
+                        <p class="text-sm text-gray-500">Paiements mobiles</p>
+                        <p class="mt-1 break-words text-2xl font-semibold text-gray-900">{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA</p>
+                    </div>
+                </div>
                 <p class="mt-3 max-w-md text-sm leading-6 text-gray-500">Un ajout augmente le solde du vendeur. Un retrait le réduit directement, ainsi que le solde global du gérant et celui du superadmin.</p>
 
                 <div class="mt-6 max-w-md rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
@@ -83,6 +92,14 @@
                       x-on:modal-confirmed-cash-movement.window="$el.submit()">
                     @csrf
                     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div>
+                            <label for="balance_type" class="block text-sm font-medium text-gray-700">Solde concerne</label>
+                            <select id="balance_type" name="balance_type" x-model="balanceType" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                                <option value="cash">Solde Cash</option>
+                                <option value="mobile_money">Paiements mobiles</option>
+                            </select>
+                        </div>
+
                         <div>
                             <label for="cash_type" class="block text-sm font-medium text-gray-700">Action</label>
                             <select id="cash_type" name="type" x-model="cashType" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
@@ -116,19 +133,20 @@
 
                 <x-modal-confirm
                     id="cash-movement"
-                    title="Confirmer le mouvement cash"
-                    message="Confirmer ce mouvement de caisse ?"
+                    title="Confirmer le mouvement de solde"
+                    message="Confirmer ce mouvement sur le solde choisi ?"
                     confirmText="Confirmer"
                     cancelText="Annuler"
                     type="warning" />
 
                 <div class="mt-6 border-t border-gray-100 pt-5">
-                    <h4 class="text-sm font-semibold text-gray-900">Derniers mouvements cash</h4>
+                    <h4 class="text-sm font-semibold text-gray-900">Derniers mouvements de solde</h4>
                     <div class="mt-3 overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 text-sm">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Type</th>
+                                    <th class="px-3 py-2 text-left font-medium text-gray-600">Solde</th>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Montant</th>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Motif</th>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Date</th>
@@ -142,13 +160,16 @@
                                                 {{ $adjustment->type === 'withdraw' ? 'Retrait' : 'Ajout' }}
                                             </span>
                                         </td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">
+                                            {{ $adjustment->balance_type === 'mobile_money' ? 'Paiements mobiles' : 'Cash' }}
+                                        </td>
                                         <td class="whitespace-nowrap px-3 py-2 font-medium text-gray-900">{{ number_format($adjustment->amount, 0, ',', ' ') }} FCFA</td>
                                         <td class="min-w-[12rem] px-3 py-2 text-gray-600">{{ $adjustment->reason ?? '-' }}</td>
                                         <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ $adjustment->created_at->format('d/m/Y H:i') }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-3 py-6 text-center text-gray-500">Aucun mouvement cash enregistré.</td>
+                                        <td colspan="5" class="px-3 py-6 text-center text-gray-500">Aucun mouvement de solde enregistre.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -165,14 +186,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-md bg-blue-500 p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Total Ventes</dt>
                             <dd class="flex items-baseline">
@@ -194,14 +208,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-md bg-rose-500 p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Aujourd'hui</dt>
                             <dd class="flex items-baseline">
@@ -223,14 +230,7 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="rounded-md bg-purple-500 p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
+                    <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
                             <dd class="flex items-baseline">

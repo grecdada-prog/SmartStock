@@ -5,9 +5,9 @@
     $isCash = $method === 'cash';
     $isOrange = $method === 'card';
     $isMtn = $method === 'mobile_money';
-    $accent = $isOrange ? '#f97316' : ($isMtn ? '#111827' : '#e11d48');
-    $softAccent = $isOrange ? '#fff7ed' : ($isMtn ? '#f8fafc' : '#fff1f2');
-    $borderAccent = $isOrange ? '#fdba74' : ($isMtn ? '#cbd5e1' : '#fecdd3');
+    $accent = $isOrange ? '#f97316' : ($isMtn ? '#ca8a04' : '#e11d48');
+    $softAccent = $isOrange ? '#fff7ed' : ($isMtn ? '#fefce8' : '#fff1f2');
+    $borderAccent = $isOrange ? '#fdba74' : ($isMtn ? '#facc15' : '#fecdd3');
     $paymentLabel = $sale->payment_method_label ?? ($isCash ? 'Especes' : ($isOrange ? 'Orange Money' : ($isMtn ? 'MTN Momo' : $method)));
     $phoneDigits = preg_replace('/\D+/', '', (string) $sale->customer_phone);
     $formattedPhone = $phoneDigits !== '' ? trim(preg_replace('/^(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/', '$1 $2 $3 $4 $5', $phoneDigits)) : '-';
@@ -38,7 +38,7 @@
         <section class="space-y-2 text-sm">
             <div class="flex items-center justify-between gap-4">
                 <span class="text-gray-500">N° Facture</span>
-                <span class="text-right font-bold text-rose-600">{{ $sale->invoice_number }}</span>
+                <span class="text-right font-bold" style="color: {{ $accent }};">{{ $sale->invoice_number }}</span>
             </div>
             <div class="flex items-center justify-between gap-4">
                 <span class="text-gray-500">Date</span>
@@ -90,7 +90,7 @@
         <section class="rounded-lg bg-gray-50 px-4 py-3">
             <div class="flex items-center justify-between gap-4 border-b border-gray-200 pb-3">
                 <span class="text-sm font-bold">Total</span>
-                <span class="text-xl font-extrabold text-rose-600">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
+                <span class="text-xl font-extrabold" style="color: {{ $accent }};">{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
             </div>
             <div class="mt-3 space-y-2 text-sm">
                 @if($isCash)
@@ -113,7 +113,7 @@
         @endif
 
         <footer class="border-t border-dashed border-gray-200 pt-4 text-center">
-            <p class="text-sm font-extrabold text-rose-600">Merci pour votre achat!</p>
+            <p class="text-sm font-extrabold" style="color: {{ $accent }};">Merci pour votre achat!</p>
             <p class="mt-1 text-xs text-gray-500">{{ $receiptTimestamp }}</p>
         </footer>
 

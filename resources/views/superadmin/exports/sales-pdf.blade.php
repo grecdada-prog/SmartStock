@@ -2,71 +2,27 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rapport des Ventes</title>
+    <title>Rapport des ventes</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .summary {
-            background-color: #f3f4f6;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .summary-item {
-            display: inline-block;
-            margin-right: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #10b981;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .total-row {
-            font-weight: bold;
-            background-color: #e5e7eb;
-        }
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #111827; }
+        .summary { background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .summary-item { display: inline-block; margin-right: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #ff0033; color: white; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+        .total-row { font-weight: bold; background-color: #fee2e2; }
+        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
     </style>
 </head>
 <body>
-    <h1>Rapport des Ventes</h1>
+    <x-smartstore-pdf-logo title="Rapport des ventes" :subtitle="'Export: ' . now()->format('d/m/Y H:i')" />
     <p><strong>Date d'export:</strong> {{ now()->format('d/m/Y H:i') }}</p>
 
     <div class="summary">
-        <div class="summary-item">
-            <strong>Nombre de ventes:</strong> {{ $sales->count() }}
-        </div>
-        <div class="summary-item">
-            <strong>Recette cumulée:</strong> {{ number_format($totalRevenue, 0, ',', ' ') }} FCFA
-        </div>
-        <div class="summary-item">
-            <strong>Panier moyen:</strong> {{ number_format($averageSale, 0, ',', ' ') }} FCFA
-        </div>
+        <div class="summary-item"><strong>Nombre de ventes:</strong> {{ $sales->count() }}</div>
+        <div class="summary-item"><strong>Recette cumulee:</strong> {{ number_format($totalRevenue, 0, ',', ' ') }} FCFA</div>
+        <div class="summary-item"><strong>Panier moyen:</strong> {{ number_format($averageSale, 0, ',', ' ') }} FCFA</div>
     </div>
 
     <table>
@@ -101,7 +57,7 @@
     </table>
 
     <div class="footer">
-        <p>Document généré par SmartStore - {{ now()->format('d/m/Y à H:i') }}</p>
+        <p>Document genere par SmartStore - {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>
 </html>

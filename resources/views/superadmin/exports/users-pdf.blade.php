@@ -2,53 +2,20 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Utilisateurs</title>
+    <title>Liste des utilisateurs</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #10b981;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-        }
-        .status-active {
-            color: #10b981;
-            font-weight: bold;
-        }
-        .status-inactive {
-            color: #ef4444;
-            font-weight: bold;
-        }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #111827; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #ff0033; color: white; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
+        .status-active { color: #16a34a; font-weight: bold; }
+        .status-inactive { color: #ef4444; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>Liste des Utilisateurs</h1>
+    <x-smartstore-pdf-logo title="Liste des utilisateurs" :subtitle="'Export: ' . now()->format('d/m/Y H:i')" />
     <p><strong>Date d'export:</strong> {{ now()->format('d/m/Y H:i') }}</p>
     <p><strong>Nombre total:</strong> {{ $users->count() }} utilisateur(s)</p>
 
@@ -58,10 +25,10 @@
                 <th>ID</th>
                 <th>Nom</th>
                 <th>Email</th>
-                <th>Téléphone</th>
-                <th>Rôle</th>
+                <th>Telephone</th>
+                <th>Role</th>
                 <th>Statut</th>
-                <th>Date création</th>
+                <th>Date creation</th>
             </tr>
         </thead>
         <tbody>
@@ -82,7 +49,7 @@
     </table>
 
     <div class="footer">
-        <p>Document généré par SmartStore - {{ now()->format('d/m/Y à H:i') }}</p>
+        <p>Document genere par SmartStore - {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>
 </html>

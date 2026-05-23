@@ -4,6 +4,8 @@
 
 @section('content')
 <div id="manager-sellers-page" data-silent-refresh class="px-4 sm:px-6 lg:px-8" x-data="{ deleteSellerId: null, resetPasswordId: null, closeCashRegisterId: null }">
+    <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div class="smartstore-sticky-inner">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Vendeurs</h1>
@@ -19,7 +21,18 @@
         </div>
     </div>
 
-    <div class="mt-6 rounded-lg bg-white p-4 shadow">
+    <div class="smartstore-sticky-cards grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="rounded-lg bg-white p-5 shadow">
+            <p class="text-sm font-medium text-gray-500">Total Solde Cash</p>
+            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($cashBalances->sum(), 0, ',', ' ') }} FCFA</p>
+        </div>
+        <div class="rounded-lg bg-white p-5 shadow">
+            <p class="text-sm font-medium text-gray-500">Total Paiements mobiles</p>
+            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($mobileMoneyBalances->sum(), 0, ',', ' ') }} FCFA</p>
+        </div>
+    </div>
+
+    <div class="rounded-lg bg-white p-4 shadow">
         <form method="GET" data-auto-filter action="{{ route('manager.sellers.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
@@ -34,6 +47,8 @@
                 </select>
             </div>
         </form>
+    </div>
+        </div>
     </div>
 
     <div class="mt-6 rounded-lg bg-white shadow">
@@ -126,6 +141,7 @@
                             <tr>
                                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Vendeur</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Solde Cash</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Paiements mobiles</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Statut</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Ventes</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Recette totale</th>
@@ -154,6 +170,9 @@
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         <span class="font-semibold text-gray-900">{{ number_format($cashBalances[$seller->id] ?? 0, 0, ',', ' ') }} FCFA</span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                        <span class="font-semibold text-gray-900">{{ number_format($mobileMoneyBalances[$seller->id] ?? 0, 0, ',', ' ') }} FCFA</span>
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if($seller->is_active)
@@ -232,7 +251,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-3 py-8 text-center text-sm text-gray-500">
+                                    <td colspan="8" class="px-3 py-8 text-center text-sm text-gray-500">
                                         Aucun vendeur trouve.
                                         <a href="{{ route('manager.sellers.create') }}" class="font-medium text-rose-600 hover:text-rose-900">Creer votre premier vendeur</a>
                                     </td>
@@ -246,7 +265,6 @@
     </div>
 
     <div class="mt-6">
-        {{ $sellers->links() }}
     </div>
 </div>
 

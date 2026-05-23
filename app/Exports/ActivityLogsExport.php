@@ -4,10 +4,11 @@ namespace App\Exports;
 
 use App\Models\ActivityLog;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ActivityLogsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
@@ -51,13 +52,19 @@ class ActivityLogsExport implements FromCollection, WithHeadings, WithMapping, W
     public function headings(): array
     {
         return [
-            'ID',
-            'Utilisateur',
-            'Type d\'action',
-            'Description',
-            'Adresse IP',
-            'Navigateur',
-            'Date',
+            ['SmartStore'],
+            ['Export des logs d\'activite'],
+            ['Genere le ' . now()->format('d/m/Y H:i')],
+            [],
+            [
+                'ID',
+                'Utilisateur',
+                'Type d\'action',
+                'Description',
+                'Adresse IP',
+                'Navigateur',
+                'Date',
+            ],
         ];
     }
 
@@ -77,7 +84,12 @@ class ActivityLogsExport implements FromCollection, WithHeadings, WithMapping, W
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => ['font' => ['bold' => true, 'size' => 12]],
+            1 => ['font' => ['bold' => true, 'size' => 18, 'color' => ['rgb' => 'FF0033']]],
+            2 => ['font' => ['bold' => true, 'size' => 13]],
+            5 => [
+                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FF0033']],
+            ],
         ];
     }
 }

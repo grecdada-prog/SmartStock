@@ -117,6 +117,7 @@ class DemoDataSeeder extends Seeder
                 ['sku' => $data['sku']],
                 [
                     'name' => $data['name'],
+                    'barcode' => $data['barcode'] ?? null,
                     'description' => 'Produit de démonstration SmartStock',
                     'category_id' => $categories[$data['category']]->id,
                     'purchase_price' => $data['purchase_price'],

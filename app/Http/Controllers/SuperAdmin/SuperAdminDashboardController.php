@@ -41,6 +41,7 @@ class SuperAdminDashboardController extends Controller
             'total_categories' => Category::count(),
             'total_sales' => Sale::count(),
             'today_sales' => Sale::whereDate('created_at', today())->count(),
+            'yesterday_sales' => Sale::whereDate('created_at', today()->subDay())->count(),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
@@ -188,7 +189,7 @@ class SuperAdminDashboardController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $query->paginate(50);
+        $logs = $query->get();
         $users = User::orderBy('name')->get();
 
         return view('superadmin.activity-logs', compact('logs', 'users'));
@@ -235,7 +236,7 @@ class SuperAdminDashboardController extends Controller
         $products = Product::with(['category', 'creator'])
             ->withCount('saleItems')
             ->latest()
-            ->paginate(20);
+            ->get();
 
         $categories = Category::withCount('products')->get();
 
@@ -269,7 +270,7 @@ class SuperAdminDashboardController extends Controller
             $query->where('invoice_number', 'like', '%' . $request->search . '%');
         }
 
-        $sales = $query->paginate(20);
+        $sales = $query->get();
         $sellers = User::role('seller')->orderBy('name')->get();
         $sellerFinancials = $this->sellerFinancials();
 
@@ -301,6 +302,8 @@ class SuperAdminDashboardController extends Controller
             'average_sale' => (float) ((clone $statsQuery)->avg('total') ?? 0),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
             'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
+            'today_sales' => Sale::whereDate('created_at', today())->count(),
+            'yesterday_sales' => Sale::whereDate('created_at', today()->subDay())->count(),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
             'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
             'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
@@ -483,7 +486,7 @@ class SuperAdminDashboardController extends Controller
                     'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
                     'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
                     'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
-                    'yesterday_revenue' => $cashRegisterService->previousDayCashRevenueForSeller($seller),
+                    'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($seller),
                 ];
             });
     }
@@ -650,7 +653,7 @@ class SuperAdminDashboardController extends Controller
         }
 
         ActivityLog::with('user')
-            ->where('action', 'cash_balance_withdrawn')
+            ->whereIn('action', ['cash_balance_withdrawn', 'mobile_money_balance_withdrawn'])
             ->where('created_at', '>=', now()->subDay())
             ->latest()
             ->take(8)
@@ -659,6 +662,7 @@ class SuperAdminDashboardController extends Controller
                 $properties = $log->properties ?? [];
                 $sellerName = $properties['seller_name'] ?? 'un vendeur';
                 $managerName = $properties['manager_name'] ?? ($log->user->name ?? 'un gerant');
+                $balanceLabel = $properties['balance_label'] ?? 'Solde Cash';
                 $amount = number_format((float) ($properties['amount'] ?? 0), 0, ',', ' ');
 
                 $anomalies->push([
@@ -667,9 +671,9 @@ class SuperAdminDashboardController extends Controller
                     'manager_id' => $properties['manager_id'] ?? null,
                     'manager_name' => $managerName,
                     'title' => 'Retrait de fonds vendeur',
-                    'message' => "{$managerName} a retire {$amount} FCFA du Solde Cash de {$sellerName}.",
+                    'message' => "{$managerName} a retire {$amount} FCFA du {$balanceLabel} de {$sellerName}.",
                     'recommendation' => 'Verifier le motif du retrait et rapprocher le mouvement avec la caisse selectionnee.',
-                    'route' => route('superadmin.activity-logs', ['action' => 'cash_balance_withdrawn']),
+                    'route' => route('superadmin.activity-logs', ['action' => $log->action]),
                     'cta' => 'Voir le log',
                     'weight' => 0,
                 ]);

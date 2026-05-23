@@ -41,13 +41,13 @@ class SuperAdminSellerController extends Controller
             });
         }
 
-        $sellers = $query->latest()->paginate(20);
-        $closedCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->getCollection()->pluck('id'))
+        $sellers = $query->latest()->get();
+        $closedCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->pluck('id'))
             ->whereNull('opened_at')
             ->whereDate('business_date', today())
             ->pluck('seller_id')
             ->all();
-        $openCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->getCollection()->pluck('id'))
+        $openCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->pluck('id'))
             ->whereNotNull('opened_at')
             ->whereDate('business_date', today())
             ->pluck('seller_id')

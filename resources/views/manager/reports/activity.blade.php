@@ -3,54 +3,69 @@
 @section('title', 'Rapport activité')
 
 @section('content')
-<div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-semibold text-gray-900">Rapport activité</h1>
-        <p class="mt-1 text-sm text-gray-600">Historique de vos actions dans SmartStore.</p>
+<div class="reports-module">
+    <div class="reports-header">
+        <div>
+            <h1 class="reports-header__title">Rapport d'activité</h1>
+            <p class="reports-header__subtitle">Historique de vos actions dans SmartStore.</p>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Total</p><p class="mt-1 text-2xl font-semibold">{{ $stats['total_activities'] }}</p></div>
-        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Aujourd'hui</p><p class="mt-1 text-2xl font-semibold">{{ $stats['today_activities'] }}</p></div>
-        <div class="bg-white p-4 rounded-md shadow-sm border"><p class="text-sm text-gray-500">Activités du mois</p><p class="mt-1 text-2xl font-semibold">{{ $stats['this_month_activities'] }}</p></div>
+    <div class="reports-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));">
+        <x-reports.kpi-card label="Total" :value="number_format($stats['total_activities'])" />
+        <x-reports.kpi-card label="Aujourd'hui" :value="number_format($stats['today_activities'])" />
+        <x-reports.kpi-card label="Activités du mois" :value="number_format($stats['this_month_activities'])" />
     </div>
 
-    <form method="GET" data-auto-filter class="bg-white p-4 rounded-md shadow-sm border grid grid-cols-1 gap-4 md:grid-cols-4">
-        <select name="action" class="rounded-md border-gray-300">
-            <option value="">Toutes les actions</option>
-            @foreach($actionTypes as $action)
-                <option value="{{ $action }}" @selected(request('action') === $action)>{{ $action }}</option>
-            @endforeach
-        </select>
-        <input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-md border-gray-300">
-        <input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-md border-gray-300">
+    <form method="GET" action="{{ route('manager.reports.activity') }}" data-auto-filter class="reports-filters" style="grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));">
+        <div class="reports-field">
+            <label for="action">Action</label>
+            <select name="action" id="action">
+                <option value="">Toutes les actions</option>
+                @foreach ($actionTypes as $action)
+                    <option value="{{ $action }}" @selected(request('action') === $action)>{{ $action }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="reports-field">
+            <label for="date_from">Date début</label>
+            <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}">
+        </div>
+        <div class="reports-field">
+            <label for="date_to">Date fin</label>
+            <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}">
+        </div>
+        <div class="reports-filters__footer">
+            <a href="{{ route('manager.reports.activity') }}" class="reports-btn">Réinitialiser</a>
+        </div>
     </form>
 
-    <div class="bg-white rounded-md shadow-sm border overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+    <x-reports.panel title="Journal d'activité" :meta="$activities->count() . ' entrée(s)'">
+        <table class="reports-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                    <th>IP</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
-                @forelse($activities as $activity)
+            <tbody>
+                @forelse ($activities as $activity)
                     <tr>
-                        <td class="px-4 py-3 text-sm text-gray-600">{{ $activity->created_at->format('d/m/Y H:i') }}</td>
-                        <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $activity->action }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-600">{{ $activity->description }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-600">{{ $activity->ip_address ?? '-' }}</td>
+                        <td class="reports-table__muted">{{ $activity->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="font-semibold">{{ $activity->action }}</td>
+                        <td>{{ $activity->description }}</td>
+                        <td class="reports-table__muted">{{ $activity->ip_address ?? '—' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">Aucune activité trouvée.</td></tr>
+                    <tr>
+                        <td colspan="4" class="reports-empty">Aucune activité trouvée.</td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-reports.panel>
 
-    {{ $activities->links() }}
 </div>
 @endsection

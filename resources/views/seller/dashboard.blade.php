@@ -5,9 +5,11 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ showToday: false, showYesterday: false, showCash: false, showMobile: false, showCloseModal: false, closingCash: false, openingCash: false }">
+    <div class="py-4" x-data="{ showToday: false, showYesterday: false, showCash: false, showMobile: false, showCloseModal: false, closingCash: false, openingCash: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 mb-8">
+            <div class="smartstore-sticky-zone px-4 sm:px-0">
+                <div class="smartstore-sticky-inner">
+            <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="money-amount-row">
@@ -63,6 +65,8 @@
                         </p>
                     </div>
                 </a>
+            </div>
+                </div>
             </div>
 
             <div class="mt-5 rounded-lg border border-red-200 bg-white p-5 shadow-sm">

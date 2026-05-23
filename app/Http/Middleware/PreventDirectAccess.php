@@ -33,7 +33,6 @@ class PreventDirectAccess
             'login',
             'superadmin/login',
             '2fa/verify',
-            'payments/monetbil/callback',
             'forgot-password',
             'reset-password',
             'reset-password/*',

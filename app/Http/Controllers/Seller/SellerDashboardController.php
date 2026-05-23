@@ -90,9 +90,16 @@ class SellerDashboardController extends Controller
             ->where('created_by', Auth::user()->created_by);
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->search.'%')
-                    ->orWhere('sku', 'like', '%'.$request->search.'%');
+            $search = $request->search;
+            $barcodeSearch = preg_replace('/\D+/', '', $search);
+
+            $query->where(function ($q) use ($search, $barcodeSearch) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('barcode', 'like', '%'.$search.'%');
+
+                if ($barcodeSearch !== '') {
+                    $q->orWhereRaw("REPLACE(barcode, ' ', '') like ?", ['%'.$barcodeSearch.'%']);
+                }
             });
         }
 
@@ -100,7 +107,7 @@ class SellerDashboardController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        $products = $query->paginate(20);
+        $products = $query->get();
 
         return view('seller.products.index', compact('products'));
     }

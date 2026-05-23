@@ -28,9 +28,16 @@ class StockController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('sku', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $barcodeSearch = preg_replace('/\D+/', '', $search);
+
+            $query->where(function($q) use ($search, $barcodeSearch) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('barcode', 'like', '%' . $search . '%');
+
+                if ($barcodeSearch !== '') {
+                    $q->orWhereRaw("REPLACE(barcode, ' ', '') like ?", ['%' . $barcodeSearch . '%']);
+                }
             });
         }
 
@@ -48,7 +55,7 @@ class StockController extends Controller
             }
         }
 
-        $products = $query->latest()->paginate(20);
+        $products = $query->latest()->get();
 
         // Statistiques
         $stats = [
@@ -89,7 +96,7 @@ class StockController extends Controller
             ->lowStock()
             ->active()
             ->orderBy('quantity', 'asc')
-            ->paginate(20);
+            ->get();
 
         return view('manager.stock.low-stock', compact('products'));
     }
@@ -113,22 +120,13 @@ class StockController extends Controller
      */
     public function restock(Request $request)
     {
-        if ($request->filled('barcode')) {
-            $request->merge([
-                'barcode' => $this->formatBarcode($request->barcode),
-            ]);
-        }
-
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
             'quantity' => ['required', 'integer', 'min:1'],
             'purchase_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0', 'gte:purchase_price'],
-            'barcode' => ['required', 'string', 'regex:/^\d \d{4} \d{2} \d{4} \d{2}$/', 'unique:stock_movements,barcode'],
         ], [
             'selling_price.gte' => 'Le prix de vente doit etre superieur ou egal au prix d achat.',
-            'barcode.regex' => 'Le code-barres doit respecter le format : 6 9455 85 0039 13.',
-            'barcode.unique' => 'Ce code-barres existe deja pour un autre stock.',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -151,7 +149,6 @@ class StockController extends Controller
                 'purchase_price' => $validated['purchase_price'],
                 'selling_price' => $validated['selling_price'],
                 'remaining_quantity' => $validated['quantity'],
-                'barcode' => $validated['barcode'],
                 'reference' => null,
                 'reason' => 'Réapprovisionnement',
                 'user_id' => auth()->id(),
@@ -257,7 +254,7 @@ class StockController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $movements = $query->latest()->paginate(20);
+        $movements = $query->latest()->get();
         $selectedProduct = null;
 
         if ($request->filled('product_id')) {
@@ -293,7 +290,7 @@ class StockController extends Controller
                 $query->where('created_by', auth()->id());
             })
             ->latest()
-            ->paginate(20);
+            ->get();
 
         return view('manager.stock.restocks', compact('restocks'));
     }
@@ -368,21 +365,6 @@ class StockController extends Controller
         });
 
         return back()->with('success', "Stock retiré avec succès pour {$product->name}.");
-    }
-
-    private function formatBarcode(string $barcode): string
-    {
-        $digits = preg_replace('/\D+/', '', $barcode);
-
-        if (strlen($digits) !== 13) {
-            return preg_replace('/\s+/', ' ', trim($barcode));
-        }
-
-        return substr($digits, 0, 1)
-            . ' ' . substr($digits, 1, 4)
-            . ' ' . substr($digits, 5, 2)
-            . ' ' . substr($digits, 7, 4)
-            . ' ' . substr($digits, 11, 2);
     }
 }
 

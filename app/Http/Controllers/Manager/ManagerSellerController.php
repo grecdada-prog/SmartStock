@@ -43,7 +43,7 @@ class ManagerSellerController extends Controller
             });
         }
 
-        $sellers = $query->latest()->paginate(20);
+        $sellers = $query->latest()->get();
         $sellerIds = User::role('seller')
             ->where('created_by', auth()->id())
             ->pluck('id');

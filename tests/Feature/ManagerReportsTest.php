@@ -35,15 +35,23 @@ class ManagerReportsTest extends TestCase
             ->get(route('manager.reports.sales'))
             ->assertOk()
             ->assertSee('Rapport des ventes')
-            ->assertSee('Recette filtree')
-            ->assertSee('Recette du jour')
+            ->assertSee('Recette totale')
+            ->assertSee('Détail des transactions')
+            ->assertSee('INV-TEST-0001')
             ->assertDontSee('CA total')
             ->assertDontSee('Ce mois');
 
         $this->actingAs($manager)
+            ->get(route('manager.reports.index'))
+            ->assertOk()
+            ->assertSee('Rapports')
+            ->assertSee('Rapport des ventes');
+
+        $this->actingAs($manager)
             ->get(route('manager.reports.activity'))
             ->assertOk()
-            ->assertSee('Rapport activité');
+            ->assertSee('Rapport d')
+            ->assertSee('activité');
 
         $this->actingAs($manager)
             ->get(route('manager.reports.stock'))
