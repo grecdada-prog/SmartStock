@@ -183,12 +183,15 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'barcode' => ['nullable', 'string', 'regex:/^\d+$/', 'unique:products,barcode,' . $product->id],
             'description' => ['nullable', 'string', 'max:1000'],
             'category_id' => ['required', 'exists:categories,id'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
         ], [
+            'barcode.regex' => 'Le code-barres doit contenir uniquement des chiffres.',
+            'barcode.unique' => 'Ce code-barres existe deja pour un autre produit.',
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
@@ -205,6 +208,7 @@ class ProductController extends Controller
 
         $product->update([
             'name' => $validated['name'],
+            'barcode' => ($validated['barcode'] ?? null) ?: null,
             'description' => $validated['description'] ?? null,
             'category_id' => $validated['category_id'],
             'alert_quantity' => $validated['alert_quantity'],

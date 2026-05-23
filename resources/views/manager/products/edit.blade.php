@@ -66,9 +66,8 @@
 
                     <div class="sm:col-span-2">
                         <label for="barcode" class="block text-sm font-medium text-gray-700">Code-barres</label>
-                        <input type="text" id="barcode" readonly value="{{ $product->barcode ?? '-' }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 shadow-sm sm:text-sm">
-                        <p class="mt-1 text-xs text-gray-500">Le code-barres ne peut pas etre modifie apres creation.</p>
+                        <input type="text" name="barcode" id="barcode" value="{{ old('barcode', $product->barcode) }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
                         @error('barcode')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
