@@ -40,7 +40,7 @@
             <td><div class="kpi-label">Ruptures critiques</div><div class="kpi-value">{{ $analysis['kpis']['critical_stock'] }}</div></td>
             <td><div class="kpi-label">Reapprovisionnements</div><div class="kpi-value">{{ $analysis['kpis']['restock_recommendations'] }}</div></td>
             <td><div class="kpi-label">Lots proches expiration</div><div class="kpi-value">{{ $analysis['kpis']['expiry_alerts'] }}</div></td>
-            <td><div class="kpi-label">Anomalies</div><div class="kpi-value">{{ $analysis['kpis']['anomalies'] }}</div></td>
+            <td><div class="kpi-label">Alertes IA</div><div class="kpi-value">{{ $analysis['kpis']['priority_alerts'] ?? 0 }}</div></td>
         </tr>
     </table>
 
@@ -53,6 +53,30 @@
     <div class="limits">
         Les recommandations sont consultatives. Leur fiabilite depend de la qualite des ventes enregistrees, de la justesse du stock saisi et de la regularite de l historique.
     </div>
+
+    <h2>Alertes IA prioritaires</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Niveau</th>
+                <th>Alerte</th>
+                <th>Message</th>
+                <th>Action conseillee</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($analysis['priority_alerts'] as $alert)
+                <tr>
+                    <td><span class="badge {{ $alert['severity'] }}">{{ $alert['severity'] }}</span></td>
+                    <td>{{ $alert['title'] }}</td>
+                    <td>{{ $alert['message'] }}</td>
+                    <td>{{ $alert['recommendation'] }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="4">Aucune alerte prioritaire.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
 
     <h2>Produits recommandes pour action</h2>
     <table>

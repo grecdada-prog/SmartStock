@@ -47,10 +47,16 @@
                             <span class="mx-2 text-gray-300">|</span>
                             {{ $analysis['generated_at']->format('d/m/Y H:i') }}
                         </div>
-                        <a href="{{ route('manager.ai-assistant.export-pdf') }}"
-                            class="inline-flex items-center justify-center rounded-md bg-gray-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
-                            Exporter rapport IA
-                        </a>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="{{ route('manager.ai-assistant.snapshots.index') }}"
+                                class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm hover:bg-gray-50">
+                                Historique IA
+                            </a>
+                            <a href="{{ route('manager.ai-assistant.export-pdf') }}"
+                                class="inline-flex items-center justify-center rounded-md bg-gray-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
+                                Exporter rapport IA
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="px-6 py-5">
@@ -73,19 +79,59 @@
                 </div>
             </div>
 
+            <section class="mb-6 overflow-hidden rounded-lg border border-rose-100 bg-white shadow-sm">
+                <div class="border-b border-rose-100 bg-rose-50 px-6 py-4">
+                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-950">Alertes IA prioritaires</h2>
+                            <p class="mt-1 text-sm text-rose-900">Notifications locales basees sur les scores, les lots et les anomalies du jour.</p>
+                        </div>
+                        <span class="inline-flex w-fit rounded-full bg-white px-3 py-1 text-sm font-bold text-rose-700 ring-1 ring-rose-200">
+                            {{ number_format($analysis['kpis']['priority_alerts'] ?? 0) }} alerte(s)
+                        </span>
+                    </div>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    @forelse($analysis['priority_alerts'] as $alert)
+                        <div class="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset {{ $severityClasses[$alert['severity']] ?? $severityClasses['medium'] }}">
+                                        {{ $severityLabels[$alert['severity']] ?? 'Moyen' }}
+                                    </span>
+                                    <p class="font-semibold text-gray-950">{{ $alert['title'] }}</p>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-600">{{ $alert['message'] }}</p>
+                                <p class="mt-1 text-sm font-medium text-gray-800">{{ $alert['recommendation'] }}</p>
+                            </div>
+                            <a href="{{ $alert['route'] }}" class="inline-flex shrink-0 items-center justify-center rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700">
+                                {{ $alert['cta'] }}
+                            </a>
+                        </div>
+                    @empty
+                        <div class="px-6 py-8 text-center text-sm text-gray-500">Aucune alerte prioritaire pour cette analyse.</div>
+                    @endforelse
+                </div>
+            </section>
+
             <section class="mb-6 overflow-hidden rounded-lg bg-white shadow-sm">
                 <div class="border-b border-gray-100 px-6 py-4">
-                    <h2 class="text-lg font-semibold text-gray-950">Historique court des analyses IA</h2>
-                    <p class="mt-1 text-sm text-gray-500">Chaque consultation enregistre un instantane auditable des recommandations affichees.</p>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-950">Historique court des analyses IA</h2>
+                            <p class="mt-1 text-sm text-gray-500">Chaque consultation enregistre un instantane auditable des recommandations affichees.</p>
+                        </div>
+                        <a href="{{ route('manager.ai-assistant.snapshots.index') }}" class="text-sm font-semibold text-rose-600 hover:text-rose-700">Voir tout l historique</a>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 divide-y divide-gray-100 md:grid-cols-5 md:divide-x md:divide-y-0">
                     @forelse($latestSnapshots as $historicalSnapshot)
-                        <div class="p-4">
+                        <a href="{{ route('manager.ai-assistant.snapshots.show', $historicalSnapshot) }}" class="block p-4 hover:bg-gray-50">
                             <p class="text-sm font-semibold text-gray-950">{{ $historicalSnapshot->generated_at->format('d/m H:i') }}</p>
                             <p class="mt-1 text-xs text-gray-500">Ruptures: {{ $historicalSnapshot->kpis['critical_stock'] ?? 0 }}</p>
                             <p class="text-xs text-gray-500">Reappro: {{ $historicalSnapshot->kpis['restock_recommendations'] ?? 0 }}</p>
                             <p class="text-xs text-gray-500">Anomalies: {{ $historicalSnapshot->kpis['anomalies'] ?? 0 }}</p>
-                        </div>
+                        </a>
                     @empty
                         <div class="p-6 text-sm text-gray-500 md:col-span-5">Aucune analyse historisee pour le moment.</div>
                     @endforelse

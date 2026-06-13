@@ -162,6 +162,8 @@ Route::prefix('manager')->name('manager.')->middleware(['auth', 'role:manager'])
     Route::get('/dashboard', [ManagerDashboardController::class, 'index'])->name('dashboard');
     Route::get('/ai-assistant', [AiAssistantController::class, 'index'])->name('ai-assistant.index');
     Route::get('/ai-assistant/export/pdf', [AiAssistantController::class, 'exportPdf'])->name('ai-assistant.export-pdf');
+    Route::get('/ai-assistant/snapshots', [AiAssistantController::class, 'snapshotsIndex'])->name('ai-assistant.snapshots.index');
+    Route::get('/ai-assistant/snapshots/{snapshot}', [AiAssistantController::class, 'showSnapshot'])->name('ai-assistant.snapshots.show');
 
     // Gestion des vendeurs
     Route::get('/sellers', [ManagerSellerController::class, 'index'])->name('sellers.index');

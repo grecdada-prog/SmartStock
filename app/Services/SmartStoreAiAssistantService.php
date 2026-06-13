@@ -29,6 +29,7 @@ class SmartStoreAiAssistantService
         $expiryInsights = $this->expiryInsights($manager);
         $anomalies = $this->anomalies($manager, $sellerIds, $stockInsights, $expiryInsights);
         $salesSummary = $this->salesSummary($sellerIds);
+        $priorityAlerts = $this->priorityAlerts($stockInsights, $expiryInsights, $anomalies);
 
         return [
             'generated_at' => now(),
@@ -38,6 +39,7 @@ class SmartStoreAiAssistantService
             'stock_predictions' => $stockInsights,
             'expiry_alerts' => $expiryInsights,
             'anomalies' => $anomalies,
+            'priority_alerts' => $priorityAlerts,
             'narrative' => $this->narrative($salesSummary, $stockInsights, $expiryInsights, $anomalies),
             'methodology' => [
                 'Analyse des '.self::ANALYSIS_DAYS.' derniers jours',
@@ -50,6 +52,7 @@ class SmartStoreAiAssistantService
                 'restock_recommendations' => $stockInsights->where('recommended_quantity', '>', 0)->count(),
                 'expiry_alerts' => $expiryInsights->count(),
                 'anomalies' => $anomalies->count(),
+                'priority_alerts' => $priorityAlerts->count(),
             ],
         ];
     }
@@ -242,6 +245,56 @@ class SmartStoreAiAssistantService
         return $anomalies
             ->sortBy(fn (array $row) => $this->severityWeight($row['severity']))
             ->take(12)
+            ->values();
+    }
+
+    private function priorityAlerts(Collection $stockInsights, Collection $expiryInsights, Collection $anomalies): Collection
+    {
+        $alerts = collect();
+
+        foreach ($stockInsights->where('priority_score', '>=', 80)->take(5) as $insight) {
+            $alerts->push([
+                'severity' => $insight['severity'],
+                'type' => 'restock_priority',
+                'title' => 'Reapprovisionnement prioritaire',
+                'message' => $insight['product']->name.' atteint un score IA de '.$insight['priority_score'].'/100.',
+                'recommendation' => 'Prevoir '.$insight['recommended_quantity'].' '.$insight['product']->unit.' et verifier le stock physique.',
+                'route' => route('manager.stock.restock', [
+                    'product_id' => $insight['product']->id,
+                    'quantity' => $insight['recommended_quantity'],
+                    'source' => 'ai_alert',
+                ]),
+                'cta' => 'Reapprovisionner',
+            ]);
+        }
+
+        foreach ($expiryInsights->whereIn('severity', ['critical', 'high'])->take(3) as $insight) {
+            $alerts->push([
+                'severity' => $insight['severity'],
+                'type' => 'expiry_priority',
+                'title' => 'Lot a traiter rapidement',
+                'message' => $insight['product']->name.' : '.$insight['message'].'.',
+                'recommendation' => 'Controler le lot, lancer une promotion courte ou retirer le produit si necessaire.',
+                'route' => route('manager.stock.expiry-alerts'),
+                'cta' => 'Voir les lots',
+            ]);
+        }
+
+        foreach ($anomalies->whereIn('severity', ['critical', 'high'])->take(4) as $anomaly) {
+            $alerts->push([
+                'severity' => $anomaly['severity'],
+                'type' => $anomaly['type'],
+                'title' => $anomaly['title'],
+                'message' => $anomaly['message'],
+                'recommendation' => $anomaly['recommendation'],
+                'route' => route('manager.reports.activity'),
+                'cta' => 'Verifier',
+            ]);
+        }
+
+        return $alerts
+            ->sortBy(fn (array $row) => $this->severityWeight($row['severity']))
+            ->take(8)
             ->values();
     }
 

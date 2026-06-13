@@ -7,6 +7,7 @@ use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\PreventDirectAccess;
 use App\Http\Middleware\SingleSessionMiddleware;
 use App\Models\AiAnalysisSnapshot;
+use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
@@ -135,8 +136,10 @@ class ManagerAiAssistantTest extends TestCase
             ->assertSee('Sucre 1kg')
             ->assertSee('Previsions de rupture')
             ->assertSee('Methode IA explicable')
+            ->assertSee('Alertes IA prioritaires')
             ->assertSee('Confiance')
             ->assertSee('Historique court des analyses IA')
+            ->assertSee('Voir tout l historique')
             ->assertSee('Limites et fiabilite')
             ->assertSee('Reapprovisionner')
             ->assertSee('source=ai', false)
@@ -153,7 +156,34 @@ class ManagerAiAssistantTest extends TestCase
         $snapshot = AiAnalysisSnapshot::where('manager_id', $manager->id)->latest('id')->first();
         $this->assertNotNull($snapshot);
         $this->assertNotEmpty($snapshot->stock_predictions);
+        $this->assertGreaterThanOrEqual(1, $snapshot->kpis['priority_alerts'] ?? 0);
         $this->assertNotNull(collect($snapshot->anomalies)->firstWhere('type', 'seller_revenue_drop'));
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $manager->id,
+            'action' => 'smartstore_ai_priority_alerts_detected',
+            'model' => 'SmartStoreAiAssistant',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('manager.ai-assistant.snapshots.index'))
+            ->assertOk()
+            ->assertSee('Historique des analyses IA')
+            ->assertSee('Voir detail');
+
+        $this->actingAs($manager)
+            ->get(route('manager.ai-assistant.snapshots.show', $snapshot))
+            ->assertOk()
+            ->assertSee('Analyse IA historisee')
+            ->assertSee('Sucre 1kg')
+            ->assertSee('Methode conservee');
+
+        $otherManager = User::factory()->create();
+        $otherManager->assignRole('manager');
+
+        $this->actingAs($otherManager)
+            ->get(route('manager.ai-assistant.snapshots.show', $snapshot))
+            ->assertForbidden();
 
         $this->actingAs($manager)
             ->get(route('manager.stock.restock', [

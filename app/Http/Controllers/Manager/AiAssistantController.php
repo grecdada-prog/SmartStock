@@ -31,7 +31,25 @@ class AiAssistantController extends Controller
             ]
         );
 
+        $this->logPriorityAlerts($analysis, $snapshot);
+
         return view('manager.ai-assistant.index', compact('analysis', 'snapshot', 'latestSnapshots'));
+    }
+
+    public function snapshotsIndex()
+    {
+        $snapshots = AiAnalysisSnapshot::where('manager_id', auth()->id())
+            ->latest('generated_at')
+            ->paginate(12);
+
+        return view('manager.ai-assistant.snapshots-index', compact('snapshots'));
+    }
+
+    public function showSnapshot(AiAnalysisSnapshot $snapshot)
+    {
+        abort_unless($snapshot->manager_id === auth()->id(), 403);
+
+        return view('manager.ai-assistant.snapshot-show', compact('snapshot'));
     }
 
     public function exportPdf(SmartStoreAiAssistantService $assistant)
@@ -74,6 +92,27 @@ class AiAssistantController extends Controller
             'narrative' => $analysis['narrative'],
             'methodology' => $analysis['methodology'],
         ]);
+    }
+
+    private function logPriorityAlerts(array $analysis, AiAnalysisSnapshot $snapshot): void
+    {
+        $alerts = $analysis['priority_alerts'] ?? collect();
+
+        if ($alerts->isEmpty()) {
+            return;
+        }
+
+        ActivityLog::log(
+            'smartstore_ai_priority_alerts_detected',
+            'Alertes prioritaires SmartStore AI detectees',
+            'SmartStoreAiAssistant',
+            $snapshot->id,
+            [
+                'snapshot_id' => $snapshot->id,
+                'alert_count' => $alerts->count(),
+                'alert_types' => $alerts->pluck('type')->unique()->values()->all(),
+            ]
+        );
     }
 
     private function snapshotStockPredictions($predictions): array
