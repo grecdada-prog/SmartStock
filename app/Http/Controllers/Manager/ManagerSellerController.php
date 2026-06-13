@@ -13,6 +13,7 @@ use App\Notifications\UserCreatedNotification;
 use App\Services\CashRegisterService;
 use App\Services\PasswordSetupLinkService;
 use App\Services\SessionManager;
+use App\Services\UserDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -43,7 +44,7 @@ class ManagerSellerController extends Controller
             });
         }
 
-        $sellers = $query->latest()->get();
+        $sellers = $query->latest()->paginate(15)->withQueryString();
         $sellerIds = User::role('seller')
             ->where('created_by', auth()->id())
             ->pluck('id');
@@ -224,7 +225,7 @@ class ManagerSellerController extends Controller
             $user->id
         );
 
-        $user->delete();
+        app(UserDeletionService::class)->delete($user);
 
         return redirect()->route('manager.sellers.index')
             ->with('success', 'Vendeur supprime.');
@@ -374,7 +375,7 @@ class ManagerSellerController extends Controller
             return back()->with('error', $exception->getMessage())->withInput();
         }
 
-        $balanceLabel = $validated['balance_type'] === 'mobile_money' ? 'Paiements mobiles' : 'Cash';
+        $balanceLabel = $validated['balance_type'] === 'mobile_money' ? 'Caisse MOMO/OM' : 'Caisse Cash';
 
         return back()->with('success', $validated['type'] === 'add' ? "Fonds {$balanceLabel} ajoutes." : "Fonds {$balanceLabel} retires.");
     }
@@ -407,4 +408,3 @@ class ManagerSellerController extends Controller
         });
     }
 }
-

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
@@ -15,8 +16,17 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Category::where('created_by', auth()->id())
-            ->withCount('products');
+        $superAdminIds = User::whereHas('roles', function ($query) {
+            $query->where('name', 'super_admin');
+        })->pluck('id');
+
+        $query = Category::where(function ($query) use ($superAdminIds) {
+                $query->where('created_by', auth()->id())
+                    ->orWhereIn('created_by', $superAdminIds);
+            })
+            ->withCount([
+                'products as products_count' => fn ($query) => $query->where('created_by', auth()->id()),
+            ]);
 
         // Filtres
         if ($request->filled('status')) {
@@ -30,7 +40,11 @@ class CategoryController extends Controller
             });
         }
 
-        $categories = $query->latest()->get();
+        $categories = $query
+            ->orderByRaw('CASE WHEN created_by = ? THEN 0 ELSE 1 END', [auth()->id()])
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         return view('manager.categories.index', compact('categories'));
     }

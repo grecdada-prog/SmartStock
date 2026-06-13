@@ -16,6 +16,8 @@ class CashBalanceAdjustment extends Model
         'balance_type',
         'amount',
         'reason',
+        'source',
+        'reference_id',
     ];
 
     protected $casts = [

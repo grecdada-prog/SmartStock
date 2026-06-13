@@ -98,7 +98,7 @@
                     </div>
                     <div class="space-y-4 p-6">
                         <div class="rounded-lg bg-gray-50 p-4">
-                            <div class="text-sm text-gray-500">Solde Cash actuel</div>
+                            <div class="text-sm text-gray-500">Caisse Cash actuel</div>
                             <div class="mt-1 text-xl font-semibold text-gray-900">{{ number_format($cashRegisterBalance, 0, ',', ' ') }} FCFA</div>
                             <div class="mt-2 text-sm">
                                 @if($pendingCashClosure)

@@ -3,56 +3,18 @@
 @section('title', 'Dashboard Gérant')
 
 @section('content')
-    <div class="py-2" x-data="{ showCash: false, showMobile: false, showToday: false, showYesterday: false }">
+    <div class="py-2" x-data="{ showCash: false, showMobile: false, showToday: false }">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
                 <div class="smartstore-sticky-inner">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <a href="{{ route('manager.sellers.create') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-rose-500">
-                    <div class="flex items-center">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">
-                                <span class="absolute inset-0" aria-hidden="true"></span>
-                                Ajouter un vendeur
-                            </h3>
-                            <p class="mt-1 text-xs text-gray-500">Creer un compte vendeur</p>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="{{ route('manager.products.create') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-rose-500">
-                    <div class="flex items-center">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">
-                                <span class="absolute inset-0" aria-hidden="true"></span>
-                                Ajouter un produit
-                            </h3>
-                            <p class="mt-1 text-xs text-gray-500">Creer une fiche produit</p>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="{{ route('manager.stock.restock') }}" class="group relative rounded-lg bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-rose-500">
-                    <div class="flex items-center">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-900">
-                                <span class="absolute inset-0" aria-hidden="true"></span>
-                                Reapprovisionner
-                            </h3>
-                            <p class="mt-1 text-xs text-gray-500">Gerer les entrees stock</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 <div class="rounded-lg bg-white p-5 shadow-sm">
                     <div class="money-amount-row">
                         <div class="min-w-0">
-                            <p class="text-sm font-medium text-gray-500">Paiements mobiles</p>
+                            <p class="text-sm font-medium text-gray-500">Caisse MOMO/OM</p>
                             <p class="mt-2 break-words text-2xl font-semibold leading-tight text-gray-900" x-text="showMobile ? '{{ number_format($stats['total_mobile_money_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <x-money-eye-button state="showMobile" label="les soldes mobiles" />
+                        <x-money-eye-button state="showMobile" label="le caisse MOMO/OM" />
                     </div>
                     <div class="mt-4 max-h-40 overflow-y-auto overflow-x-hidden divide-y divide-gray-100 text-sm">
                         @forelse($sellerFinancials as $row)
@@ -72,10 +34,10 @@
                 <div class="rounded-lg bg-white p-5 shadow-sm">
                     <div class="money-amount-row">
                         <div class="min-w-0">
-                            <p class="text-sm font-medium text-gray-500">Solde Cash</p>
+                            <p class="text-sm font-medium text-gray-500">Caisse Cash</p>
                             <p class="mt-2 break-words text-2xl font-semibold leading-tight text-gray-900" x-text="showCash ? '{{ number_format($stats['total_cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <x-money-eye-button state="showCash" label="le solde cash" refresh-on-show />
+                        <x-money-eye-button state="showCash" label="le Caisse Cash" refresh-on-show />
                     </div>
                     <div class="mt-4 max-h-40 overflow-y-auto overflow-x-hidden divide-y divide-gray-100 text-sm">
                         @forelse($sellerFinancials as $row)
@@ -113,26 +75,6 @@
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-5 shadow-sm">
-                    <div class="money-amount-row">
-                        <div class="min-w-0">
-                            <p class="text-sm font-medium text-gray-500">Recette d'hier</p>
-                            <p class="mt-2 break-words text-2xl font-semibold leading-tight text-gray-900" x-text="showYesterday ? '{{ number_format($stats['total_yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                            <p class="mt-1 text-sm text-gray-500">{{ number_format($stats['yesterday_sales']) }} vente(s)</p>
-                        </div>
-                        <x-money-eye-button state="showYesterday" label="la recette d'hier" refresh-on-show />
-                    </div>
-                    <div class="mt-4 max-h-40 overflow-y-auto divide-y divide-gray-100 text-sm">
-                        @forelse($sellerFinancials as $row)
-                            <div class="flex items-center justify-between py-2">
-                                <span class="truncate text-gray-600">{{ $row['seller']->name }}</span>
-                                <span class="font-medium text-gray-900" x-text="showYesterday ? '{{ number_format($row['yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></span>
-                            </div>
-                        @empty
-                            <p class="py-2 text-gray-500">Aucun vendeur.</p>
-                        @endforelse
-                    </div>
-                </div>
             </div>
                 </div>
             </div>
@@ -140,26 +82,69 @@
             <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <div class="overflow-hidden rounded-lg bg-white shadow-sm">
                     <div class="p-6">
-                        <h3 class="mb-5 text-lg font-medium text-gray-900">Top Vendeurs du Mois</h3>
+                        <div class="mb-5 flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-900">Services recents</h3>
+                            <span class="text-sm font-medium text-gray-500">Hors ventes</span>
+                        </div>
                         <div class="flow-root">
-                            <ul role="list" class="-my-5 divide-y divide-gray-200">
-                                @forelse($topSellers as $seller)
+                            <ul role="list" class="-my-4 divide-y divide-gray-200">
+                                @forelse($recentServiceOperations as $operation)
                                     <li class="py-4">
-                                        <div class="flex items-center space-x-4">
-                                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100">
-                                                <span class="text-sm font-medium text-rose-600">{{ strtoupper(substr($seller->name, 0, 2)) }}</span>
+                                        <div class="flex items-center justify-between gap-4">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-sm font-semibold text-gray-900">{{ $operation->seller->name ?? 'Vendeur supprime' }}</p>
+                                                <p class="text-sm text-gray-500">{{ $operation->reason ?? 'Service MOMO/OM' }}</p>
                                             </div>
-                                            <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-gray-900">{{ $seller->name }}</p>
-                                                <p class="text-sm text-gray-500">{{ $seller->sales_count }} ventes</p>
+                                            <div class="text-right">
+                                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $operation->type === 'add' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
+                                                    {{ $operation->type === 'add' ? 'Depot' : 'Retrait' }}
+                                                </span>
+                                                <p class="mt-1 text-sm font-semibold text-gray-900">{{ number_format($operation->amount, 0, ',', ' ') }} FCFA</p>
+                                                <p class="text-xs text-gray-500">{{ $operation->created_at->format('d/m/Y H:i') }}</p>
                                             </div>
-                                            <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-800">
-                                                {{ number_format($seller->sales_sum_total ?? 0, 0, ',', ' ') }} FCFA
-                                            </span>
                                         </div>
                                     </li>
                                 @empty
-                                    <li class="py-8 text-center text-gray-500">Aucune donnee ce mois-ci</li>
+                                    <li class="py-8 text-center text-gray-500">Aucun service recent.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+                    <div class="p-6">
+                        <div class="mb-5 flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-900">Alertes produits périmés</h3>
+                            <a href="{{ route('manager.stock.expiry-alerts') }}" class="text-sm font-medium text-rose-600 hover:text-rose-500">Voir tout</a>
+                        </div>
+                        <div class="flow-root">
+                            <ul role="list" class="-my-5 divide-y divide-gray-200">
+                                @forelse($expiringStockMovements as $movement)
+                                    @php
+                                        $expirationDate = $movement->expiration_date;
+                                        $isExpired = $expirationDate?->isPast() && ! $expirationDate?->isToday();
+                                        $daysLeft = $expirationDate ? today()->diffInDays($expirationDate, false) : null;
+                                    @endphp
+                                    <li class="py-4">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-sm font-medium text-gray-900">{{ $movement->product->name ?? 'Produit supprime' }}</p>
+                                                <p class="text-sm text-gray-500">
+                                                    {{ $movement->product->category->name ?? 'Sans categorie' }}
+                                                    - Lot {{ $movement->batch_code ?? $movement->id }}
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $isExpired ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800' }}">
+                                                    {{ $isExpired ? 'Périmé' : 'J-'.$daysLeft }}
+                                                </span>
+                                                <p class="mt-1 text-xs text-gray-500">{{ $expirationDate?->format('d/m/Y') }} - {{ $movement->remaining_quantity }} {{ $movement->product->unit ?? '' }}</p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                @empty
+                                    <li class="py-8 text-center text-gray-500">Aucun produit périmé ou proche de péremption</li>
                                 @endforelse
                             </ul>
                         </div>

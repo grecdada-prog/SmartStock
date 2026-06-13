@@ -148,6 +148,7 @@
     </div>
 
     <div class="mt-6">
+        {{ $managers->links() }}
     </div>
 </div>
 

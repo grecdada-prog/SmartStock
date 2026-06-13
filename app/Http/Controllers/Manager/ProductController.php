@@ -3,15 +3,79 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Exports\ProductsExport;
+use App\Imports\ProductsImport;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelFormat;
 
 class ProductController extends Controller
 {
+    public function search(Request $request)
+    {
+        $search = trim((string) $request->query('q', ''));
+        $barcodeSearch = preg_replace('/\D+/', '', $search);
+
+        if (mb_strlen($search) < 2 && strlen($barcodeSearch) < 3) {
+            return response()->json(['products' => []]);
+        }
+
+        $products = Product::with([
+            'category',
+            'promotions' => fn ($query) => $query
+                ->where('manager_id', auth()->id())
+                ->orderBy('min_quantity')
+                ->orderBy('created_at')
+                ->orderBy('id'),
+            'stockMovements' => fn ($query) => $query
+                ->sellableBatches()
+                ->orderBy('created_at')
+                ->orderBy('id'),
+        ])
+            ->where('created_by', auth()->id())
+            ->where('is_active', true)
+            ->where(function ($query) use ($search, $barcodeSearch) {
+                $query->where('name', 'like', $search.'%')
+                    ->orWhere('name', 'like', '%'.$search.'%')
+                    ->orWhere('barcode', 'like', $search.'%')
+                    ->orWhere('barcode', 'like', '%'.$search.'%');
+
+                if ($barcodeSearch !== '') {
+                    $query->orWhereRaw("REPLACE(barcode, ' ', '') = ?", [$barcodeSearch])
+                        ->orWhereRaw("REPLACE(barcode, ' ', '') like ?", [$barcodeSearch.'%'])
+                        ->orWhereRaw("REPLACE(barcode, ' ', '') like ?", ['%'.$barcodeSearch.'%']);
+                }
+            })
+            ->orderByRaw(
+                "CASE
+                    WHEN REPLACE(COALESCE(barcode, ''), ' ', '') = ? THEN 0
+                    WHEN REPLACE(COALESCE(barcode, ''), ' ', '') LIKE ? THEN 1
+                    WHEN LOWER(name) LIKE ? THEN 2
+                    WHEN LOWER(name) LIKE ? OR REPLACE(COALESCE(barcode, ''), ' ', '') LIKE ? THEN 3
+                    ELSE 4
+                END",
+                [
+                    $barcodeSearch,
+                    $barcodeSearch.'%',
+                    mb_strtolower($search).'%',
+                    '%'.mb_strtolower($search).'%',
+                    '%'.$barcodeSearch.'%',
+                ]
+            )
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'products' => $products->map(fn (Product $product) => $this->productSearchPayload($product))->values(),
+        ]);
+    }
+
     /**
      * Liste des produits créés par le manager authentifié
      */
@@ -59,7 +123,7 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->latest()->get();
+        $products = $query->latest()->paginate(15)->withQueryString();
 
         // Catégories pour le filtre
         $categories = $this->availableCategoriesQuery()
@@ -95,19 +159,27 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'barcode' => ['nullable', 'string', 'regex:/^\d+$/', 'unique:products,barcode'],
+            'barcode' => ['nullable', 'string', 'max:13', 'regex:/^\d+$/'],
             'category_id' => ['required', 'exists:categories,id'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
+            'is_direct_restock_eligible' => ['boolean'],
         ], [
             'sku.unique' => 'Ce code SKU existe déjà.',
+            'barcode.max' => 'Le code-barres ne doit pas depasser 13 chiffres.',
             'barcode.regex' => 'Le code-barres doit contenir uniquement des chiffres.',
-            'barcode.unique' => 'Ce code-barres existe deja pour un autre produit.',
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
         // Vérifier que la catégorie est disponible pour le manager.
+        if ($conflictingProduct = $this->barcodeConflict($validated['barcode'] ?? null)) {
+            return back()
+                ->withErrors(['barcode' => 'Code-barres deja existant chez vous.'])
+                ->withInput()
+                ->with('barcode_conflict_product_name', $conflictingProduct->name);
+        }
+
         $category = $this->availableCategoriesQuery()
             ->where('id', $validated['category_id'])
             ->first();
@@ -128,6 +200,7 @@ class ProductController extends Controller
             'alert_quantity' => $validated['alert_quantity'],
             'unit' => $validated['unit'],
             'is_active' => $validated['is_active'] ?? true,
+            'is_direct_restock_eligible' => $validated['is_direct_restock_eligible'] ?? false,
             'created_by' => auth()->id(),
         ]);
 
@@ -183,15 +256,14 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'barcode' => ['nullable', 'string', 'regex:/^\d+$/', 'unique:products,barcode,' . $product->id],
+            'barcode' => ['nullable', 'string', 'max:13', 'regex:/^\d+$/'],
             'description' => ['nullable', 'string', 'max:1000'],
             'category_id' => ['required', 'exists:categories,id'],
             'alert_quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
             'is_active' => ['boolean'],
+            'is_direct_restock_eligible' => ['boolean'],
         ], [
-            'barcode.regex' => 'Le code-barres doit contenir uniquement des chiffres.',
-            'barcode.unique' => 'Ce code-barres existe deja pour un autre produit.',
             'selling_price.gte' => 'Le prix de vente doit être supérieur ou égal au prix d\'achat.',
         ]);
 
@@ -204,6 +276,13 @@ class ProductController extends Controller
             return back()->withErrors(['category_id' => 'Catégorie invalide.'])->withInput();
         }
 
+        if ($conflictingProduct = $this->barcodeConflict($validated['barcode'] ?? null, $product)) {
+            return back()
+                ->withErrors(['barcode' => 'Code-barres deja existant chez vous.'])
+                ->withInput()
+                ->with('barcode_conflict_product_name', $conflictingProduct->name);
+        }
+
         $oldValues = $product->only(['name', 'sku']);
 
         $product->update([
@@ -214,6 +293,7 @@ class ProductController extends Controller
             'alert_quantity' => $validated['alert_quantity'],
             'unit' => $validated['unit'],
             'is_active' => $validated['is_active'] ?? $product->is_active,
+            'is_direct_restock_eligible' => $validated['is_direct_restock_eligible'] ?? false,
         ]);
 
         // Log les changements importants
@@ -230,12 +310,21 @@ class ProductController extends Controller
             $product->id
         );
 
+        $successMessage = 'Produit mis à jour avec succès.';
+
+        if ($request->boolean('modal')) {
+            return response()->view('manager.products._modal-success', [
+                'message' => $successMessage,
+                'redirectUrl' => route('manager.products.index'),
+            ]);
+        }
+
         return redirect()->route('manager.products.index')
-            ->with('success', 'Produit mis à jour avec succès.');
+            ->with('success', $successMessage);
     }
 
     /**
-     * Supprimer un produit (soft delete)
+     * Supprimer definitivement un produit sans ventes liees.
      */
     public function destroy(Product $product)
     {
@@ -257,7 +346,7 @@ class ProductController extends Controller
             $product->id
         );
 
-        $product->delete();
+        $product->forceDelete();
 
         return redirect()->route('manager.products.index')
             ->with('success', "Produit {$productName} supprimé avec succès.");
@@ -284,19 +373,41 @@ class ProductController extends Controller
         return back()->with('success', "Produit " . ($newStatus ? 'activé' : 'désactivé') . " avec succès.");
     }
 
-    /**
-     * Afficher les produits en stock faible
-     */
-    public function lowStock()
+    public function exportExcel()
     {
-        $products = Product::where('created_by', auth()->id())
-            ->with(['category', 'creator'])
-            ->lowStock()
-            ->active()
-            ->orderBy('quantity', 'asc')
-            ->get();
+        return Excel::download(
+            new ProductsExport(auth()->id()),
+            'produits_manager_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
+    }
 
-        return view('manager.products.low-stock', compact('products'));
+    public function exportCsv()
+    {
+        return Excel::download(
+            new ProductsExport(auth()->id(), true),
+            'produits_manager_' . now()->format('Y-m-d_H-i-s') . '.csv',
+            ExcelFormat::CSV
+        );
+    }
+
+    public function import(Request $request)
+    {
+        $validated = $request->validate([
+            'products_file' => ['required', 'file', 'mimes:csv,txt,xlsx,xls', 'max:5120'],
+        ], [
+            'products_file.required' => 'Choisissez un fichier CSV ou Excel.',
+            'products_file.mimes' => 'Le fichier doit etre au format CSV ou Excel.',
+        ]);
+
+        $import = new ProductsImport(auth()->user());
+        Excel::import($import, $validated['products_file']);
+
+        $message = "{$import->createdCount()} produit(s) importe(s) avec succes.";
+        if ($import->skippedRows()) {
+            $message .= ' Lignes ignorees: ' . implode(' ', array_slice($import->skippedRows(), 0, 5));
+        }
+
+        return redirect()->route('manager.products.index')->with('success', $message);
     }
 
     private function availableCategoriesQuery()
@@ -308,7 +419,35 @@ class ProductController extends Controller
         return Category::where(function ($query) use ($superAdminIds) {
             $query->where('created_by', auth()->id())
                 ->orWhereIn('created_by', $superAdminIds);
-        });
+            });
+    }
+
+    private function productSearchPayload(Product $product): array
+    {
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'barcode' => $product->barcode,
+            'category' => $product->category?->name,
+            'quantity' => $product->quantity,
+            'unit' => $product->unit,
+            'alert_quantity' => $product->alert_quantity,
+            'purchase_price' => (float) $product->purchase_price,
+            'selling_price' => (float) $product->selling_price,
+            'promotions' => $product->promotions->map(fn ($promotion) => [
+                'id' => $promotion->id,
+                'name' => $promotion->name,
+                'promotion_price' => (float) $promotion->promotion_price,
+                'min_quantity' => $promotion->min_quantity,
+                'status' => $promotion->status,
+                'delete_url' => route('manager.promotions.destroy', $promotion),
+            ])->values(),
+            'batches' => $product->stockMovements->map(fn ($batch) => [
+                'code' => $batch->batch_code ?? 'LOT-'.$batch->id,
+                'remaining_quantity' => $batch->remaining_quantity,
+                'selling_price' => (float) $batch->selling_price,
+            ])->values(),
+        ];
     }
 
     private function generateSku(string $productName): string
@@ -328,5 +467,25 @@ class ProductController extends Controller
         return $sku;
     }
 
-}
+    private function barcodeConflict(?string $barcode, ?Product $currentProduct = null): ?Product
+    {
+        if (!$barcode) {
+            return null;
+        }
 
+        $conflictingProduct = Product::withTrashed()
+            ->where('barcode', $barcode)
+            ->where('created_by', auth()->id())
+            ->when($currentProduct, fn ($query) => $query->whereKeyNot($currentProduct->id))
+            ->first();
+
+        if ($conflictingProduct?->trashed() && $conflictingProduct->saleItems()->count() === 0) {
+            $conflictingProduct->forceDelete();
+
+            return null;
+        }
+
+        return $conflictingProduct;
+    }
+
+}

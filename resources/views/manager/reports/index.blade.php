@@ -19,11 +19,11 @@
             :hint="number_format($stats['today_sales']) . ' vente(s)'"
         />
         <x-reports.kpi-card
-            label="Solde cash"
+            label="Caisse Cash"
             :value="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'"
         />
         <x-reports.kpi-card
-            label="Paiements mobiles"
+            label="Caisse MOMO/OM"
             :value="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
         />
     </div>

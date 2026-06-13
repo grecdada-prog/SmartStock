@@ -18,7 +18,7 @@ class CheckInactivity
 
         $user = Auth::user();
         $lastActivity = $user->last_activity;
-        $inactivityTimeout = (int) config('session.lifetime', 120);
+        $inactivityTimeout = $this->inactivityTimeoutMinutes($user);
 
         if ($request->session()->pull('just_logged_in', false)) {
             $this->touchActivity($request, $user);
@@ -53,9 +53,16 @@ class CheckInactivity
                 ->with('message', 'Vous avez ete deconnecte pour inactivite.');
         }
 
-        $this->touchActivity($request, $user);
+        if (! $request->routeIs('session.heartbeat') && ! $request->is('session/heartbeat')) {
+            $this->touchActivity($request, $user);
+        }
 
         return $next($request);
+    }
+
+    private function inactivityTimeoutMinutes($user): int
+    {
+        return 15;
     }
 
     private function touchActivity(Request $request, $user): void

@@ -61,6 +61,7 @@
                     <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>Entree</option>
                     <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Sortie</option>
                     <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>Ajustement</option>
+                    <option value="correction_cancellation" {{ request('type') == 'correction_cancellation' ? 'selected' : '' }}>Correction annulation</option>
                 </select>
             </div>
 
@@ -80,16 +81,16 @@
         </div>
     </div>
 
-    <div class="mt-6 overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
-        <div class="overflow-x-auto">
-            <table class="min-w-[980px] divide-y divide-gray-200">
+    <div class="mt-6 overflow-visible rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
+        <div class="overflow-visible">
+            <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="w-32 px-5 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
                         @if($showProductColumn)
                             <th scope="col" class="w-56 px-5 py-4 text-left text-sm font-semibold text-gray-900">Produit</th>
                         @endif
-                        <th scope="col" class="w-32 px-5 py-4 text-left text-sm font-semibold text-gray-900">Type</th>
+                        <th scope="col" class="w-44 px-5 py-4 text-left text-sm font-semibold text-gray-900">Type</th>
                         <th scope="col" class="w-32 px-5 py-4 text-left text-sm font-semibold text-gray-900">Quantite</th>
                         <th scope="col" class="w-32 px-5 py-4 text-left text-sm font-semibold text-gray-900">Stock</th>
                         <th scope="col" class="w-40 px-5 py-4 text-left text-sm font-semibold text-gray-900">Prix</th>
@@ -111,27 +112,32 @@
                                     <div class="mt-1 text-xs text-gray-500">{{ $movement->product->sku ?? 'N/A' }}</div>
                                 </td>
                             @endif
-                            <td class="whitespace-nowrap px-5 py-5 text-sm">
+                            <td class="px-5 py-5 text-sm">
                                 @if($movement->type === 'in')
                                     <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-800">
-                                        <span class="mr-1.5 h-2 w-2 rounded-full bg-rose-400"></span>
+                                        <span class="mr-1.5 h-2 w-2 shrink-0 rounded-full bg-rose-400"></span>
                                         Entree
                                     </span>
                                 @elseif($movement->type === 'out')
                                     <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">
-                                        <span class="mr-1.5 h-2 w-2 rounded-full bg-red-400"></span>
+                                        <span class="mr-1.5 h-2 w-2 shrink-0 rounded-full bg-red-400"></span>
                                         Sortie
+                                    </span>
+                                @elseif($movement->type === 'correction_cancellation')
+                                    <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 whitespace-nowrap">
+                                        <span class="mr-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-400"></span>
+                                        Correction annul.
                                     </span>
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
-                                        <span class="mr-1.5 h-2 w-2 rounded-full bg-blue-400"></span>
+                                        <span class="mr-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-400"></span>
                                         Ajustement
                                     </span>
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-5 py-5 text-sm">
-                                <span class="{{ $movement->type === 'in' ? 'text-rose-600' : ($movement->type === 'out' ? 'text-red-600' : 'text-blue-600') }} font-semibold">
-                                    {{ $movement->type === 'in' ? '+' : ($movement->type === 'out' ? '-' : '+/-') }}{{ $movement->quantity }}
+                                <span class="{{ in_array($movement->type, ['in', 'correction_cancellation'], true) ? 'text-rose-600' : ($movement->type === 'out' ? 'text-red-600' : 'text-blue-600') }} font-semibold">
+                                    {{ in_array($movement->type, ['in', 'correction_cancellation'], true) ? '+' : ($movement->type === 'out' ? '-' : '+/-') }}{{ $movement->quantity }}
                                 </span>
                                 <span class="text-gray-500">{{ $movement->product->unit ?? '' }}</span>
                             </td>
@@ -165,6 +171,12 @@
             </table>
         </div>
     </div>
+
+    @if(method_exists($movements, 'links'))
+        <div class="mt-4">
+            {{ $movements->links() }}
+        </div>
+    @endif
 
 </div>
 @endsection

@@ -37,9 +37,7 @@ class ReportController extends Controller
             'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
             'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
-            'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
-            'yesterday_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today()->subDay())->count(),
             'total_products' => Product::where('created_by', auth()->id())->count(),
         ];
 
@@ -82,7 +80,7 @@ class ReportController extends Controller
 
             $sales = collect();
         } else {
-            $sales = $query->latest()->get();
+            $sales = $query->latest()->paginate(15)->withQueryString();
             $salesByDate = collect();
         }
 
@@ -98,9 +96,7 @@ class ReportController extends Controller
             'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
             'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
-            'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'today_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today())->count(),
-            'yesterday_sales' => Sale::whereIn('seller_id', $sellerIds)->whereDate('created_at', today()->subDay())->count(),
         ];
 
         // Liste des vendeurs pour le filtre
@@ -132,7 +128,7 @@ class ReportController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $activities = $query->latest()->get();
+        $activities = $query->latest()->paginate(15)->withQueryString();
 
         // Statistiques
         $stats = [
@@ -175,7 +171,7 @@ class ReportController extends Controller
             }
         }
 
-        $products = $query->with('category')->latest()->get();
+        $products = $query->with('category')->latest()->paginate(15)->withQueryString();
 
         // Statistiques
         $stats = [
@@ -252,8 +248,7 @@ class ReportController extends Controller
                     'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($seller),
                     'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
                     'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
-                    'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
-                    'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($seller),
+                    'today_revenue' => $cashRegisterService->currentDayRevenueForSeller($seller),
                 ];
             });
     }

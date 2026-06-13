@@ -3,10 +3,16 @@
 @section('title', 'Point de Vente')
 
 @section('content')
-<div class="px-4 sm:px-6 lg:px-8" x-data="posSystem()" data-pos-scanner-zone>
+<div class="px-4 sm:px-6 lg:px-8" x-data="posSystem()" x-cloak data-pos-scanner-zone>
     <div class="mb-4">
-        <h1 class="text-2xl font-semibold text-gray-900">Point de Vente</h1>
-        <p class="mt-1 text-sm text-gray-700">Enregistrez vos ventes rapidement</p>
+        @php
+            $managerName = \App\Models\User::find(auth()->user()->created_by)?->name ?? 'Boutique';
+            $totalProducts = count($products);
+        @endphp
+        <h1 class="text-2xl font-semibold text-gray-900">
+            {{ $managerName }}
+            <span class="ml-2 text-base font-normal text-gray-500">({{ $totalProducts }} produit{{ $totalProducts > 1 ? 's' : '' }} disponible{{ $totalProducts > 1 ? 's' : '' }})</span>
+        </h1>
     </div>
 
     <!-- Interface POS principale -->
@@ -27,13 +33,6 @@
                                 class="block w-full rounded-md border-gray-300 py-2 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm"
                             >
                         </div>
-                        <!-- Filtre catégorie -->
-                        <select x-model="selectedCategory" class="rounded-md border-gray-300 py-2 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:w-52 sm:text-sm">
-                            <option value="">Toutes catégories</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
 
@@ -60,7 +59,7 @@
                             </div>
 
                             <span class="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
-                                Stock disponible: <span x-text="product.quantity"></span>
+                                <span x-text="product.quantity"></span>
                             </span>
                         </button>
                     </template>
@@ -80,9 +79,23 @@
         <!-- Panel droit : Panier et paiement -->
         <div class="lg:col-span-1">
             <div class="sticky flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-lg bg-white shadow" style="top: 5rem;">
-                <div class="shrink-0 bg-rose-600 px-3 py-2 text-white">
-                    <h2 class="text-base font-semibold">Panier</h2>
-                    <p class="text-sm opacity-90"><span x-text="cart.length"></span> article(s)</p>
+                <div class="shrink-0 bg-rose-600 px-3 py-2 text-white flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold">Panier</h2>
+                        <p class="text-sm opacity-90"><span x-text="cart.length"></span> article(s)</p>
+                    </div>
+                    <button
+                        x-show="cart.length > 0"
+                        @click="clearCart()"
+                        type="button"
+                        class="flex h-8 w-8 items-center justify-center rounded hover:bg-rose-700 transition-colors"
+                        title="Vider le panier"
+                        aria-label="Vider le panier"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
                 </div>
 
                 <!-- Items du panier -->
@@ -102,25 +115,27 @@
                                 <h4 class="truncate text-xs font-semibold text-gray-900" x-text="item.name" :title="item.name"></h4>
                                 <div class="space-y-0.5 text-xs text-gray-500">
                                     <template x-for="(line, lineIndex) in item.priceLines" :key="lineIndex">
-                                        <p x-text="formatPrice(line.price) + ' x ' + line.quantity"></p>
+                                        <p x-text="formatPrice(line.price) + ' x ' + line.quantity + ' = ' + formatPrice(line.subtotal)"></p>
                                     </template>
-                                    <label
-                                        x-show="promotionEligible(item)"
-                                        class="mt-1 flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            x-model="item.applyPromotion"
-                                            @change="togglePromotion(index)"
-                                            class="h-3.5 w-3.5 rounded border-rose-300 text-rose-600 focus:ring-rose-500"
-                                        >
-                                        <span>
-                                            Appliquer promo
-                                            <span x-text="formatPrice(item.activePromotion?.promotion_price || 0)"></span>
-                                        </span>
-                                    </label>
-                                    <p x-show="item.activePromotion && !promotionEligible(item)" class="text-[11px] text-gray-400">
-                                        Promo des <span x-text="item.activePromotion?.min_quantity"></span> articles.
+                                    <div x-show="eligiblePromotions(item).length > 0" class="mt-1 space-y-1">
+                                        <template x-for="promotion in eligiblePromotions(item)" :key="promotion.id">
+                                            <label class="flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700">
+                                                <input
+                                                    type="checkbox"
+                                                    :value="promotion.id"
+                                                    :checked="Number(item.selectedPromotionId) === Number(promotion.id)"
+                                                    @change="togglePromotion(index, promotion.id, $event.target.checked)"
+                                                    class="h-3.5 w-3.5 border-rose-300 text-rose-600 focus:ring-rose-500"
+                                                >
+                                                <span>
+                                                    Appliquer Prix
+                                                    <span x-text="formatPrice(promotion.promotion_price || 0)"></span>
+                                                    <span x-text="promotion.name"></span>
+                                                </span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                    <p x-show="promotionMessage(item)" x-text="promotionMessage(item)" class="text-[11px] text-gray-400">
                                     </p>
                                 </div>
                             </div>
@@ -157,6 +172,15 @@
                         <div class="flex justify-between text-lg font-semibold">
                             <span>Total:</span>
                             <span class="text-rose-600" x-text="formatPrice(cartTotal)"></span>
+                        </div>
+                        <div x-show="paymentMethod !== 'cash'" x-cloak class="flex justify-between text-sm font-semibold text-gray-700">
+                            <span>Frais operateur (2%) :</span>
+                            <span x-text="formatPrice(operatorFee)"></span>
+                        </div>
+                        <div x-show="paymentMethod !== 'cash'" x-cloak class="flex justify-between text-base font-extrabold">
+                            <span>Total a payer :</span>
+                            <span class="text-rose-600" x-text="formatPrice(totalToPay)"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -167,7 +191,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Méthode de paiement</label>
                         <select x-model="paymentMethod" @change="handlePaymentMethodChange()" class="w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                             <option value="cash">Espèces</option>
-                            <option value="mobile_money">Paiement mobile</option>
+                            <option value="mobile_money">Paiement Mobile</option>
                         </select>
                     </div>
 
@@ -227,9 +251,12 @@
                             type="tel"
                             x-model="customerPhone"
                             data-phone-format
-                            @smartstore:phone-formatted="customerPhone = $event.target.value"
+                            @input="limitCameroonPhone()"
+                            @smartstore:phone-formatted="customerPhone = $event.target.value; limitCameroonPhone()"
                             :placeholder="paymentMethod === 'cash' ? 'Telephone (optionnel)' : 'Entrez le numero de telephone'"
                             :required="paymentMethod !== 'cash'"
+                            maxlength="15"
+                            inputmode="numeric"
                             placeholder="Téléphone (optionnel)"
                             class="min-w-0 flex-1 border-0 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:ring-0"
                         >
@@ -261,13 +288,6 @@
                         <p x-show="paymentMethod === 'cash' && cart.length > 0 && change < 0" class="text-sm text-red-600 text-center">
                             Montant recu insuffisant.
                         </p>
-                        <button
-                            @click="clearCart()"
-                            :disabled="processing"
-                            class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50"
-                        >
-                            Vider le panier
-                        </button>
                     </div>
                 </div>
             </div>
@@ -329,9 +349,44 @@
         </div>
     </div>
 
+    <div
+        x-show="paymentTransaction"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/45 px-4 py-6"
+        role="dialog"
+        aria-modal="true"
+    >
+        <div class="w-full max-w-md rounded-lg border border-rose-200 bg-white p-5 shadow-2xl">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-bold uppercase tracking-wide text-rose-600">Paiement Monetbil</p>
+                    <h3 class="mt-1 break-words text-lg font-extrabold text-gray-950" x-text="readablePaymentMessage(paymentMessage || 'Paiement en attente')"></h3>
+                </div>
+                <button type="button" @click="paymentTransaction = null" class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="Fermer">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+            </div>
+            <dl class="mt-4 space-y-2 rounded-lg bg-rose-50 p-4 text-sm">
+                <div class="flex justify-between gap-3"><dt class="text-gray-600">Reference</dt><dd class="break-all text-right font-bold" x-text="paymentTransaction?.reference"></dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-gray-600">Operateur</dt><dd class="break-words text-right font-bold" x-text="paymentTransaction?.operator_label"></dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-gray-600">Total a payer</dt><dd class="font-bold text-rose-600" x-text="formatPrice(paymentTransaction?.total_amount || 0)"></dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-gray-600">Statut</dt><dd class="font-bold" x-text="paymentTransaction?.status"></dd></div>
+            </dl>
+            <p x-show="paymentTransaction?.failure_reason" class="mt-3 break-words rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-700" x-text="readablePaymentMessage(paymentTransaction?.failure_reason)"></p>
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" @click="paymentTransaction = null" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50">Fermer</button>
+                <button type="button" @click="checkMonetbilPayment()" :disabled="processing || !paymentTransaction" class="rounded-md bg-rose-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-rose-700 disabled:opacity-60">
+                    Verifier
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification locale POS -->
     <div
         x-show="showToast"
+        @click.away="if (toastType !== 'success') showToast = false"
         x-transition
         class="fixed top-3 left-1/2 z-[9999] w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-md border bg-white px-4 py-3 text-gray-900 shadow-lg"
         :class="toastType === 'success' ? 'border-rose-300' : 'border-red-300'"
@@ -348,7 +403,7 @@
                 </svg>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-sm leading-5" x-text="toastMessage"></p>
+                <p class="break-words text-sm leading-5" x-text="readablePaymentMessage(toastMessage)"></p>
             </div>
             <button type="button"
                     @click="showToast = false"
@@ -370,12 +425,12 @@ function posSystem() {
         allProducts: @json($products),
         filteredProducts: @json($products),
         searchQuery: '',
-        selectedCategory: '',
         // Panier
         cart: [],
 
         // Paiement
         paymentMethod: 'cash',
+        operatorFeeRate: 0.02,
         amountReceived: '',
         change: 0,
         customerName: '',
@@ -390,25 +445,45 @@ function posSystem() {
         saleCompleted: false,
         lastReceiptUrl: '',
         lastInvoiceNumber: '',
+        paymentTransaction: null,
+        paymentMessage: '',
+        paymentCheckTimer: null,
         barcodeScanBuffer: '',
         barcodeScanStartedAt: 0,
         barcodeScanLastKeyAt: 0,
         barcodeScanField: null,
         barcodeScanFieldValueBefore: '',
         barcodeScanHandler: null,
+        inactivityRefreshHandler: null,
+        inactivityRefreshTimerId: null,
+        lastActivityAt: Date.now(),
+        lastSilentRefreshAt: 0,
         cartStorageKey: 'smartstore:pos-cart:{{ auth()->id() }}',
+        saleTokenStorageKey: 'smartstore:pos-sale-token:{{ auth()->id() }}',
+        currentSaleToken: '',
 
         init() {
+            this.ensureSaleToken();
             this.restoreCart();
-            this.$watch('selectedCategory', () => this.filterProducts());
             this.$watch('customerPhone', () => this.detectMobileOperator());
             this.barcodeScanHandler = (event) => this.handleBarcodeScanKeydown(event);
             window.addEventListener('keydown', this.barcodeScanHandler, true);
+            this.initPosInactivityRefresh();
         },
 
         destroy() {
             if (this.barcodeScanHandler) {
                 window.removeEventListener('keydown', this.barcodeScanHandler, true);
+            }
+
+            if (this.inactivityRefreshHandler) {
+                ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'input', 'change'].forEach((eventName) => {
+                    window.removeEventListener(eventName, this.inactivityRefreshHandler, true);
+                });
+            }
+
+            if (this.inactivityRefreshTimerId) {
+                window.clearInterval(this.inactivityRefreshTimerId);
             }
         },
 
@@ -420,10 +495,6 @@ function posSystem() {
             let products = this.allProducts;
 
             // Filtre par catégorie
-            if (this.selectedCategory) {
-                products = products.filter(p => p.category_id == this.selectedCategory);
-            }
-
             // Filtre par recherche
             if (this.searchQuery.length > 0) {
                 const query = this.searchQuery.toLowerCase();
@@ -438,7 +509,7 @@ function posSystem() {
             this.filteredProducts = products;
         },
 
-        async refreshProducts() {
+        async refreshProducts(options = {}) {
             try {
                 const response = await fetch('{{ route("seller.pos.products") }}', {
                     headers: {
@@ -457,9 +528,75 @@ function posSystem() {
                 this.syncCartWithProducts();
                 this.filterProducts();
             } catch (error) {
-                this.showNotification('Impossible de rafraichir le stock', 'error');
+                if (!options.silent) {
+                    this.showNotification('Impossible de rafraichir le stock', 'error');
+                }
                 console.error('Stock refresh error:', error);
             }
+        },
+
+        initPosInactivityRefresh() {
+            this.inactivityRefreshHandler = () => {
+                this.lastActivityAt = Date.now();
+            };
+
+            ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'input', 'change'].forEach((eventName) => {
+                window.addEventListener(eventName, this.inactivityRefreshHandler, true);
+            });
+
+            this.inactivityRefreshTimerId = window.setInterval(() => this.refreshAfterInactivity(), 10000);
+        },
+
+        async refreshAfterInactivity() {
+            const inactivityMs = Date.now() - this.lastActivityAt;
+
+            if (inactivityMs < 120000 || this.shouldSkipSilentPosRefresh()) {
+                return;
+            }
+
+            this.lastSilentRefreshAt = Date.now();
+            await this.refreshProducts({ silent: true });
+            this.lastActivityAt = Date.now();
+        },
+
+        shouldSkipSilentPosRefresh() {
+            if (this.processing || this.saleCompleted) {
+                return true;
+            }
+
+            const active = document.activeElement;
+
+            return Boolean(active && active !== document.body && (
+                ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName) || active.isContentEditable
+            ));
+        },
+
+        ensureSaleToken() {
+            try {
+                const existingToken = window.localStorage.getItem(this.saleTokenStorageKey);
+                this.currentSaleToken = existingToken || this.generateSaleToken();
+                window.localStorage.setItem(this.saleTokenStorageKey, this.currentSaleToken);
+            } catch (error) {
+                this.currentSaleToken = this.generateSaleToken();
+            }
+        },
+
+        resetSaleToken() {
+            this.currentSaleToken = this.generateSaleToken();
+
+            try {
+                window.localStorage.setItem(this.saleTokenStorageKey, this.currentSaleToken);
+            } catch (error) {
+                console.warn('POS sale token persistence unavailable:', error);
+            }
+        },
+
+        generateSaleToken() {
+            if (window.crypto?.randomUUID) {
+                return window.crypto.randomUUID();
+            }
+
+            return 'sale-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
         },
 
         addToCart(product, quantity = 1) {
@@ -689,6 +826,14 @@ function posSystem() {
             }, 0);
         },
 
+        get operatorFee() {
+            return this.paymentMethod !== 'cash' ? Math.round(this.cartTotal * this.operatorFeeRate) : 0;
+        },
+
+        get totalToPay() {
+            return this.cartTotal + this.operatorFee;
+        },
+
         calculateChange() {
             if (this.paymentMethod === 'cash') {
                 this.change = Number(this.amountReceived || 0) - this.cartTotal;
@@ -710,7 +855,7 @@ function posSystem() {
                 return 'MTN Momo';
             }
 
-            return 'Paiement mobile';
+            return 'MTN Momo';
         },
 
         get mobileOperatorColor() {
@@ -737,6 +882,21 @@ function posSystem() {
 
         get mobilePaymentReady() {
             return this.mobilePhoneDigits.length === 9 && Boolean(this.mobileOperator);
+        },
+
+        limitCameroonPhone() {
+            let digits = String(this.customerPhone || '').replace(/\D/g, '');
+            const hasCountryCode = digits.startsWith('237');
+            const maxLength = hasCountryCode ? 12 : 9;
+
+            digits = digits.slice(0, maxLength);
+            const groups = [];
+
+            for (let index = 0; index < digits.length; index += 3) {
+                groups.push(digits.slice(index, index + 3));
+            }
+
+            this.customerPhone = groups.join(' ');
         },
 
         detectMobileOperator() {
@@ -787,12 +947,12 @@ function posSystem() {
             return Number(product.fifo_selling_price ?? product.selling_price ?? 0);
         },
 
-        productPriceLines(product, quantity, applyPromotion = false) {
+        productPriceLines(product, quantity, selectedPromotionId = null) {
             let remaining = Math.max(0, Math.floor(Number(quantity || 0)));
             const lines = [];
             const batches = product.stockMovements || product.stock_movements || [];
-            const promotion = product.activePromotion || product.active_promotion || null;
-            const promotionApplies = applyPromotion && promotion && remaining >= Number(promotion.min_quantity || 0);
+            const promotion = this.promotionById(product, selectedPromotionId);
+            const promotionApplies = promotion && remaining >= Number(promotion.min_quantity || 0);
 
             if (promotionApplies) {
                 const price = Number(promotion.promotion_price || 0);
@@ -854,31 +1014,91 @@ function posSystem() {
                 quantity: safeQuantity,
                 maxQuantity: product.quantity,
                 stockMovements: product.stock_movements || [],
+                activePromotions: product.active_promotions || product.activePromotions || (product.active_promotion ? [product.active_promotion] : []),
                 priceLines: this.productPriceLines(product, safeQuantity),
                 activePromotion: product.active_promotion || product.activePromotion || null,
                 applyPromotion: false,
+                selectedPromotionId: null,
             };
         },
 
-        promotionEligible(item) {
-            const promotion = item.activePromotion || null;
+        activePromotionsForItem(item) {
+            return item.activePromotions || item.active_promotions || (item.activePromotion ? [item.activePromotion] : []);
+        },
 
-            return Boolean(promotion) && Number(item.quantity || 0) >= Number(promotion.min_quantity || 0);
+        eligiblePromotions(item) {
+            return this.activePromotionsForItem(item).filter((promotion) => {
+                return Number(item.quantity || 0) >= Number(promotion.min_quantity || 0);
+            });
+        },
+
+        nextPromotion(item) {
+            return this.activePromotionsForItem(item).find((promotion) => {
+                return Number(item.quantity || 0) < Number(promotion.min_quantity || 0);
+            }) || null;
+        },
+
+        promotionMessage(item) {
+            const promotions = this.activePromotionsForItem(item)
+                .slice()
+                .sort((first, second) => Number(first.min_quantity || 0) - Number(second.min_quantity || 0));
+
+            if (promotions.length === 0) {
+                return '';
+            }
+
+            if (promotions.length === 1 || this.eligiblePromotions(item).length === 0) {
+                return 'Produit en Promotion';
+            }
+
+            const next = promotions.find((promotion) => {
+                return Number(item.quantity || 0) < Number(promotion.min_quantity || 0);
+            }) || null;
+
+            return next ? `Prochaine promo a partir de ${next.min_quantity} articles.` : 'Produit en Promotion';
+        },
+
+        promotionById(item, promotionId) {
+            if (!promotionId) {
+                return null;
+            }
+
+            return this.activePromotionsForItem(item).find((promotion) => {
+                return Number(promotion.id) === Number(promotionId);
+            }) || null;
+        },
+
+        promotionEligible(item) {
+            return Boolean(this.promotionById(item, item.selectedPromotionId))
+                && Number(item.quantity || 0) >= Number(this.promotionById(item, item.selectedPromotionId)?.min_quantity || 0);
         },
 
         refreshCartItemPricing(item) {
             if (!this.promotionEligible(item)) {
                 item.applyPromotion = false;
+                item.selectedPromotionId = null;
+            } else {
+                item.applyPromotion = true;
             }
 
-            item.priceLines = this.productPriceLines(item, item.quantity, item.applyPromotion);
+            item.priceLines = this.productPriceLines(item, item.quantity, item.selectedPromotionId);
         },
 
-        togglePromotion(index) {
+        togglePromotion(index, promotionId = null, checked = null) {
             const item = this.cart[index];
 
             if (!item) {
                 return;
+            }
+
+            if (promotionId !== null) {
+                if (checked) {
+                    item.selectedPromotionId = Number(promotionId);
+                    item.applyPromotion = true;
+                } else if (Number(item.selectedPromotionId) === Number(promotionId)) {
+                    item.selectedPromotionId = null;
+                    item.applyPromotion = false;
+                }
             }
 
             this.refreshCartItemPricing(item);
@@ -892,6 +1112,7 @@ function posSystem() {
                     id: item.id,
                     quantity: item.quantity,
                     applyPromotion: Boolean(item.applyPromotion),
+                    selectedPromotionId: item.selectedPromotionId,
                 }));
 
                 if (payload.length === 0) {
@@ -929,7 +1150,8 @@ function posSystem() {
                         }
 
                         const item = this.cartItemFromProduct(product, savedItem.quantity);
-                        item.applyPromotion = Boolean(savedItem.applyPromotion) && this.promotionEligible(item);
+                        item.selectedPromotionId = savedItem.selectedPromotionId || (savedItem.applyPromotion ? item.activePromotion?.id : null);
+                        item.applyPromotion = Boolean(item.selectedPromotionId) && this.promotionEligible(item);
                         this.refreshCartItemPricing(item);
 
                         return item;
@@ -954,7 +1176,8 @@ function posSystem() {
                     }
 
                     const refreshedItem = this.cartItemFromProduct(product, item.quantity);
-                    refreshedItem.applyPromotion = Boolean(item.applyPromotion) && this.promotionEligible(refreshedItem);
+                    refreshedItem.selectedPromotionId = item.selectedPromotionId;
+                    refreshedItem.applyPromotion = Boolean(refreshedItem.selectedPromotionId) && this.promotionEligible(refreshedItem);
                     this.refreshCartItemPricing(refreshedItem);
 
                     return refreshedItem;
@@ -975,6 +1198,7 @@ function posSystem() {
             this.saleCompleted = false;
             this.lastReceiptUrl = '';
             this.lastInvoiceNumber = '';
+            this.resetSaleToken();
             this.persistCart();
         },
 
@@ -1008,16 +1232,22 @@ function posSystem() {
                     quantity: item.quantity,
                     price: item.price,
                     apply_promotion: Boolean(item.applyPromotion && this.promotionEligible(item)),
-                    promotion_id: item.applyPromotion && this.promotionEligible(item) ? item.activePromotion?.id : null,
+                    promotion_id: item.applyPromotion && this.promotionEligible(item) ? item.selectedPromotionId : null,
                 })),
                 payment_method: this.paymentMethod,
-                amount_received: this.paymentMethod === 'cash' ? this.amountReceived : this.cartTotal,
+                amount_received: this.paymentMethod === 'cash' ? this.amountReceived : this.totalToPay,
                 customer_name: this.customerName || null,
                 customer_phone: this.customerPhone ? this.customerPhone.replace(/\D/g, '') : null,
+                client_sale_token: this.currentSaleToken,
                 _token: '{{ csrf_token() }}'
             };
 
             try {
+                // if (this.paymentMethod !== 'cash') {
+                //     await this.startMonetbilPayment(saleData);
+                //     return;
+                // }
+
                 const response = await fetch('{{ route("seller.pos.sale") }}', {
                     method: 'POST',
                     headers: {
@@ -1046,11 +1276,101 @@ function posSystem() {
                     this.showNotification(data.message || 'Erreur lors de l\'enregistrement', 'error');
                 }
             } catch (error) {
-                this.showNotification('Erreur de connexion au serveur', 'error');
+                this.showNotification(error.message || 'Erreur de connexion au serveur', 'error');
                 console.error('Error:', error);
             } finally {
                 this.processing = false;
             }
+        },
+
+        async startMonetbilPayment(saleData) {
+            const response = await fetch('{{ route("seller.pos.mobile-payment.start") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(saleData)
+            });
+
+            const data = await this.parseJsonResponse(response);
+
+            if (!data.success) {
+                this.showNotification(data.message || 'Paiement mobile refuse', 'error');
+                return;
+            }
+
+            this.paymentTransaction = data.transaction;
+            this.paymentMessage = data.message || 'Paiement en attente de confirmation Monetbil.';
+            this.showNotification('Paiement lance. Demandez au client de confirmer sur son telephone.', 'success');
+            this.schedulePaymentCheck();
+        },
+
+        schedulePaymentCheck() {
+            if (this.paymentCheckTimer) {
+                clearTimeout(this.paymentCheckTimer);
+            }
+
+            this.paymentCheckTimer = setTimeout(() => this.checkMonetbilPayment(), 5000);
+        },
+
+        async checkMonetbilPayment() {
+            if (!this.paymentTransaction?.id) {
+                return;
+            }
+
+            this.processing = true;
+
+            try {
+                const url = '{{ route("seller.payments.check", ":id") }}'.replace(':id', this.paymentTransaction.id);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await this.parseJsonResponse(response);
+
+                this.paymentTransaction = data.transaction || this.paymentTransaction;
+                this.paymentMessage = data.message || this.paymentMessage;
+
+                if (data.status === 'success' && data.sale_id) {
+                    this.showNotification('Paiement confirme. Vente enregistree avec succes!', 'success');
+                    this.lastReceiptUrl = data.receipt_url || '{{ route("seller.pos.receipt", ":id") }}'.replace(':id', data.sale_id);
+                    this.lastInvoiceNumber = data.invoice_number || '';
+                    this.saleCompleted = true;
+                    this.paymentTransaction = null;
+                    this.clearCartAfterSale();
+                    window.dispatchEvent(new CustomEvent('smartstore:refresh-now'));
+                    return;
+                }
+
+                if (['failed', 'expired', 'paid_action_required'].includes(data.status)) {
+                    this.showNotification(data.message || 'Paiement non finalise', 'error');
+                    return;
+                }
+
+                this.schedulePaymentCheck();
+            } catch (error) {
+                this.showNotification('Impossible de verifier le paiement pour le moment', 'error');
+                console.error('Monetbil check error:', error);
+            } finally {
+                this.processing = false;
+            }
+        },
+
+        readablePaymentMessage(message) {
+            const value = String(message || '');
+
+            if (value === 'LOW_BALANCE_OR_PAYEE_LIMIT_REACHED_OR_NOT_ALLOWED') {
+                return 'Solde insuffisant, limite atteinte ou paiement non autorise.';
+            }
+
+            return value;
         },
 
         async parseJsonResponse(response) {
@@ -1064,6 +1384,7 @@ function posSystem() {
 
             if ([401, 419].includes(response.status)) {
                 this.showNotification(data.message || 'Votre session a expire. Veuillez vous reconnecter.', 'error');
+                window.SmartStorePosStorage?.clear?.();
 
                 if (data.redirect) {
                     setTimeout(() => window.location.assign(data.redirect), 1200);
@@ -1074,6 +1395,11 @@ function posSystem() {
 
             if (response.status === 429) {
                 throw new Error(data.message || 'Trop de tentatives. Veuillez patienter quelques secondes puis reessayer.');
+            }
+
+            if (!response.ok && !data.message && data.errors) {
+                const firstErrors = Object.values(data.errors).flat();
+                data.message = firstErrors[0] || 'Enregistrement impossible. Verifiez les informations et reessayez.';
             }
 
             return data;
@@ -1087,6 +1413,7 @@ function posSystem() {
             this.customerPhone = '';
             this.showCustomerInfo = false;
             this.paymentMethod = 'cash';
+            this.resetSaleToken();
             this.persistCart();
         },
 
@@ -1112,7 +1439,10 @@ function posSystem() {
             this.toastMessage = message;
             this.toastType = type;
             this.showToast = true;
-            setTimeout(() => this.showToast = false, 5000);
+
+            if (type === 'success') {
+                setTimeout(() => this.showToast = false, 5000);
+            }
         }
     }
 }

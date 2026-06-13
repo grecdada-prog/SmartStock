@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-use App\Models\CashRegisterClosure;
+use App\Models\CashBalanceAdjustment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Services\CashRegisterService;
@@ -22,19 +22,10 @@ class SellerDashboardController extends Controller
         $todaySalesQuery = $cashRegisterService->currentDaySalesQuery($user);
         $currentSessionOpenedAt = $cashRegisterService->currentSessionOpenedAt($user);
         $cashRegisterIsOpen = $cashRegisterService->isOpenForSeller($user);
-        $yesterdayClosure = CashRegisterClosure::where('seller_id', $user->id)
-            ->whereDate('business_date', today()->subDay())
-            ->first();
-
         $stats = [
             'today_sales' => (clone $todaySalesQuery)->count(),
             'today_cash_sales' => (clone $todayCashSalesQuery)->count(),
             'today_revenue' => (clone $todaySalesQuery)->sum('total'),
-            'yesterday_cash_sales' => $yesterdayClosure
-                ? null
-                : $cashRegisterService->cashSalesCountForDate($user, today()->subDay()),
-            'yesterday_sales' => Sale::where('seller_id', $user->id)->whereDate('created_at', today()->subDay())->count(),
-            'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($user),
             'cash_balance' => $cashRegisterService->balanceForSeller($user),
             'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($user),
             'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($user),
@@ -46,7 +37,14 @@ class SellerDashboardController extends Controller
             'cash_register_opened_at' => $currentSessionOpenedAt,
         ];
 
-        return view('seller.dashboard', compact('stats'));
+        $recentServiceOperations = CashBalanceAdjustment::where('seller_id', $user->id)
+            ->where('source', 'service')
+            ->where('balance_type', CashRegisterService::CASH_BALANCE_TYPE)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('seller.dashboard', compact('stats', 'recentServiceOperations'));
     }
 
     public function closeCashRegister(CashRegisterService $cashRegisterService)
@@ -107,7 +105,7 @@ class SellerDashboardController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        $products = $query->get();
+        $products = $query->paginate(15)->withQueryString();
 
         return view('seller.products.index', compact('products'));
     }

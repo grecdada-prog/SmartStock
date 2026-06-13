@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Exports\ActivityLogsExport;
+use App\Exports\ProductsExport;
 use App\Exports\SalesExport;
 use App\Http\Controllers\Controller;
 use App\Models\ActiveSession;
 use App\Models\ActivityLog;
+use App\Models\CashBalanceAdjustment;
 use App\Models\CashRegisterClosure;
 use App\Models\Category;
 use App\Models\Product;
@@ -19,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelFormat;
 
 class SuperAdminDashboardController extends Controller
 {
@@ -41,9 +44,7 @@ class SuperAdminDashboardController extends Controller
             'total_categories' => Category::count(),
             'total_sales' => Sale::count(),
             'today_sales' => Sale::whereDate('created_at', today())->count(),
-            'yesterday_sales' => Sale::whereDate('created_at', today()->subDay())->count(),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
-            'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
             'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
             'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
@@ -90,6 +91,13 @@ class SuperAdminDashboardController extends Controller
             ->take(10)
             ->get();
 
+        $recentServiceOperations = CashBalanceAdjustment::with('seller')
+            ->where('source', 'service')
+            ->where('balance_type', CashRegisterService::CASH_BALANCE_TYPE)
+            ->latest()
+            ->take(8)
+            ->get();
+
         return view('superadmin.dashboard', compact(
             'stats',
             'onlineUsers',
@@ -98,6 +106,7 @@ class SuperAdminDashboardController extends Controller
             'salesChart',
             'topSellers',
             'cashRegisterClosures',
+            'recentServiceOperations',
             'managerSummaries',
             'oversightAlerts'
         ));
@@ -189,7 +198,7 @@ class SuperAdminDashboardController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $query->get();
+        $logs = $query->paginate(15)->withQueryString();
         $users = User::orderBy('name')->get();
 
         return view('superadmin.activity-logs', compact('logs', 'users'));
@@ -236,11 +245,46 @@ class SuperAdminDashboardController extends Controller
         $products = Product::with(['category', 'creator'])
             ->withCount('saleItems')
             ->latest()
-            ->get();
+            ->paginate(15)->withQueryString();
 
         $categories = Category::withCount('products')->get();
+        $productStats = [
+            'total' => Product::count(),
+            'low_stock' => Product::lowStock()->count(),
+        ];
 
-        return view('superadmin.products', compact('products', 'categories'));
+        return view('superadmin.products', compact('products', 'categories', 'productStats'));
+    }
+
+    public function exportProductsExcel()
+    {
+        ActivityLog::log(
+            'export_products_excel',
+            'Export des produits en Excel',
+            'Product',
+            null
+        );
+
+        return Excel::download(
+            new ProductsExport(),
+            'produits_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
+    }
+
+    public function exportProductsCsv()
+    {
+        ActivityLog::log(
+            'export_products_csv',
+            'Export des produits en CSV',
+            'Product',
+            null
+        );
+
+        return Excel::download(
+            new ProductsExport(null, true),
+            'produits_' . now()->format('Y-m-d_H-i-s') . '.csv',
+            ExcelFormat::CSV
+        );
     }
 
     /**
@@ -248,7 +292,7 @@ class SuperAdminDashboardController extends Controller
      */
     public function sales(Request $request)
     {
-        $query = Sale::with(['seller', 'items.product'])->latest();
+        $query = Sale::with(['seller', 'items.product', 'items.promotion'])->latest();
 
         if ($request->filled('seller_id')) {
             $query->where('seller_id', $request->seller_id);
@@ -270,7 +314,29 @@ class SuperAdminDashboardController extends Controller
             $query->where('invoice_number', 'like', '%' . $request->search . '%');
         }
 
-        $sales = $query->get();
+        if ($request->filled('product_id')) {
+            $query->whereHas('items.product', function ($q) use ($request) {
+                $q->where('products.id', $request->integer('product_id'));
+            });
+        } elseif ($request->filled('product_search')) {
+            $productSearch = trim((string) $request->product_search);
+            $barcodeSearch = preg_replace('/\D+/', '', $productSearch);
+
+            $query->where(function ($saleQuery) use ($productSearch, $barcodeSearch) {
+                $saleQuery->whereHas('items.product', function ($q) use ($productSearch, $barcodeSearch) {
+                    $q->where('name', 'like', '%'.$productSearch.'%')
+                        ->orWhere('barcode', 'like', '%'.$productSearch.'%');
+
+                    if ($barcodeSearch !== '') {
+                        $q->orWhere('barcode', 'like', '%'.$barcodeSearch.'%');
+                    }
+                })->orWhereHas('items', function ($q) use ($productSearch) {
+                    $q->where('service_name', 'like', '%'.$productSearch.'%');
+                });
+            });
+        }
+
+        $sales = $query->paginate(15)->withQueryString();
         $sellers = User::role('seller')->orderBy('name')->get();
         $sellerFinancials = $this->sellerFinancials();
 
@@ -296,21 +362,77 @@ class SuperAdminDashboardController extends Controller
             $statsQuery->where('invoice_number', 'like', '%' . $request->search . '%');
         }
 
+        if ($request->filled('product_id')) {
+            $statsQuery->whereHas('items.product', function ($q) use ($request) {
+                $q->where('products.id', $request->integer('product_id'));
+            });
+        } elseif ($request->filled('product_search')) {
+            $productSearch = trim((string) $request->product_search);
+            $barcodeSearch = preg_replace('/\D+/', '', $productSearch);
+
+            $statsQuery->where(function ($saleQuery) use ($productSearch, $barcodeSearch) {
+                $saleQuery->whereHas('items.product', function ($q) use ($productSearch, $barcodeSearch) {
+                    $q->where('name', 'like', '%'.$productSearch.'%')
+                        ->orWhere('barcode', 'like', '%'.$productSearch.'%');
+
+                    if ($barcodeSearch !== '') {
+                        $q->orWhere('barcode', 'like', '%'.$barcodeSearch.'%');
+                    }
+                })->orWhereHas('items', function ($q) use ($productSearch) {
+                    $q->where('service_name', 'like', '%'.$productSearch.'%');
+                });
+            });
+        }
+
         $stats = [
             'filtered_sales' => (clone $statsQuery)->count(),
             'filtered_revenue' => (float) (clone $statsQuery)->sum('total'),
             'average_sale' => (float) ((clone $statsQuery)->avg('total') ?? 0),
             'total_current_day_revenue' => $sellerFinancials->sum('today_revenue'),
-            'total_yesterday_revenue' => $sellerFinancials->sum('yesterday_revenue'),
             'today_sales' => Sale::whereDate('created_at', today())->count(),
-            'yesterday_sales' => Sale::whereDate('created_at', today()->subDay())->count(),
             'total_cash_balance' => $sellerFinancials->sum('cash_balance'),
             'total_orange_money_balance' => $sellerFinancials->sum('orange_money_balance'),
             'total_mtn_momo_balance' => $sellerFinancials->sum('mtn_momo_balance'),
             'total_mobile_money_balance' => $sellerFinancials->sum('mobile_money_balance'),
         ];
+        $productSuggestions = Product::orderBy('name')
+            ->get(['id', 'name', 'barcode'])
+            ->push((object) [
+                'id' => '',
+                'name' => 'Token Energie',
+                'barcode' => null,
+            ]);
 
-        return view('superadmin.sales', compact('sales', 'sellers', 'stats'));
+        return view('superadmin.sales', compact('sales', 'sellers', 'stats', 'productSuggestions'));
+    }
+
+    public function topProducts(Request $request)
+    {
+        [$dateFrom, $dateTo, $period] = $this->salesPeriod($request);
+
+        $products = \App\Models\SaleItem::query()
+            ->select(
+                'products.id',
+                'products.name',
+                'products.sku',
+                'products.unit',
+                'categories.name as category_name',
+                'managers.name as manager_name',
+                DB::raw('SUM(sale_items.quantity) as total_quantity'),
+                DB::raw('SUM(sale_items.subtotal) as total_revenue')
+            )
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->leftJoin('users as managers', 'managers.id', '=', 'products.created_by')
+            ->whereBetween('sales.created_at', [$dateFrom->copy()->startOfDay(), $dateTo->copy()->endOfDay()])
+            ->groupBy('products.id', 'products.name', 'products.sku', 'products.unit', 'categories.name', 'managers.name')
+            ->orderByDesc('total_quantity')
+            ->orderBy('products.name')
+            ->paginate(30)
+            ->withQueryString();
+
+        return view('superadmin.top-products', compact('products', 'period', 'dateFrom', 'dateTo'));
     }
 
     /**
@@ -485,10 +607,30 @@ class SuperAdminDashboardController extends Controller
                     'orange_money_balance' => $cashRegisterService->orangeMoneyBalanceForSeller($seller),
                     'mtn_momo_balance' => $cashRegisterService->mtnMomoBalanceForSeller($seller),
                     'mobile_money_balance' => $cashRegisterService->mobileMoneyBalanceForSeller($seller),
-                    'today_revenue' => $cashRegisterService->currentDayCashRevenueForSeller($seller),
-                    'yesterday_revenue' => $cashRegisterService->previousDayRevenueForSeller($seller),
+                    'today_revenue' => $cashRegisterService->currentDayRevenueForSeller($seller),
                 ];
             });
+    }
+
+    private function salesPeriod(Request $request): array
+    {
+        $period = $request->input('period', '30_days');
+
+        if ($period === 'custom') {
+            $validated = $request->validate([
+                'date_from' => ['required', 'date'],
+                'date_to' => ['required', 'date', 'after_or_equal:date_from'],
+            ]);
+
+            return [Carbon::parse($validated['date_from']), Carbon::parse($validated['date_to']), $period];
+        }
+
+        return match ($period) {
+            'today' => [today(), today(), $period],
+            '7_days' => [today()->subDays(6), today(), $period],
+            'month' => [now()->startOfMonth(), today(), $period],
+            default => [today()->subDays(29), today(), '30_days'],
+        };
     }
 
     private function managerSummaries($sellerFinancials)
@@ -518,7 +660,6 @@ class SuperAdminDashboardController extends Controller
                         )
                     )->count(),
                     'today_revenue' => (float) $sellerFinancialRows->sum('today_revenue'),
-                    'yesterday_revenue' => (float) $sellerFinancialRows->sum('yesterday_revenue'),
                     'cash_balance' => (float) $sellerFinancialRows->sum('cash_balance'),
                     'orange_money_balance' => (float) $sellerFinancialRows->sum('orange_money_balance'),
                     'mtn_momo_balance' => (float) $sellerFinancialRows->sum('mtn_momo_balance'),
@@ -662,7 +803,7 @@ class SuperAdminDashboardController extends Controller
                 $properties = $log->properties ?? [];
                 $sellerName = $properties['seller_name'] ?? 'un vendeur';
                 $managerName = $properties['manager_name'] ?? ($log->user->name ?? 'un gerant');
-                $balanceLabel = $properties['balance_label'] ?? 'Solde Cash';
+                $balanceLabel = $properties['balance_label'] ?? 'Caisse Cash';
                 $amount = number_format((float) ($properties['amount'] ?? 0), 0, ',', ' ');
 
                 $anomalies->push([
@@ -684,4 +825,3 @@ class SuperAdminDashboardController extends Controller
             ->values();
     }
 }
-

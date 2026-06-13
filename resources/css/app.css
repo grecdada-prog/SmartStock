@@ -580,10 +580,9 @@ table {
 .overflow-visible.shadow.ring-1:has(table),
 .bg-white.shadow.overflow-hidden:has(table),
 .reports-panel__body:has(table) {
-    max-height: clamp(20rem, calc(100vh - var(--smartstore-navbar-height) - 8rem), 80vh);
-    overflow: auto !important;
-    overscroll-behavior: auto;
-    scrollbar-gutter: stable;
+    max-height: none !important;
+    overflow: visible !important;
+    scrollbar-gutter: auto;
     scroll-behavior: smooth;
 }
 
@@ -594,10 +593,9 @@ table {
 }
 
 .overflow-x-auto:has(> table) {
-    max-height: clamp(20rem, calc(100vh - var(--smartstore-navbar-height) - 8rem), 80vh);
-    overflow: auto !important;
-    overscroll-behavior: auto;
-    scrollbar-gutter: stable;
+    max-height: none !important;
+    overflow: visible !important;
+    scrollbar-gutter: auto;
 }
 
 .smartstore-sticky-zone + .flex.flex-col .overflow-x-auto > .inline-block > .overflow-hidden:has(table),
@@ -605,12 +603,12 @@ table {
 .smartstore-page .overflow-x-auto > .inline-block > .overflow-hidden:has(table),
 .smartstore-page .overflow-x-auto > .overflow-hidden:has(table),
 .smartstore-page .overflow-x-auto:has(> table) {
-    max-height: clamp(18rem, calc(100vh - var(--smartstore-navbar-height) - 12rem), 75vh);
+    max-height: none !important;
 }
 
 table thead {
     background-color: #f9fafb;
-    position: sticky;
+    position: static;
     top: 0;
     z-index: 2;
 }

@@ -23,7 +23,7 @@
         @endunless
 
         <div class="{{ $isModal ? 'bg-white' : 'bg-white shadow rounded-lg' }}">
-            <form method="POST" action="{{ route('manager.products.update', $product) }}" class="{{ $isModal ? 'space-y-5 p-6' : 'space-y-6 p-6' }}">
+            <form method="POST" action="{{ $isModal ? route('manager.products.update', ['product' => $product, 'modal' => 1]) : route('manager.products.update', $product) }}" class="{{ $isModal ? 'space-y-5 p-6' : 'space-y-6 p-6' }}">
                 @csrf
                 @method('PUT')
 
@@ -67,6 +67,7 @@
                     <div class="sm:col-span-2">
                         <label for="barcode" class="block text-sm font-medium text-gray-700">Code-barres</label>
                         <input type="text" name="barcode" id="barcode" value="{{ old('barcode', $product->barcode) }}"
+                            maxlength="13" pattern="\d{0,13}" inputmode="numeric" autocomplete="off" data-barcode-format
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
                         @error('barcode')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -119,6 +120,16 @@
                                 class="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded">
                             <label for="is_active" class="ml-2 block text-sm text-gray-900">
                                 Produit actif (disponible à la vente)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" name="is_direct_restock_eligible" id="is_direct_restock_eligible" value="1" {{ old('is_direct_restock_eligible', $product->is_direct_restock_eligible) ? 'checked' : '' }}
+                                class="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded">
+                            <label for="is_direct_restock_eligible" class="ml-2 block text-sm text-gray-900">
+                                Éligible à l’appro direct
                             </label>
                         </div>
                     </div>
@@ -181,5 +192,6 @@
         </div>
     </div>
 </div>
+@include('manager.products._barcode-conflict-modal')
 
 @endsection

@@ -23,11 +23,11 @@
 
     <div class="smartstore-sticky-cards grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div class="rounded-lg bg-white p-5 shadow">
-            <p class="text-sm font-medium text-gray-500">Total Solde Cash</p>
+            <p class="text-sm font-medium text-gray-500">Total Caisse Cash</p>
             <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($cashBalances->sum(), 0, ',', ' ') }} FCFA</p>
         </div>
         <div class="rounded-lg bg-white p-5 shadow">
-            <p class="text-sm font-medium text-gray-500">Total Paiements mobiles</p>
+            <p class="text-sm font-medium text-gray-500">Total Caisse MOMO/OM</p>
             <p class="mt-2 text-2xl font-semibold text-gray-900">{{ number_format($mobileMoneyBalances->sum(), 0, ',', ' ') }} FCFA</p>
         </div>
     </div>
@@ -68,7 +68,7 @@
                 </div>
             </summary>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-visible">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
                         <tr>
@@ -115,7 +115,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-3">
                                     @if($closure->opened_at)
-                                        <span class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Rouverte</span>
+                                        <span class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Ouverte</span>
                                     @else
                                         <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Fermee</span>
                                     @endif
@@ -140,8 +140,8 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Vendeur</th>
-                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Solde Cash</th>
-                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Paiements mobiles</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Caisse Cash</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Caisse MOMO/OM</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Statut</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Ventes</th>
                                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Recette totale</th>
@@ -265,6 +265,7 @@
     </div>
 
     <div class="mt-6">
+        {{ $sellers->links() }}
     </div>
 </div>
 

@@ -5,7 +5,9 @@
 @section('content')
 @php
     $isGroupedByDate = $salesByDate->isNotEmpty();
-    $detailSales = $isGroupedByDate ? collect() : collect($sales);
+    $detailSales = $isGroupedByDate
+        ? collect()
+        : ($sales instanceof \Illuminate\Contracts\Pagination\Paginator ? $sales->getCollection() : collect($sales));
 
     $topProducts = $detailSales
         ->flatMap(fn ($sale) => $sale->items)
@@ -51,15 +53,7 @@
             return ($item->unit_price - (float) $item->product->purchase_price) * $item->quantity;
         });
 
-    $revenueTrend = null;
-    if (($stats['total_yesterday_revenue'] ?? 0) > 0) {
-        $revenueTrend = round(
-            ((($stats['total_current_day_revenue'] ?? 0) - $stats['total_yesterday_revenue']) / $stats['total_yesterday_revenue']) * 100,
-            1
-        );
-    }
-
-    $resultsCount = $isGroupedByDate ? $salesByDate->count() : $detailSales->count();
+    $resultsCount = $isGroupedByDate ? $salesByDate->count() : ($sales instanceof \Illuminate\Contracts\Pagination\Paginator ? $sales->total() : $detailSales->count());
 @endphp
 
 <div class="reports-module">
@@ -96,8 +90,6 @@
             label="Recette totale"
             wide
             :value="number_format($stats['filtered_revenue'], 0, ',', ' ') . ' FCFA'"
-            :badge="$revenueTrend !== null ? (($revenueTrend >= 0 ? '+' : '') . $revenueTrend . '% vs hier') : null"
-            :badge-trend="$revenueTrend !== null ? ($revenueTrend >= 0 ? 'up' : 'down') : null"
         />
         <x-reports.kpi-card
             label="Panier moyen"
@@ -289,6 +281,11 @@
                 @endif
             </tbody>
         </table>
+        @if (method_exists($sales, 'links'))
+            <div class="mt-4">
+                {{ $sales->links() }}
+            </div>
+        @endif
     </x-reports.panel>
 
 </div>

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('seller_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('manager_id')->constrained('users')->onDelete('cascade');
-            $table->enum('type', ['add', 'withdraw']);
+            $table->enum('type', ['add', 'withdraw', 'correction_cancellation']);
             $table->decimal('amount', 12, 2);
             $table->string('reason')->nullable();
             $table->timestamps();

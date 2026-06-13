@@ -8,8 +8,8 @@ if (timeoutMeta) {
     const heartbeatUrl = '/session/heartbeat';
     let deadline = Date.now() + timeoutMs;
     let timerId = null;
-    let heartbeatTimerId = null;
     let heartbeatInFlight = false;
+    let lastHeartbeatAt = 0;
     let loggingOut = false;
 
     const redirectToLogin = () => {
@@ -24,10 +24,18 @@ if (timeoutMeta) {
         }
 
         loggingOut = true;
+        window.SmartStorePosStorage?.clear?.();
+
+        window.setTimeout(redirectToLogin, 2500);
+
+        const controller = window.AbortController ? new AbortController() : null;
+        const abortTimer = controller ? window.setTimeout(() => controller.abort(), 2000) : null;
 
         fetch(logoutUrl, {
             method: 'POST',
             credentials: 'same-origin',
+            keepalive: true,
+            signal: controller?.signal,
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
@@ -35,7 +43,13 @@ if (timeoutMeta) {
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: '{}',
-        }).finally(redirectToLogin);
+        }).finally(() => {
+            if (abortTimer) {
+                window.clearTimeout(abortTimer);
+            }
+
+            redirectToLogin();
+        });
     };
 
     const schedule = () => {
@@ -52,18 +66,25 @@ if (timeoutMeta) {
 
         deadline = Date.now() + timeoutMs;
         schedule();
+        heartbeat();
     };
 
-    const heartbeat = () => {
+    const heartbeat = (force = false) => {
         if (loggingOut || heartbeatInFlight) {
             return;
         }
 
+        if (!force && Date.now() - lastHeartbeatAt < 30000) {
+            return;
+        }
+
+        lastHeartbeatAt = Date.now();
         heartbeatInFlight = true;
 
         fetch(heartbeatUrl, {
             method: 'POST',
             credentials: 'same-origin',
+            keepalive: true,
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
@@ -86,14 +107,12 @@ if (timeoutMeta) {
                 if (Date.now() >= deadline) {
                     logoutForInactivity();
                 } else {
-                    schedule();
-                    heartbeat();
+                    markActivity();
                 }
             }
         });
 
         schedule();
-        heartbeat();
-        heartbeatTimerId = window.setInterval(heartbeat, 15000);
+        heartbeat(true);
     }
 }

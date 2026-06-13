@@ -56,7 +56,7 @@
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">Ajouter / Retirer des fonds</h2>
-                    <p class="mt-1 text-sm text-gray-500">Mouvement manuel sur le Solde Cash ou le Solde Paiements mobiles de ce vendeur.</p>
+                    <p class="mt-1 text-sm text-gray-500">Mouvement manuel sur la Caisse Cash ou la Caisse MOMO/OM de ce vendeur.</p>
                 </div>
                 <span class="mt-2 inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200 sm:mt-0">
                     Action sensible
@@ -69,11 +69,11 @@
                 <h3 class="text-base font-semibold text-gray-900">Soldes disponibles</h3>
                 <div class="mt-3 grid gap-3">
                     <div class="rounded-md border border-gray-200 bg-white p-4">
-                        <p class="text-sm text-gray-500">Solde Cash</p>
+                        <p class="text-sm text-gray-500">Caisse Cash</p>
                         <p class="mt-1 break-words text-2xl font-semibold text-gray-900">{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA</p>
                     </div>
                     <div class="rounded-md border border-gray-200 bg-white p-4">
-                        <p class="text-sm text-gray-500">Paiements mobiles</p>
+                        <p class="text-sm text-gray-500">Caisse MOMO/OM</p>
                         <p class="mt-1 break-words text-2xl font-semibold text-gray-900">{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA</p>
                     </div>
                 </div>
@@ -95,8 +95,8 @@
                         <div>
                             <label for="balance_type" class="block text-sm font-medium text-gray-700">Solde concerne</label>
                             <select id="balance_type" name="balance_type" x-model="balanceType" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
-                                <option value="cash">Solde Cash</option>
-                                <option value="mobile_money">Paiements mobiles</option>
+                                <option value="cash">Caisse Cash</option>
+                                <option value="mobile_money">Caisse MOMO/OM</option>
                             </select>
                         </div>
 
@@ -146,6 +146,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Type</th>
+                                    <th class="px-3 py-2 text-left font-medium text-gray-600">Source</th>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Solde</th>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Montant</th>
                                     <th class="px-3 py-2 text-left font-medium text-gray-600">Motif</th>
@@ -156,12 +157,15 @@
                                 @forelse($recentCashAdjustments as $adjustment)
                                     <tr>
                                         <td class="whitespace-nowrap px-3 py-2">
-                                            <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $adjustment->type === 'withdraw' ? 'bg-red-50 text-red-700' : 'bg-rose-50 text-rose-700' }}">
-                                                {{ $adjustment->type === 'withdraw' ? 'Retrait' : 'Ajout' }}
+                                            <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $adjustment->type === 'withdraw' ? 'bg-red-50 text-red-700' : ($adjustment->type === 'correction_cancellation' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700') }}">
+                                                {{ $adjustment->type === 'withdraw' ? 'Retrait' : ($adjustment->type === 'correction_cancellation' ? 'Correction annulation' : 'Ajout') }}
                                             </span>
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-2 text-gray-600">
-                                            {{ $adjustment->balance_type === 'mobile_money' ? 'Paiements mobiles' : 'Cash' }}
+                                            {{ $adjustment->source === 'service' ? 'Service' : ($adjustment->source === 'restock' ? 'Appro direct' : 'Manuel') }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-gray-600">
+                                            {{ $adjustment->balance_type === 'mobile_money' ? 'Caisse MOMO/OM' : 'Caisse Cash' }}
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-2 font-medium text-gray-900">{{ number_format($adjustment->amount, 0, ',', ' ') }} FCFA</td>
                                         <td class="min-w-[12rem] px-3 py-2 text-gray-600">{{ $adjustment->reason ?? '-' }}</td>
@@ -169,7 +173,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-3 py-6 text-center text-gray-500">Aucun mouvement de solde enregistre.</td>
+                                        <td colspan="6" class="px-3 py-6 text-center text-gray-500">Aucun mouvement de solde enregistre.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -226,13 +230,13 @@
             </div>
         </div>
 
-        <!-- Solde Cash -->
+        <!-- Caisse Cash -->
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="w-full min-w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Solde Cash</dt>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Caisse Cash</dt>
                             <dd class="flex items-baseline">
                                 <div class="text-2xl font-semibold text-gray-900">{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA</div>
                             </dd>

@@ -23,8 +23,8 @@
         </div>
     </div>
 
-    <div class="mt-5 overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
-        <div class="table-scroll table-scroll--page">
+    <div class="mt-5 overflow-visible rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="overflow-visible">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -88,6 +88,10 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div class="mt-6">
+        {{ $promotions->links() }}
     </div>
 </div>
 @endsection

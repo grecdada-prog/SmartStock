@@ -11,6 +11,7 @@ class Sale extends Model
 
     protected $fillable = [
         'invoice_number',
+        'client_sale_token',
         'seller_id',
         'subtotal',
         'tax',
@@ -31,6 +32,7 @@ class Sale extends Model
         'total' => 'decimal:2',
         'amount_received' => 'decimal:2',
         'change_given' => 'decimal:2',
+        'is_service' => 'boolean'
     ];
 
     // Relations
@@ -42,6 +44,11 @@ class Sale extends Model
     public function items()
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function paymentTransactions()
+    {
+        return $this->hasMany(PaymentTransaction::class);
     }
 
     public function saleItems()

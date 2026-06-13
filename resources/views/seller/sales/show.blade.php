@@ -74,8 +74,37 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach($sale->items as $item)
+                @php($promotionDetails = $item->promotion_details)
                 <tr>
-                    <td class="px-3 py-2 text-sm text-gray-900">{{ $item->product->name ?? 'N/A' }}</td>
+                    <td class="px-3 py-2 text-sm text-gray-900">
+                        <div class="font-semibold">{{ $item->display_name }}</div>
+                        @if(($item->service_payload['token'] ?? null))
+                            <div class="text-xs text-gray-500">Token: {{ $item->service_payload['token'] }}</div>
+                        @endif
+                        @if($item->service_payload['send_sms'] ?? false)
+                            <div class="text-xs text-gray-500">
+                                SMS: {{ $item->service_payload['sms_phone'] ?? 'Oui' }}
+                                @if(($item->service_payload['sms_fee'] ?? 0) > 0)
+                                    - {{ number_format($item->service_payload['sms_fee'], 0, ',', ' ') }} FCFA
+                                @endif
+                            </div>
+                        @endif
+@if($promotionDetails)
+    <div class="mt-2 rounded-md border border-rose-100 bg-rose-50 px-2.5 py-2 text-xs text-rose-900">
+        <div class="font-extrabold text-rose-700">Promo: {{ $promotionDetails['name'] }}</div>
+        <div class="mt-1">
+            @if($promotionDetails['original_unit_price'])
+                <span>Prix normal: <span class="line-through">{{ number_format($promotionDetails['original_unit_price'], 0, ',', ' ') }} FCFA</span></span>
+            @endif
+            <span class="ml-2">Prix promo: <span class="font-bold">{{ number_format($promotionDetails['promotion_price'], 0, ',', ' ') }} FCFA</span></span>
+            <span class="ml-2">Minimum: {{ $promotionDetails['min_quantity'] }}</span>
+            @if($promotionDetails['discount_amount'] > 0)
+                <span class="ml-2">Remise: <span class="font-bold">{{ number_format($promotionDetails['discount_amount'], 0, ',', ' ') }} FCFA</span></span>
+            @endif
+        </div>
+    </div>
+@endif
+                    </td>
                     <td class="px-3 py-2 text-sm text-gray-500">{{ $item->quantity }}</td>
                     <td class="px-3 py-2 text-sm text-gray-500">{{ number_format($item->unit_price, 0, ',', ' ') }} FCFA</td>
                     <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ number_format($item->subtotal, 0, ',', ' ') }} FCFA</td>

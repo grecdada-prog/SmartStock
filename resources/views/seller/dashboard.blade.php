@@ -1,119 +1,156 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Dashboard vendeur
-        </h2>
-    </x-slot>
+@extends('seller.layouts.app')
 
-    <div class="py-4" x-data="{ showToday: false, showYesterday: false, showCash: false, showMobile: false, showCloseModal: false, closingCash: false, openingCash: false }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="smartstore-sticky-zone px-4 sm:px-0">
-                <div class="smartstore-sticky-inner">
-            <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="money-amount-row">
-                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Recette du jour</p>
-                            <x-money-eye-button state="showToday" label="la recette du jour" refresh-on-show />
+@section('title', 'Soldes')
+
+@section('content')
+<div class="px-4 sm:px-6 lg:px-8">
+    <div x-data="{ showToday: false, showCash: false, showMobile: false, showCloseModal: false, closingCash: false, openingCash: false }">
+        <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+            <div class="smartstore-sticky-inner">
+                <!-- Titre page -->
+                <div class="sm:flex sm:items-center sm:justify-between">
+                    <div class="sm:flex-auto">
+                        <h1 class="text-2xl font-semibold text-gray-900">Soldes</h1>
+                        <p class="mt-2 text-sm text-gray-700">Aperçu de vos soldes et de votre caisse</p>
+                    </div>
+                </div>
+
+                <!-- Cartes soldes -->
+                <div class="smartstore-sticky-cards grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <div class="money-amount-row">
+                                <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Recette du jour</p>
+                                <x-money-eye-button state="showToday" label="la recette du jour" refresh-on-show />
+                            </div>
+                            <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
+                            <p class="mt-2 text-sm text-gray-500">{{ number_format($stats['today_sales']) }} vente(s)</p>
                         </div>
-                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showToday ? '{{ number_format($stats['today_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                        <p class="mt-2 text-sm text-gray-500">{{ number_format($stats['today_sales']) }} vente(s)</p>
                     </div>
-                </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="money-amount-row">
-                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Recette d'hier</p>
-                            <x-money-eye-button state="showYesterday" label="la recette d'hier" refresh-on-show />
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <div class="money-amount-row">
+                                <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Caisse Cash</p>
+                                <x-money-eye-button state="showCash" label="le Caisse Cash" refresh-on-show />
+                            </div>
+                            <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showCash ? '{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showYesterday ? '{{ number_format($stats['yesterday_revenue'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                        <p class="mt-2 text-sm text-gray-500">{{ number_format($stats['yesterday_sales']) }} vente(s)</p>
                     </div>
-                </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="money-amount-row">
-                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Solde Cash</p>
-                            <x-money-eye-button state="showCash" label="le solde cash" refresh-on-show />
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <div class="money-amount-row">
+                                <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Caisse MOMO/OM</p>
+                                <x-money-eye-button state="showMobile" label="la Caisse MOMO/OM" />
+                            </div>
+                            <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showMobile ? '{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                         </div>
-                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showCash ? '{{ number_format($stats['cash_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="money-amount-row">
-                            <p class="min-w-0 flex-1 text-sm font-medium text-gray-500">Paiements mobiles</p>
-                            <x-money-eye-button state="showMobile" label="les soldes mobiles" />
-                        </div>
-                        <p class="mt-2 text-3xl font-semibold text-gray-900" x-text="showMobile ? '{{ number_format($stats['mobile_money_balance'], 0, ',', ' ') }} FCFA' : '******'"></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <a href="{{ route('seller.pos.index') }}" class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Nouvelle Vente
-                        </h3>
-                        <p class="mt-2 text-sm text-gray-500">
-                            Acceder au point de vente
-                        </p>
-                    </div>
-                </a>
-            </div>
-                </div>
-            </div>
-
-            <div class="mt-5 rounded-lg border border-red-200 bg-white p-5 shadow-sm">
-                @if(!$stats['cash_register_is_open'])
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <!-- Raccourci Point de vente -->
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <a href="{{ route('seller.pos.index') }}" class="relative group p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-rose-500 rounded-lg shadow-sm hover:shadow-md transition" style="background: linear-gradient(90deg, #fff1f2 0%, #ffe4e6 52%, #fecdd3 100%);">
                         <div>
-                            <h3 class="text-base font-semibold text-gray-900">Caisse non ouverte</h3>
-                            <p class="mt-1 text-sm text-gray-500">Les ventes sont bloquees jusqu'a votre ouverture manuelle de la caisse.</p>
+                            <h3 class="text-lg font-medium text-gray-900">
+                                <span class="absolute inset-0" aria-hidden="true"></span>
+                                Nouvelle Vente
+                            </h3>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Acceder au point de vente
+                            </p>
                         </div>
-                        <form x-ref="openForm" method="POST" action="{{ route('seller.dashboard.open-cash-register') }}">
-                            @csrf
-                            <button
-                                type="button"
-                                @click="openingCash = true; setTimeout(() => $refs.openForm.submit(), 1200)"
-                                :disabled="openingCash"
-                                class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-rose-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70 lg:w-auto"
-                            >
-                                <svg x-show="openingCash" class="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                </svg>
-                                <span x-text="openingCash ? 'Ouverture...' : 'Ouvrir la caisse'"></span>
-                            </button>
-                        </form>
-                    </div>
-                @else
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-normal text-green-700">Caisse ouverte</p>
-                            <h3 class="text-base font-semibold text-red-900">Fermeture de caisse</h3>
-                        </div>
-                        <button
-                            type="button"
-                            @click="showCloseModal = true"
-                            class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-700 lg:w-auto"
-                        >
-                            Fermer la caisse
-                        </button>
-                    </div>
-
-                    <form x-ref="closeForm" method="POST" action="{{ route('seller.dashboard.close-cash-register') }}" class="hidden">
-                        @csrf
-                    </form>
-                @endif
+                    </a>
+                    <a href="{{ route('seller.services.history') }}" class="relative group rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:border-rose-200 hover:shadow-md">
+                        <h3 class="text-lg font-medium text-gray-900">Historique services</h3>
+                        <p class="mt-2 text-sm text-gray-500">Dépôt / retrait MOMO/OM.</p>
+                    </a>
+                </div>
             </div>
         </div>
 
+        <div class="mt-5 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center justify-between gap-4">
+                <h3 class="text-base font-semibold text-gray-900">Services recents</h3>
+                <a href="{{ route('seller.services.history') }}" class="text-sm font-semibold text-rose-600 hover:text-rose-700">Voir tout</a>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Operation</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Montant</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                        @forelse($recentServiceOperations as $operation)
+                            <tr>
+                                <td class="whitespace-nowrap px-3 py-2">
+                                    <span class="rounded-full px-2 py-1 text-xs font-medium {{ $operation->type === 'add' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
+                                        {{ $operation->type === 'add' ? 'Depot' : 'Retrait' }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-2 font-semibold text-gray-900">{{ number_format($operation->amount, 0, ',', ' ') }} FCFA</td>
+                                <td class="whitespace-nowrap px-3 py-2 text-gray-600">{{ $operation->created_at->format('d/m/Y H:i') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-3 py-6 text-center text-gray-500">Aucun service recent.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Bloc fermeture / ouverture caisse -->
+        <div class="mt-5 rounded-lg border border-red-200 bg-white p-5 shadow-sm">
+            @if(!$stats['cash_register_is_open'])
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Caisse non ouverte</h3>
+                        <p class="mt-1 text-sm text-gray-500">Les ventes sont bloquees jusqu'a votre ouverture manuelle de la caisse.</p>
+                    </div>
+                    <form x-ref="openForm" method="POST" action="{{ route('seller.dashboard.open-cash-register') }}">
+                        @csrf
+                        <button
+                            type="button"
+                            @click="openingCash = true; setTimeout(() => $refs.openForm.submit(), 1200)"
+                            :disabled="openingCash"
+                            class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-rose-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rose-700 disabled:cursor-wait disabled:opacity-70 lg:w-auto"
+                        >
+                            <svg x-show="openingCash" class="-ml-1 mr-2 h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span x-text="openingCash ? 'Ouverture...' : 'Ouvrir la caisse'"></span>
+                        </button>
+                    </form>
+                </div>
+            @else
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-normal text-green-700">Caisse ouverte</p>
+                        <h3 class="text-base font-semibold text-red-900">Fermeture de caisse</h3>
+                    </div>
+                    <button
+                        type="button"
+                        @click="showCloseModal = true"
+                        class="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-700 lg:w-auto"
+                    >
+                        Fermer la caisse
+                    </button>
+                </div>
+
+                <form x-ref="closeForm" method="POST" action="{{ route('seller.dashboard.close-cash-register') }}" class="hidden">
+                    @csrf
+                </form>
+            @endif
+        </div>
+
+        <!-- Modal confirmation fermeture caisse — logique identique à l'original -->
         <div
             x-show="showCloseModal"
             x-transition.opacity
@@ -158,4 +195,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

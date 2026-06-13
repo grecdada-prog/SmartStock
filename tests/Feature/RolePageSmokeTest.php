@@ -49,6 +49,7 @@ class RolePageSmokeTest extends TestCase
             'superadmin.sellers.create',
             'superadmin.products',
             'superadmin.sales',
+            'superadmin.sales.top-products',
             'superadmin.anomalies',
             'superadmin.activity-logs',
             'superadmin.sessions.active',
@@ -99,14 +100,16 @@ class RolePageSmokeTest extends TestCase
             ['manager.products.create'],
             ['manager.products.show', $product],
             ['manager.products.edit', $product],
-            ['manager.products.low-stock'],
             ['manager.promotions.index'],
             ['manager.promotions.create'],
             ['manager.stock.index'],
             ['manager.stock.low-stock'],
+            ['manager.stock.low-stock.pdf'],
+            ['manager.stock.expiry-alerts'],
             ['manager.stock.restock'],
             ['manager.stock.movements'],
             ['manager.sales'],
+            ['manager.sales.top-products'],
             ['manager.reports.index'],
             ['manager.reports.sales'],
             ['manager.reports.activity'],
@@ -138,9 +141,11 @@ class RolePageSmokeTest extends TestCase
             ->get(route('manager.sales'))
             ->assertSee('Ventes filtrees')
             ->assertSee('Recette du jour')
-            ->assertSee("Recette d'hier", false)
-            ->assertSee('Solde Cash')
-            ->assertDontSee('Ce mois')
+            ->assertDontSee("Recette d'hier", false)
+            ->assertSee('Panier moyen')
+            ->assertSee('Top produits')
+            ->assertSee('Produit')
+            ->assertSee('Ce mois')
             ->assertDontSee('CA total');
     }
 
@@ -175,6 +180,8 @@ class RolePageSmokeTest extends TestCase
 
         $this->actingAs($seller)
             ->get(route('seller.pos.index'))
+            ->assertSee('<style>[x-cloak]{display:none!important}</style>', false)
+            ->assertSee('x-data="posSystem()" x-cloak', false)
             ->assertSee('Montant recu insuffisant')
             ->assertSee('Indisponible');
     }

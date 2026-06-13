@@ -8,7 +8,6 @@ use App\Models\Product;
 use App\Models\ProductPromotion;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class ProductPromotionController extends Controller
 {
@@ -17,17 +16,23 @@ class ProductPromotionController extends Controller
         $promotions = ProductPromotion::with(['product.category'])
             ->where('manager_id', auth()->id())
             ->latest()
-            ->get();
+            ->paginate(15)->withQueryString();
 
         return view('manager.promotions.index', compact('promotions'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $productId = $request->integer('product_id');
+        $selectedProductId = $productId && Product::where('created_by', auth()->id())->whereKey($productId)->exists()
+            ? $productId
+            : null;
+
         return view('manager.promotions.create', [
-            'products' => $this->promotionProducts(),
+            'products' => $this->promotionProducts($selectedProductId),
             'promotion' => new ProductPromotion([
-                'min_quantity' => 2,
+                'product_id' => $selectedProductId,
+                'min_quantity' => 1,
                 'status' => ProductPromotion::STATUS_ACTIVE,
             ]),
         ]);
@@ -37,12 +42,6 @@ class ProductPromotionController extends Controller
     {
         $validated = $this->validatedPromotionData($request);
         $product = $this->managerProduct((int) $validated['product_id']);
-
-        $this->ensurePromotionPriceIsBelowCurrentPrice($product, (float) $validated['promotion_price']);
-
-        if (($validated['status'] ?? ProductPromotion::STATUS_ACTIVE) === ProductPromotion::STATUS_ACTIVE) {
-            $this->suspendOtherActivePromotions($product->id);
-        }
 
         $promotion = ProductPromotion::create([
             ...$validated,
@@ -67,7 +66,7 @@ class ProductPromotionController extends Controller
 
         return view('manager.promotions.edit', [
             'promotion' => $promotion->load('product.stockMovements'),
-            'products' => $this->promotionProducts(),
+            'products' => $this->promotionProducts($promotion->product_id),
         ]);
     }
 
@@ -77,12 +76,6 @@ class ProductPromotionController extends Controller
 
         $validated = $this->validatedPromotionData($request, $promotion);
         $product = $this->managerProduct((int) $validated['product_id']);
-
-        $this->ensurePromotionPriceIsBelowCurrentPrice($product, (float) $validated['promotion_price']);
-
-        if (($validated['status'] ?? $promotion->status) === ProductPromotion::STATUS_ACTIVE) {
-            $this->suspendOtherActivePromotions($product->id, $promotion->id);
-        }
 
         $promotion->update([
             ...$validated,
@@ -100,7 +93,7 @@ class ProductPromotionController extends Controller
             ->with('success', 'Promotion mise a jour avec succes.');
     }
 
-    public function destroy(ProductPromotion $promotion)
+    public function destroy(Request $request, ProductPromotion $promotion)
     {
         $this->authorizeManagerPromotion($promotion);
 
@@ -113,6 +106,13 @@ class ProductPromotionController extends Controller
             'ProductPromotion'
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Promotion supprimee avec succes.',
+            ]);
+        }
+
         return redirect()->route('manager.promotions.index')
             ->with('success', 'Promotion supprimee avec succes.');
     }
@@ -124,10 +124,6 @@ class ProductPromotionController extends Controller
         $newStatus = $promotion->isActive()
             ? ProductPromotion::STATUS_SUSPENDED
             : ProductPromotion::STATUS_ACTIVE;
-
-        if ($newStatus === ProductPromotion::STATUS_ACTIVE) {
-            $this->suspendOtherActivePromotions($promotion->product_id, $promotion->id);
-        }
 
         $promotion->update(['status' => $newStatus]);
 
@@ -142,27 +138,36 @@ class ProductPromotionController extends Controller
             'product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('created_by', auth()->id())],
             'name' => ['required', 'string', 'max:255'],
             'promotion_price' => ['required', 'numeric', 'min:1'],
-            'min_quantity' => ['required', 'integer', 'min:2'],
+            'min_quantity' => ['required', 'integer', 'min:1'],
             'status' => ['required', Rule::in([ProductPromotion::STATUS_ACTIVE, ProductPromotion::STATUS_SUSPENDED])],
         ], [
             'product_id.required' => 'Choisissez un produit.',
             'product_id.exists' => 'Produit introuvable pour ce gerant.',
             'promotion_price.min' => 'Le prix promotionnel doit etre superieur a 0.',
-            'min_quantity.min' => 'La promotion doit commencer a partir de 2 articles.',
+            'min_quantity.min' => 'La promotion doit commencer a partir de 1 article.',
         ]);
     }
 
-    private function promotionProducts()
+    private function promotionProducts(?int $selectedProductId = null)
     {
+        if (! $selectedProductId) {
+            return collect();
+        }
+
         return Product::with([
             'category',
+            'promotions' => fn ($query) => $query
+                ->where('manager_id', auth()->id())
+                ->orderBy('min_quantity')
+                ->orderBy('created_at')
+                ->orderBy('id'),
             'stockMovements' => fn ($query) => $query
-                ->where('type', 'in')
-                ->where('remaining_quantity', '>', 0)
+                ->sellableBatches()
                 ->orderBy('created_at')
                 ->orderBy('id'),
         ])
             ->where('created_by', auth()->id())
+            ->whereKey($selectedProductId)
             ->orderBy('name')
             ->get();
     }
@@ -170,9 +175,13 @@ class ProductPromotionController extends Controller
     private function managerProduct(int $productId): Product
     {
         return Product::with([
+            'promotions' => fn ($query) => $query
+                ->where('manager_id', auth()->id())
+                ->orderBy('min_quantity')
+                ->orderBy('created_at')
+                ->orderBy('id'),
             'stockMovements' => fn ($query) => $query
-                ->where('type', 'in')
-                ->where('remaining_quantity', '>', 0)
+                ->sellableBatches()
                 ->orderBy('created_at')
                 ->orderBy('id'),
         ])
@@ -185,30 +194,4 @@ class ProductPromotionController extends Controller
         abort_unless($promotion->manager_id === auth()->id(), 403);
     }
 
-    private function suspendOtherActivePromotions(int $productId, ?int $exceptId = null): void
-    {
-        ProductPromotion::where('manager_id', auth()->id())
-            ->where('product_id', $productId)
-            ->where('status', ProductPromotion::STATUS_ACTIVE)
-            ->when($exceptId, fn ($query) => $query->where('id', '!=', $exceptId))
-            ->update(['status' => ProductPromotion::STATUS_SUSPENDED]);
-    }
-
-    private function ensurePromotionPriceIsBelowCurrentPrice(Product $product, float $promotionPrice): void
-    {
-        $currentPrices = $product->stockMovements
-            ->pluck('selling_price')
-            ->filter(fn ($price) => $price !== null && (float) $price > 0)
-            ->map(fn ($price) => (float) $price);
-
-        if ($currentPrices->isEmpty() && (float) $product->selling_price > 0) {
-            $currentPrices->push((float) $product->selling_price);
-        }
-
-        if ($currentPrices->isNotEmpty() && $promotionPrice >= $currentPrices->max()) {
-            throw ValidationException::withMessages([
-                'promotion_price' => 'Le prix promotionnel doit etre inferieur au prix de vente actuel.',
-            ]);
-        }
-    }
 }

@@ -9,6 +9,11 @@ class StockMovement extends Model
 {
     use HasFactory;
 
+    public const TYPE_IN = 'in';
+    public const TYPE_OUT = 'out';
+    public const TYPE_ADJUSTMENT = 'adjustment';
+    public const TYPE_CORRECTION_CANCELLATION = 'correction_cancellation';
+
     protected $fillable = [
         'product_id',
         'type',
@@ -19,6 +24,8 @@ class StockMovement extends Model
         'selling_price',
         'remaining_quantity',
         'batch_code',
+        'is_perishable',
+        'expiration_date',
         'reference',
         'reason',
         'user_id',
@@ -31,6 +38,8 @@ class StockMovement extends Model
         'purchase_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'remaining_quantity' => 'integer',
+        'is_perishable' => 'boolean',
+        'expiration_date' => 'date',
     ];
 
     // Relations
@@ -47,16 +56,23 @@ class StockMovement extends Model
     // Scopes
     public function scopeIn($query)
     {
-        return $query->where('type', 'in');
+        return $query->where('type', self::TYPE_IN);
     }
 
     public function scopeOut($query)
     {
-        return $query->where('type', 'out');
+        return $query->where('type', self::TYPE_OUT);
     }
 
     public function scopeAdjustment($query)
     {
-        return $query->where('type', 'adjustment');
+        return $query->where('type', self::TYPE_ADJUSTMENT);
+    }
+
+    public function scopeSellableBatches($query)
+    {
+        return $query
+            ->whereIn('type', [self::TYPE_IN, self::TYPE_CORRECTION_CANCELLATION])
+            ->where('remaining_quantity', '>', 0);
     }
 }

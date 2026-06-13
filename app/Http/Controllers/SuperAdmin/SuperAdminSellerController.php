@@ -10,6 +10,7 @@ use App\Notifications\Enable2FANotification;
 use App\Notifications\UserCreatedNotification;
 use App\Services\CashRegisterService;
 use App\Services\PasswordSetupLinkService;
+use App\Services\UserDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class SuperAdminSellerController extends Controller
             });
         }
 
-        $sellers = $query->latest()->get();
+        $sellers = $query->latest()->paginate(15)->withQueryString();
         $closedCashRegisterSellerIds = CashRegisterClosure::whereIn('seller_id', $sellers->pluck('id'))
             ->whereNull('opened_at')
             ->whereDate('business_date', today())
@@ -346,7 +347,7 @@ class SuperAdminSellerController extends Controller
             $user->id
         );
 
-        $user->delete();
+        app(UserDeletionService::class)->delete($user);
 
         return redirect()->route('superadmin.sellers.index')
             ->with('success', 'Vendeur supprime.');

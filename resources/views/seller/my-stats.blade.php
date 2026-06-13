@@ -116,7 +116,7 @@
                     <span class="text-sm font-medium">{{ \App\Models\Sale::where('seller_id', auth()->id())->where('payment_method', 'cash')->count() }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Paiements mobiles</span>
+                    <span class="text-sm text-gray-600">Caisse MOMO/OM</span>
                     <span class="text-sm font-medium">{{ \App\Models\Sale::where('seller_id', auth()->id())->whereIn('payment_method', ['card', 'mobile_money'])->count() }}</span>
                 </div>
             </div>

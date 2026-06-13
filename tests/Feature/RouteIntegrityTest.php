@@ -7,6 +7,7 @@ use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\PreventDirectAccess;
 use App\Http\Middleware\SingleSessionMiddleware;
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
@@ -25,6 +26,7 @@ class RouteIntegrityTest extends TestCase
             SingleSessionMiddleware::class,
             CheckInactivity::class,
             CheckUserActive::class,
+            ValidateCsrfToken::class,
         ]);
     }
 
@@ -50,6 +52,17 @@ class RouteIntegrityTest extends TestCase
     public function test_super_admin_force_logout_route_is_named(): void
     {
         $this->assertTrue(Route::has('superadmin.users.force-logout'));
+    }
+
+    public function test_seller_token_recent_check_route_is_registered_once(): void
+    {
+        $namedRoutes = collect(Route::getRoutes()->getRoutesByName());
+        $matchingUris = collect(Route::getRoutes())
+            ->filter(fn ($route) => in_array('seller/tokens/check-recent', $route->methods(), true) || $route->uri() === 'seller/tokens/check-recent');
+
+        $this->assertTrue(Route::has('seller.tokens.check-recent'));
+        $this->assertSame(1, $namedRoutes->keys()->filter(fn ($name) => $name === 'seller.tokens.check-recent')->count());
+        $this->assertSame(1, $matchingUris->count());
     }
 
     public function test_seller_cannot_update_own_password_from_custom_profile(): void

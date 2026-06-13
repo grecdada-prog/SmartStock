@@ -136,6 +136,53 @@ function modalTitleFor(url) {
     return 'Modification';
 }
 
+function showModalToast(message, type = 'success') {
+    const tone = type === 'error'
+        ? { border: 'border-red-300', icon: 'text-red-600' }
+        : { border: 'border-rose-300', icon: 'text-rose-600' };
+    const persistent = type === 'error';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pointer-events-none fixed left-1/2 top-3 z-[9999] flex w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 flex-col gap-3';
+    wrapper.innerHTML = `
+        <div class="pointer-events-auto rounded-md border bg-white px-4 py-3 text-gray-900 shadow-lg ${tone.border}" role="alert">
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 shrink-0 ${tone.icon}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm leading-5"></p>
+                </div>
+                <button type="button" class="-mr-1 -mt-1 rounded-md p-1.5 text-gray-400 hover:text-gray-700 focus:outline-none" aria-label="Fermer le message">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+
+    wrapper.querySelector('p').textContent = message;
+    wrapper.querySelector('button').addEventListener('click', () => wrapper.remove());
+    document.body.appendChild(wrapper);
+
+    if (persistent) {
+        const closeOnOutsideClick = (event) => {
+            if (!wrapper.contains(event.target)) {
+                wrapper.remove();
+                document.removeEventListener('click', closeOnOutsideClick);
+            }
+        };
+
+        window.setTimeout(() => {
+            document.addEventListener('click', closeOnOutsideClick);
+        }, 0);
+    } else {
+        window.setTimeout(() => wrapper.remove(), 5000);
+    }
+}
+
 function initModalLinks() {
     const modal = document.getElementById('smartstore-link-modal') || createModal();
     const title = modal.querySelector('#smartstore-link-modal-title');
@@ -227,6 +274,16 @@ function initModalLinks() {
         if (event.detail?.url) {
             open(event.detail.url, event.detail.title || null, Boolean(event.detail.force));
         }
+    });
+
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin || event.data?.type !== 'smartstore:modal-success') {
+            return;
+        }
+
+        close(false);
+        showModalToast(event.data.message || 'Operation reussie.');
+        window.dispatchEvent(new CustomEvent('smartstore:refresh-now', { detail: { force: true } }));
     });
 }
 

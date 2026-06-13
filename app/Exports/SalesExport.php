@@ -79,7 +79,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             [],
             ['', 'Genere le', now()->format('d/m/Y H:i'), 'Periode', $this->dateFrom || $this->dateTo ? (($this->dateFrom ?? '...') . ' - ' . ($this->dateTo ?? '...')) : 'Toutes'],
             [],
-            ['', 'Ventes', 'Montant total', 'Especes', 'Paiements mobiles', 'Articles'],
+            ['', 'Ventes', 'Montant total', 'Especes', 'Caisse MOMO/OM', 'Articles'],
             ['', $sales->count(), number_format($total, 0, ',', ' ') . ' FCFA', number_format($cashTotal, 0, ',', ' ') . ' FCFA', number_format($mobileTotal, 0, ',', ' ') . ' FCFA', $itemsCount],
             [],
             [],

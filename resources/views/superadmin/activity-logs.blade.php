@@ -53,7 +53,7 @@
     </div>
 
     <!-- Liste des logs -->
-    <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-md">
+    <div class="mt-8 bg-white shadow overflow-visible sm:rounded-md">
         <ul class="divide-y divide-gray-200">
             @forelse($logs as $log)
                 <li class="px-6 py-4">
@@ -97,6 +97,7 @@
     </div>
 
     <div class="mt-6">
+        {{ $logs->links() }}
     </div>
 </div>
 @endsection

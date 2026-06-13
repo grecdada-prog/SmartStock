@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @unless(request()->boolean('modal'))
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="smartstore-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
+        <meta name="smartstore-session-timeout" content="900">
         <meta name="smartstore-logout-url" content="{{ route('logout') }}">
         <meta name="smartstore-login-url" content="{{ route('login') }}">
     @endunless
     <title>@yield('title', 'Dashboard') - SmartStore</title>
     <x-favicon />
+    <style>[x-cloak]{display:none!important}</style>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -46,11 +47,11 @@
                             <x-nav-link href="{{ route('manager.products.index') }}" :active="request()->routeIs('manager.products.*')">
                                 Produits
                             </x-nav-link>
-                            <x-nav-link href="{{ route('manager.promotions.index') }}" :active="request()->routeIs('manager.promotions.*')">
-                                Promotions
-                            </x-nav-link>
                             <x-nav-link href="{{ route('manager.stock.index') }}" :active="request()->routeIs('manager.stock.*')">
                                 Stock
+                            </x-nav-link>
+                            <x-nav-link href="{{ route('manager.ai-assistant.index') }}" :active="request()->routeIs('manager.ai-assistant.*')">
+                                Assistant IA
                             </x-nav-link>
                             <x-nav-link href="{{ route('manager.sales') }}" :active="request()->routeIs('manager.sales*')">
                                 Ventes
@@ -128,11 +129,11 @@
                     <x-responsive-nav-link href="{{ route('manager.products.index') }}" :active="request()->routeIs('manager.products.*')">
                         Produits
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link href="{{ route('manager.promotions.index') }}" :active="request()->routeIs('manager.promotions.*')">
-                        Promotions
-                    </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('manager.stock.index') }}" :active="request()->routeIs('manager.stock.*')">
                         Stock
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link href="{{ route('manager.ai-assistant.index') }}" :active="request()->routeIs('manager.ai-assistant.*')">
+                        Assistant IA
                     </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('manager.sales') }}" :active="request()->routeIs('manager.sales*')">
                         Ventes
@@ -181,43 +182,5 @@
             <x-dashboard-footer />
         @endunless
     </div>
-    <script>
-        window.SmartStoreAutoFilters = window.SmartStoreAutoFilters || {
-            debounce(callback, delay = 450) {
-                let timeoutId;
-
-                return (...args) => {
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => callback(...args), delay);
-                };
-            },
-
-            init(root = document) {
-                root.querySelectorAll('form[data-auto-filter]:not([data-auto-filter-ready])').forEach((form) => {
-                    form.dataset.autoFilterReady = 'true';
-
-                    const submit = this.debounce(() => {
-                        form.setAttribute('aria-busy', 'true');
-                        form.dataset.filtering = 'true';
-                        form.classList.add('opacity-60');
-
-                        if (typeof form.requestSubmit === 'function') {
-                            form.requestSubmit();
-                        } else {
-                            form.submit();
-                        }
-                    }, Number(form.dataset.autoFilterDelay || 450));
-
-                    form.querySelectorAll('input, select, textarea').forEach((field) => {
-                        const eventName = field.tagName === 'SELECT' || field.type === 'date' ? 'change' : 'input';
-                        field.addEventListener(eventName, submit);
-                    });
-                });
-            },
-        };
-
-        document.addEventListener('DOMContentLoaded', () => window.SmartStoreAutoFilters.init());
-        window.addEventListener('pageshow', () => window.SmartStoreAutoFilters.init());
-    </script>
 </body>
 </html>

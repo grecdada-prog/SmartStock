@@ -5,9 +5,11 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Product;
 use App\Models\ActivityLog;
 use App\Services\SessionManager;
 use App\Services\PasswordSetupLinkService;
+use App\Services\UserDeletionService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
@@ -28,7 +30,20 @@ class SuperAdminUserController extends Controller
     public function index(Request $request)
     {
         $query = User::with(['roles', 'creator'])
-            ->withCount(['sales', 'activityLogs']);
+            ->withCount(['sales', 'activityLogs'])
+            ->select('users.*')
+            ->selectSub(
+                Product::query()
+                    ->selectRaw('COALESCE(SUM(quantity * purchase_price), 0)')
+                    ->whereColumn('products.created_by', 'users.id'),
+                'stock_value'
+            );
+        $roleCounts = [
+            'all' => User::count(),
+            'super_admin' => User::role('super_admin')->count(),
+            'manager' => User::role('manager')->count(),
+            'seller' => User::role('seller')->count(),
+        ];
 
         // Filtres
         if ($request->filled('role')) {
@@ -46,9 +61,9 @@ class SuperAdminUserController extends Controller
             });
         }
 
-        $users = $query->latest()->get();
+        $users = $query->latest()->paginate(15)->withQueryString();
 
-        return view('superadmin.users.index', compact('users'));
+        return view('superadmin.users.index', compact('users', 'roleCounts'));
     }
 
     /**
@@ -71,7 +86,7 @@ class SuperAdminUserController extends Controller
             });
         }
 
-        $managers = $query->latest()->get();
+        $managers = $query->latest()->paginate(15)->withQueryString();
 
         return view('superadmin.users.managers', compact('managers'));
     }
@@ -97,7 +112,7 @@ class SuperAdminUserController extends Controller
             });
         }
 
-        $sellers = $query->latest()->get();
+        $sellers = $query->latest()->paginate(15)->withQueryString();
 
         return view('superadmin.users.sellers', compact('sellers'));
     }
@@ -111,8 +126,9 @@ class SuperAdminUserController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+        $selectedRole = request('role');
 
-        return view('superadmin.users.create', compact('managers'));
+        return view('superadmin.users.create', compact('managers', 'selectedRole'));
     }
 
     /**
@@ -300,7 +316,7 @@ public function destroy(User $user)
         $user->id
     );
 
-    $user->delete();
+    app(UserDeletionService::class)->delete($user);
 
     return redirect()->route('superadmin.users.index')
         ->with('success', "L'utilisateur {$userName} a été supprimé avec succès !");

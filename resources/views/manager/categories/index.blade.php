@@ -44,23 +44,31 @@
     <div class="mt-6 flex flex-col">
         <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-300">
+                <div class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                    <table class="min-w-[980px] table-fixed divide-y divide-gray-300">
+                        <colgroup>
+                            <col class="w-[250px]">
+                            <col>
+                            <col class="w-[130px]">
+                            <col class="w-[120px]">
+                            <col class="w-[130px]">
+                        </colgroup>
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Catégorie</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Produits</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Statut</th>
-                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                <th scope="col" class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Produits</th>
+                                <th scope="col" class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Statut</th>
+                                <th scope="col" class="relative py-3.5 pl-3 pr-4 text-center sm:pr-6">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
                             @forelse($categories as $category)
+                                @php($isManagerCategory = (int) $category->created_by === (int) auth()->id())
                                 <tr>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                                    <td class="py-4 pl-4 pr-3 text-sm sm:pl-6">
                                         <div class="flex items-center">
                                             <div class="h-10 w-10 flex-shrink-0">
                                                 <div class="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center">
@@ -69,32 +77,32 @@
                                                     </svg>
                                                 </div>
                                             </div>
-                                            <div class="ml-4">
-                                                <div class="font-medium text-gray-900">{{ $category->name }}</div>
+                                            <div class="ml-4 min-w-0">
+                                                <div class="line-clamp-2 font-medium leading-5 text-gray-900">{{ $category->name }}</div>
                                                 <div class="text-gray-500 text-xs">Créée le {{ $category->created_at->format('d/m/Y') }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-3 py-4 text-sm text-gray-500">
-                                        <div class="max-w-xs truncate">
+                                        <div class="truncate">
                                             {{ $category->description ?? 'Aucune description' }}
                                         </div>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <td class="px-3 py-4 text-center text-sm text-gray-500">
+                                        <span class="inline-flex min-w-[92px] items-center justify-center whitespace-nowrap rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
                                             {{ $category->products_count }} produit(s)
                                         </span>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <td class="px-3 py-4 text-center text-sm">
                                         @if($category->is_active)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                            <span class="inline-flex min-w-[74px] items-center justify-center whitespace-nowrap rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-800">
                                                 <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-rose-400" fill="currentColor" viewBox="0 0 8 8">
                                                     <circle cx="4" cy="4" r="3" />
                                                 </svg>
                                                 Actif
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="inline-flex min-w-[74px] items-center justify-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">
                                                 <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8">
                                                     <circle cx="4" cy="4" r="3" />
                                                 </svg>
@@ -102,7 +110,8 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                    <td class="relative py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">
+                                        @if($isManagerCategory)
                                         <x-action-menu>
                                             <a href="{{ route('manager.categories.edit', $category) }}" class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none">
                                                 Modifier
@@ -127,6 +136,11 @@
                                                 </form>
                                             </div>
                                         </x-action-menu>
+                                        @else
+                                            <span class="inline-flex min-w-[88px] items-center justify-center whitespace-nowrap rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                                                Systeme
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -145,6 +159,7 @@
     </div>
 
     <div class="mt-6">
+        {{ $categories->links() }}
     </div>
 </div>
 

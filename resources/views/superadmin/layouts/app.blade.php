@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @unless(request()->boolean('modal'))
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="smartstore-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
+        <meta name="smartstore-session-timeout" content="900">
         <meta name="smartstore-logout-url" content="{{ route('logout') }}">
         <meta name="smartstore-login-url" content="{{ route('login') }}">
     @endunless
@@ -39,12 +39,6 @@
                             </x-nav-link>
                             <x-nav-link href="{{ route('superadmin.users.index') }}" :active="request()->routeIs('superadmin.users.*')">
                                 Utilisateurs
-                            </x-nav-link>
-                            <x-nav-link href="{{ route('superadmin.managers.index') }}" :active="request()->routeIs('superadmin.managers.*')">
-                                Gérants
-                            </x-nav-link>
-                            <x-nav-link href="{{ route('superadmin.sellers.index') }}" :active="request()->routeIs('superadmin.sellers.*')">
-                                Vendeurs
                             </x-nav-link>
                             <x-nav-link href="{{ route('superadmin.products') }}" :active="request()->routeIs('superadmin.products')">
                                 Produits
@@ -135,12 +129,6 @@
                     <x-responsive-nav-link href="{{ route('superadmin.users.index') }}" :active="request()->routeIs('superadmin.users.*')">
                         Utilisateurs
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link href="{{ route('superadmin.managers.index') }}" :active="request()->routeIs('superadmin.managers.*')">
-                        Gérants
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link href="{{ route('superadmin.sellers.index') }}" :active="request()->routeIs('superadmin.sellers.*')">
-                        Vendeurs
-                    </x-responsive-nav-link>
                     <x-responsive-nav-link href="{{ route('superadmin.products') }}" :active="request()->routeIs('superadmin.products')">
                         Produits
                     </x-responsive-nav-link>
@@ -201,43 +189,5 @@
             <x-dashboard-footer />
         @endunless
     </div>
-    <script>
-        window.SmartStoreAutoFilters = window.SmartStoreAutoFilters || {
-            debounce(callback, delay = 450) {
-                let timeoutId;
-
-                return (...args) => {
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => callback(...args), delay);
-                };
-            },
-
-            init(root = document) {
-                root.querySelectorAll('form[data-auto-filter]:not([data-auto-filter-ready])').forEach((form) => {
-                    form.dataset.autoFilterReady = 'true';
-
-                    const submit = this.debounce(() => {
-                        form.setAttribute('aria-busy', 'true');
-                        form.dataset.filtering = 'true';
-                        form.classList.add('opacity-60');
-
-                        if (typeof form.requestSubmit === 'function') {
-                            form.requestSubmit();
-                        } else {
-                            form.submit();
-                        }
-                    }, Number(form.dataset.autoFilterDelay || 450));
-
-                    form.querySelectorAll('input, select, textarea').forEach((field) => {
-                        const eventName = field.tagName === 'SELECT' || field.type === 'date' ? 'change' : 'input';
-                        field.addEventListener(eventName, submit);
-                    });
-                });
-            },
-        };
-
-        document.addEventListener('DOMContentLoaded', () => window.SmartStoreAutoFilters.init());
-        window.addEventListener('pageshow', () => window.SmartStoreAutoFilters.init());
-    </script>
 </body>
 </html>

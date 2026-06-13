@@ -22,6 +22,7 @@ class Product extends Model
         'alert_quantity',
         'unit',
         'is_active',
+        'is_direct_restock_eligible',
         'created_by',
     ];
 
@@ -31,6 +32,7 @@ class Product extends Model
         'quantity' => 'integer',
         'alert_quantity' => 'integer',
         'is_active' => 'boolean',
+        'is_direct_restock_eligible' => 'boolean',
     ];
 
     // Relations
@@ -61,9 +63,26 @@ class Product extends Model
             ->latestOfMany();
     }
 
+    public function activePromotions()
+    {
+        return $this->hasMany(ProductPromotion::class)
+            ->where('status', ProductPromotion::STATUS_ACTIVE)
+            ->orderBy('min_quantity')
+            ->orderBy('created_at')
+            ->orderBy('id');
+    }
+
     public function stockMovements()
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public function latestPurchaseMovement()
+    {
+        return $this->hasOne(StockMovement::class)
+            ->where('type', 'in')
+            ->whereNotNull('purchase_price')
+            ->latestOfMany();
     }
 
     // Scopes

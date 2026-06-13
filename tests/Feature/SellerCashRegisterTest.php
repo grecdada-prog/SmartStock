@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\CashRegisterClosure;
+use App\Models\CashBalanceAdjustment;
 use App\Models\Sale;
 use App\Models\User;
+use App\Services\CashRegisterService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Carbon;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -74,7 +77,7 @@ class SellerCashRegisterTest extends TestCase
         $this->assertSame(1, CashRegisterClosure::where('seller_id', $seller->id)->count());
     }
 
-    public function test_closed_cash_register_resets_today_revenue_and_can_be_reopened(): void
+    public function test_closed_cash_register_keeps_today_revenue_visible_and_can_be_reopened(): void
     {
         $seller = $this->createSellerWithManager();
         $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
@@ -85,9 +88,9 @@ class SellerCashRegisterTest extends TestCase
         $response = $this->actingAs($seller)->get(route('seller.dashboard'));
 
         $response->assertOk()
-            ->assertSee('0 FCFA')
+            ->assertSee("showToday ? '5 000 FCFA' : '******'", false)
             ->assertSee('Ouvrir la caisse')
-            ->assertSee('Solde Cash');
+            ->assertSee('Caisse Cash');
 
         $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
 
@@ -113,6 +116,42 @@ class SellerCashRegisterTest extends TestCase
         ]);
     }
 
+    public function test_midnight_schedule_closes_previous_day_and_seller_can_open_next_morning(): void
+    {
+        $seller = $this->createSellerWithManager();
+
+        $this->travelTo(Carbon::parse('2026-05-24 09:00:00', 'Africa/Douala'));
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
+        $this->createSale($seller, 7000, 'cash', now());
+
+        $this->travelTo(Carbon::parse('2026-05-25 00:00:00', 'Africa/Douala'));
+        $this->artisan('cash-registers:close-daily --yesterday')->assertSuccessful();
+
+        $closure = CashRegisterClosure::where('seller_id', $seller->id)
+            ->whereDate('business_date', '2026-05-24')
+            ->firstOrFail();
+
+        $this->assertSame(7000.0, (float) $closure->amount);
+        $this->assertSame('automatic', $closure->closed_by);
+        $this->assertNull($closure->opened_at);
+
+        $this->travelTo(Carbon::parse('2026-05-25 08:00:00', 'Africa/Douala'));
+
+        $this->actingAs($seller)
+            ->get(route('seller.dashboard'))
+            ->assertOk()
+            ->assertSee('Ouvrir la caisse')
+            ->assertSee('Caisse non ouverte');
+
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
+
+        $this->actingAs($seller)
+            ->get(route('seller.dashboard'))
+            ->assertOk()
+            ->assertSee('Caisse ouverte')
+            ->assertSee('Fermer la caisse');
+    }
+
     public function test_daily_command_does_not_create_closure_for_unopened_cash_registers(): void
     {
         $seller = $this->createSellerWithManager();
@@ -134,6 +173,8 @@ class SellerCashRegisterTest extends TestCase
         $this->createSale($seller, 5000, 'cash', now());
         $this->createSale($seller, 2500, 'mobile_money', now());
         $this->createSale($seller, 1000, 'card', now());
+
+        $this->assertSame(5000.0, app(\App\Services\CashRegisterService::class)->balanceForSeller($seller));
 
         $this->actingAs($seller)->post(route('seller.dashboard.close-cash-register'));
 
@@ -159,9 +200,10 @@ class SellerCashRegisterTest extends TestCase
         $this->createSale($seller, 2000, 'card', now());
         $this->createSale($seller, 3000, 'mobile_money', now());
 
-        $this->assertSame(0.0, $cashRegisterService->orangeMoneyBalanceForSeller($seller));
-        $this->assertSame(0.0, $cashRegisterService->mtnMomoBalanceForSeller($seller));
-        $this->assertSame(0.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->balanceForSeller($seller));
+        $this->assertSame(2000.0, $cashRegisterService->orangeMoneyBalanceForSeller($seller));
+        $this->assertSame(3000.0, $cashRegisterService->mtnMomoBalanceForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
 
         $this->actingAs($seller)->post(route('seller.dashboard.close-cash-register'));
 
@@ -175,6 +217,52 @@ class SellerCashRegisterTest extends TestCase
             ->assertOk()
             ->assertSee("showCash ? '5 000 FCFA' : '******'", false)
             ->assertSee("showMobile ? '5 000 FCFA' : '******'", false);
+    }
+
+    public function test_current_day_revenue_includes_mobile_payments_and_closure_separates_balances(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $manager = User::findOrFail($seller->created_by);
+        $superAdmin = User::factory()->create(['is_active' => true]);
+        $superAdmin->assignRole('super_admin');
+        $cashRegisterService = app(\App\Services\CashRegisterService::class);
+
+        $this->actingAs($seller)->post(route('seller.dashboard.open-cash-register'));
+        $this->createSale($seller, 5000, 'cash', now());
+        $this->createSale($seller, 2000, 'card', now());
+        $this->createSale($seller, 3000, 'mobile_money', now());
+
+        $this->assertSame(10000.0, $cashRegisterService->currentDayRevenueForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->currentDayCashRevenueForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->balanceForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+
+        $this->actingAs($seller)
+            ->get(route('seller.dashboard'))
+            ->assertOk()
+            ->assertSee("showToday ? '10 000 FCFA' : '******'", false);
+
+        $this->actingAs($manager)
+            ->get(route('manager.dashboard'))
+            ->assertOk()
+            ->assertSee("showToday ? '10 000 FCFA' : '******'", false);
+
+        $this->actingAs($superAdmin)
+            ->get(route('superadmin.dashboard'))
+            ->assertOk()
+            ->assertSee('10 000 FCFA');
+
+        $this->actingAs($seller)->post(route('seller.dashboard.close-cash-register'));
+
+        $this->assertSame(10000.0, $cashRegisterService->currentDayRevenueForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->currentDayCashRevenueForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->balanceForSeller($seller));
+        $this->assertSame(5000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+
+        $this->assertDatabaseHas('cash_register_closures', [
+            'seller_id' => $seller->id,
+            'amount' => 5000,
+        ]);
     }
 
     public function test_balances_remain_visible_after_reopening_cash_register(): void
@@ -196,61 +284,31 @@ class SellerCashRegisterTest extends TestCase
         $this->assertSame(5000.0, $cashRegisterService->balanceForSeller($seller));
         $this->assertSame(3000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
 
+        $this->createSale($seller, 2000, 'cash', now());
+        $this->createSale($seller, 1000, 'mobile_money', now());
+
+        $this->assertSame(7000.0, $cashRegisterService->balanceForSeller($seller));
+        $this->assertSame(4000.0, $cashRegisterService->mobileMoneyBalanceForSeller($seller));
+
         $this->actingAs($seller)
             ->get(route('seller.dashboard'))
             ->assertOk()
-            ->assertSee("showCash ? '5 000 FCFA' : '******'", false)
-            ->assertSee("showMobile ? '3 000 FCFA' : '******'", false);
+            ->assertSee("showCash ? '7 000 FCFA' : '******'", false)
+            ->assertSee("showMobile ? '4 000 FCFA' : '******'", false);
 
         $this->actingAs($manager)
             ->get(route('manager.dashboard'))
             ->assertOk()
-            ->assertSee("showCash ? '5 000 FCFA' : '******'", false)
-            ->assertSee("showMobile ? '3 000 FCFA' : '******'", false);
+            ->assertSee("showCash ? '7 000 FCFA' : '******'", false)
+            ->assertSee("showMobile ? '4 000 FCFA' : '******'", false);
 
         $this->actingAs($manager)
             ->get(route('manager.sellers.index'))
             ->assertOk()
-            ->assertSee('Total Solde Cash')
-            ->assertSee('Total Paiements mobiles')
-            ->assertSee('5 000 FCFA')
-            ->assertSee('3 000 FCFA');
-    }
-
-    public function test_yesterday_revenue_includes_all_payment_methods_on_dashboards(): void
-    {
-        $seller = $this->createSellerWithManager();
-        $manager = User::findOrFail($seller->created_by);
-        $cashRegisterService = app(\App\Services\CashRegisterService::class);
-
-        $this->createSale($seller, 5000, 'cash', now()->subDay());
-        $this->createSale($seller, 3000, 'mobile_money', now()->subDay());
-        $this->createSale($seller, 2000, 'card', now()->subDay());
-
-        CashRegisterClosure::create([
-            'seller_id' => $seller->id,
-            'business_date' => today()->subDay(),
-            'amount' => 5000,
-            'closed_by' => 'manual',
-            'closed_at' => now()->subDay()->endOfDay(),
-        ]);
-
-        $this->assertSame(10000.0, $cashRegisterService->previousDayRevenueForSeller($seller));
-
-        $this->actingAs($seller)
-            ->get(route('seller.dashboard'))
-            ->assertOk()
-            ->assertSee("showYesterday ? '10 000 FCFA' : '******'", false);
-
-        $this->actingAs($manager)
-            ->get(route('manager.dashboard'))
-            ->assertOk()
-            ->assertSee("showYesterday ? '10 000 FCFA' : '******'", false);
-
-        $this->actingAs($manager)
-            ->get(route('manager.sales'))
-            ->assertOk()
-            ->assertSee('10 000 FCFA');
+            ->assertSee('Total Caisse Cash')
+            ->assertSee('Total Caisse MOMO/OM')
+            ->assertSee('7 000 FCFA')
+            ->assertSee('4 000 FCFA');
     }
 
     public function test_cash_register_balance_recalculates_legacy_closures_from_cash_sales(): void
@@ -396,6 +454,44 @@ class SellerCashRegisterTest extends TestCase
         ]);
     }
 
+    public function test_seller_cash_service_records_separate_adjustments_without_creating_sales(): void
+    {
+        $seller = $this->createSellerWithManager();
+        $salesBefore = Sale::count();
+
+        $this->createSale($seller, 5000, 'mobile_money', now()->subMinute());
+
+        $this->actingAs($seller)->post(route('seller.services.store'), [
+            'operation' => 'depot',
+            'amount' => 2000,
+            'reason' => 'Client depot',
+        ])->assertRedirect(route('seller.services.index'));
+
+        $this->assertSame($salesBefore + 1, Sale::count());
+
+        $adjustments = CashBalanceAdjustment::where('seller_id', $seller->id)
+            ->where('source', 'service')
+            ->whereNotNull('reference_id')
+            ->get();
+
+        $this->assertCount(2, $adjustments);
+        $this->assertCount(1, $adjustments->pluck('reference_id')->unique());
+        $this->assertDatabaseHas('cash_balance_adjustments', [
+            'seller_id' => $seller->id,
+            'type' => 'add',
+            'balance_type' => CashRegisterService::CASH_BALANCE_TYPE,
+            'amount' => 2000,
+            'source' => 'service',
+        ]);
+        $this->assertDatabaseHas('cash_balance_adjustments', [
+            'seller_id' => $seller->id,
+            'type' => 'withdraw',
+            'balance_type' => CashRegisterService::MOBILE_MONEY_BALANCE_TYPE,
+            'amount' => 2000,
+            'source' => 'service',
+        ]);
+    }
+
     public function test_manager_does_not_see_close_cash_register_action_when_cash_register_is_closed(): void
     {
         $seller = $this->createSellerWithManager();
@@ -450,8 +546,9 @@ class SellerCashRegisterTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Recette du jour')
-            ->assertSee("Recette d'hier", false)
-            ->assertSee('Solde Cash')
+            ->assertDontSee("Recette d'hier", false)
+            ->assertSee('Caisse Cash')
+            ->assertSee('Caisse MOMO/OM')
             ->assertSee('Ouvrir la caisse')
             ->assertDontSee('Fermer la caisse')
             ->assertDontSee('Produits Disponibles')

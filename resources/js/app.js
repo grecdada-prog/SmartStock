@@ -2,18 +2,21 @@ import './bootstrap';
 import './notifications';
 import './silent-refresh';
 import './modal-links';
+import './pos-storage';
 import './inactivity-logout';
 
 const PHONE_DIGIT_LIMIT = 15;
+const BARCODE_DIGIT_LIMIT = 13;
 
 function formatProductBarcode(value) {
-    return String(value || '').replace(/\D/g, '');
+    return String(value || '').replace(/\D/g, '').slice(0, BARCODE_DIGIT_LIMIT);
 }
 
 function initBarcodeInputs(root = document) {
     root.querySelectorAll('[data-barcode-format]:not([data-barcode-ready])').forEach((input) => {
         input.dataset.barcodeReady = 'true';
         input.setAttribute('autocomplete', 'off');
+        input.setAttribute('maxlength', String(BARCODE_DIGIT_LIMIT));
 
         const syncValue = () => {
             input.value = formatProductBarcode(input.value);
@@ -28,7 +31,13 @@ function initBarcodeInputs(root = document) {
                 return;
             }
 
-            if (event.data.replace(/\d/g, '').length > 0) {
+            const selectedDigits = input.value
+                .slice(input.selectionStart || 0, input.selectionEnd || 0)
+                .replace(/\D/g, '').length;
+            const currentDigits = input.value.replace(/\D/g, '').length;
+            const incomingDigits = event.data.replace(/\D/g, '').length;
+
+            if (event.data.replace(/\d/g, '').length > 0 || currentDigits - selectedDigits + incomingDigits > BARCODE_DIGIT_LIMIT) {
                 event.preventDefault();
             }
         });
@@ -102,6 +111,36 @@ function initEmailInputs(root = document) {
     });
 }
 
+function initSubmitGuards(root = document) {
+    root.querySelectorAll('form[data-disable-on-submit]:not([data-submit-guard-ready])').forEach((form) => {
+        form.dataset.submitGuardReady = 'true';
+
+        form.addEventListener('submit', (event) => {
+            if (form.dataset.submitted === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            form.dataset.submitted = 'true';
+            const submitButtons = [
+                ...form.querySelectorAll('button[type="submit"]'),
+            ];
+
+            if (form.id) {
+                submitButtons.push(...document.querySelectorAll(`button[type="submit"][form="${CSS.escape(form.id)}"]`));
+            }
+
+            submitButtons.forEach((button) => {
+                if (button.dataset.submittingText) {
+                    button.textContent = button.dataset.submittingText;
+                }
+
+                button.disabled = true;
+            });
+        });
+    });
+}
+
 // Auto-dismiss notifications après 5 secondes
 document.addEventListener('DOMContentLoaded', function() {
     const notifications = document.querySelectorAll('[data-auto-dismiss]');
@@ -120,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initBarcodeInputs();
     initPhoneInputs();
     initEmailInputs();
+    initSubmitGuards();
 });
 
 window.SmartStoreBarcodeInputs = {
@@ -134,6 +174,10 @@ window.SmartStorePhoneInputs = {
 
 window.SmartStoreEmailInputs = {
     init: initEmailInputs,
+};
+
+window.SmartStoreSubmitGuards = {
+    init: initSubmitGuards,
 };
 
 function initSaleDetailsModals() {

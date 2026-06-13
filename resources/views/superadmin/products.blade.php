@@ -6,9 +6,17 @@
 <div class="px-4 sm:px-6 lg:px-8">
     <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div class="smartstore-sticky-inner">
-    <div class="sm:flex sm:items-center">
+    <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Tous les Produits</h1>
+        </div>
+        <div class="mt-4 flex items-center gap-3 sm:mt-0">
+            <a href="{{ route('superadmin.products.export.excel') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
+                Excel
+            </a>
+            <a href="{{ route('superadmin.products.export.csv') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
+                CSV
+            </a>
         </div>
     </div>
 
@@ -20,7 +28,7 @@
                     <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Total Produits</dt>
-                            <dd class="text-2xl font-bold text-gray-900">{{ $products->count() }}</dd>
+                            <dd class="text-2xl font-bold text-gray-900">{{ $productStats['total'] }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -46,7 +54,7 @@
                     <div class="w-full min-w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Stock Faible</dt>
-                            <dd class="text-2xl font-bold text-red-600">{{ $products->where('quantity', '<=', 'alert_quantity')->count() }}</dd>
+                            <dd class="text-2xl font-bold text-red-600">{{ $productStats['low_stock'] }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -58,9 +66,9 @@
 
     <!-- Table des produits -->
     <div class="mt-8 flex flex-col">
-        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="-my-2 -mx-4 overflow-visible sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <div class="overflow-visible shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
                             <tr>
@@ -113,5 +121,8 @@
         </div>
     </div>
 
+    <div class="mt-6">
+        {{ $products->links() }}
+    </div>
 </div>
 @endsection

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->enum('type', ['in', 'out', 'adjustment']); // entrée, sortie, ajustement
+            $table->enum('type', ['in', 'out', 'adjustment', 'correction_cancellation']); // entree, sortie, ajustement, correction annulation
             $table->integer('quantity');
             $table->integer('quantity_before');
             $table->integer('quantity_after');

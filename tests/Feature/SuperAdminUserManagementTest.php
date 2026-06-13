@@ -6,6 +6,9 @@ use App\Http\Middleware\CheckInactivity;
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\PreventDirectAccess;
 use App\Http\Middleware\SingleSessionMiddleware;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Sale;
 use App\Models\User;
 use App\Notifications\PasswordResetNotification;
 use App\Notifications\UserCreatedNotification;
@@ -111,6 +114,52 @@ class SuperAdminUserManagementTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_users_list_shows_manager_stock_value_instead_of_creation_date(): void
+    {
+        [$superAdmin, $manager] = $this->createUsers();
+
+        $category = Category::create([
+            'name' => 'Boissons',
+            'is_active' => true,
+            'created_by' => $manager->id,
+        ]);
+
+        Product::create([
+            'name' => 'Produit stock A',
+            'sku' => 'STOCK-A',
+            'barcode' => 'BAR-STOCK-A',
+            'category_id' => $category->id,
+            'purchase_price' => 100,
+            'selling_price' => 150,
+            'quantity' => 5,
+            'alert_quantity' => 2,
+            'unit' => 'piece',
+            'is_active' => true,
+            'created_by' => $manager->id,
+        ]);
+
+        Product::create([
+            'name' => 'Produit stock B',
+            'sku' => 'STOCK-B',
+            'barcode' => 'BAR-STOCK-B',
+            'category_id' => $category->id,
+            'purchase_price' => 300,
+            'selling_price' => 450,
+            'quantity' => 2,
+            'alert_quantity' => 2,
+            'unit' => 'piece',
+            'is_active' => true,
+            'created_by' => $manager->id,
+        ]);
+
+        $response = $this->actingAs($superAdmin)
+            ->get(route('superadmin.users.index', ['role' => 'manager']));
+
+        $response->assertOk();
+        $response->assertSeeText('Valeur stock');
+        $response->assertSeeText('1 100 FCFA');
+    }
+
     public function test_super_admin_reset_password_sends_link_without_changing_password(): void
     {
         Notification::fake();
@@ -199,6 +248,56 @@ class SuperAdminUserManagementTest extends TestCase
             'id' => $superAdmin->id,
             'is_active' => true,
         ]);
+    }
+
+    public function test_super_admin_delete_manager_removes_owned_users_and_business_data(): void
+    {
+        [$superAdmin, $manager] = $this->createUsers();
+
+        $seller = User::factory()->create([
+            'is_active' => true,
+            'created_by' => $manager->id,
+        ]);
+        $seller->assignRole('seller');
+
+        $category = Category::create([
+            'name' => 'Categorie suppression',
+            'created_by' => $manager->id,
+        ]);
+
+        $product = Product::create([
+            'name' => 'Produit suppression',
+            'sku' => 'DEL-USER-001',
+            'barcode' => '604300002506',
+            'category_id' => $category->id,
+            'purchase_price' => 100,
+            'selling_price' => 200,
+            'quantity' => 5,
+            'alert_quantity' => 2,
+            'unit' => 'piece',
+            'is_active' => true,
+            'created_by' => $manager->id,
+        ]);
+
+        $sale = Sale::create([
+            'seller_id' => $seller->id,
+            'invoice_number' => 'INV-DELETE-MANAGER',
+            'subtotal' => 200,
+            'total' => 200,
+            'payment_method' => 'cash',
+            'amount_received' => 200,
+            'change_given' => 0,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->delete(route('superadmin.users.destroy', $manager))
+            ->assertRedirect(route('superadmin.users.index'));
+
+        $this->assertDatabaseMissing('users', ['id' => $manager->id]);
+        $this->assertDatabaseMissing('users', ['id' => $seller->id]);
+        $this->assertDatabaseMissing('categories', ['id' => $category->id]);
+        $this->assertDatabaseMissing('products', ['id' => $product->id]);
+        $this->assertDatabaseMissing('sales', ['id' => $sale->id]);
     }
 
     private function createUsers(): array

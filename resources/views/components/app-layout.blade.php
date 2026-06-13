@@ -10,12 +10,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @unless(request()->boolean('modal'))
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="smartstore-session-timeout" content="{{ config('session.lifetime', 10) * 60 }}">
+        <meta name="smartstore-session-timeout" content="900">
         <meta name="smartstore-logout-url" content="{{ route('logout') }}">
         <meta name="smartstore-login-url" content="{{ route('login') }}">
     @endunless
     <title>@yield('title', 'SmartStore')</title>
     <x-favicon />
+    <style>[x-cloak]{display:none!important}</style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -52,12 +53,6 @@
                                 </x-nav-link>
                                 <x-nav-link href="{{ route('superadmin.users.index') }}" :active="request()->routeIs('superadmin.users.*')">
                                     Utilisateurs
-                                </x-nav-link>
-                                <x-nav-link href="{{ route('superadmin.managers.index') }}" :active="request()->routeIs('superadmin.managers.*')">
-                                    Gérants
-                                </x-nav-link>
-                                <x-nav-link href="{{ route('superadmin.sellers.index') }}" :active="request()->routeIs('superadmin.sellers.*')">
-                                    Vendeurs
                                 </x-nav-link>
                                 <x-nav-link href="{{ route('superadmin.products') }}" :active="request()->routeIs('superadmin.products')">
                                     Produits
@@ -98,7 +93,10 @@
                                     Point de Vente
                                 </x-nav-link>
                                 <x-nav-link href="{{ route('seller.sales.history') }}" :active="request()->routeIs('seller.sales.*')">
-                                    Historique des ventes
+                                    Historique
+                                </x-nav-link>
+                                <x-nav-link href="{{ route('seller.tokens.create') }}" :active="request()->routeIs('seller.tokens.*')">
+                                    Services
                                 </x-nav-link>
                             @endif
                         </div>
@@ -159,8 +157,6 @@
                     @if($user->hasRole('super_admin'))
                         <x-responsive-nav-link href="{{ route('superadmin.dashboard') }}" :active="request()->routeIs('superadmin.dashboard')">Dashboard</x-responsive-nav-link>
                         <x-responsive-nav-link href="{{ route('superadmin.users.index') }}" :active="request()->routeIs('superadmin.users.*')">Utilisateurs</x-responsive-nav-link>
-                        <x-responsive-nav-link href="{{ route('superadmin.managers.index') }}" :active="request()->routeIs('superadmin.managers.*')">Gérants</x-responsive-nav-link>
-                        <x-responsive-nav-link href="{{ route('superadmin.sellers.index') }}" :active="request()->routeIs('superadmin.sellers.*')">Vendeurs</x-responsive-nav-link>
                         <x-responsive-nav-link href="{{ route('superadmin.products') }}" :active="request()->routeIs('superadmin.products')">Produits</x-responsive-nav-link>
                         <x-responsive-nav-link href="{{ route('superadmin.sales') }}" :active="request()->routeIs('superadmin.sales')">Ventes</x-responsive-nav-link>
                         <x-responsive-nav-link href="{{ route('superadmin.activity-logs') }}" :active="request()->routeIs('superadmin.activity-logs')">Logs</x-responsive-nav-link>
@@ -175,7 +171,8 @@
                     @elseif($user->hasRole('seller'))
                         <x-responsive-nav-link href="{{ route('seller.dashboard') }}" :active="request()->routeIs('seller.dashboard')">Dashboard</x-responsive-nav-link>
                         <x-responsive-nav-link href="{{ route('seller.pos.index') }}" :active="request()->routeIs('seller.pos.*')">Point de Vente</x-responsive-nav-link>
-                        <x-responsive-nav-link href="{{ route('seller.sales.history') }}" :active="request()->routeIs('seller.sales.*')">Historique des ventes</x-responsive-nav-link>
+                        <x-responsive-nav-link href="{{ route('seller.sales.history') }}" :active="request()->routeIs('seller.sales.*')">Historique</x-responsive-nav-link>
+                        <x-responsive-nav-link href="{{ route('seller.tokens.create') }}" :active="request()->routeIs('seller.tokens.*')">Services</x-responsive-nav-link>
                     @endif
                 </div>
 

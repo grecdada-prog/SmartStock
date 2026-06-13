@@ -132,6 +132,7 @@
     </div>
 
     <div class="mt-6">
+        {{ $sellers->links() }}
     </div>
 </div>
 

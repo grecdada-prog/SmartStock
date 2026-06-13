@@ -41,7 +41,10 @@
                             Point de Vente
                         </x-nav-link>
                         <x-nav-link href="{{ route('seller.sales.history') }}" :active="request()->routeIs('seller.sales.*')">
-                            Historique des ventes
+                            Historique
+                        </x-nav-link>
+                        <x-nav-link href="{{ route('seller.tokens.create') }}" :active="request()->routeIs('seller.tokens.*')">
+                            Services
                         </x-nav-link>
                     @endif
                 </div>
@@ -136,7 +139,10 @@
                     Point de Vente
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('seller.sales.history') }}" :active="request()->routeIs('seller.sales.*')">
-                    Historique des ventes
+                    Historique
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('seller.tokens.create') }}" :active="request()->routeIs('seller.tokens.*')">
+                    Services
                 </x-responsive-nav-link>
             @endif
         </div>

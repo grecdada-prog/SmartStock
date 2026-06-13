@@ -11,7 +11,7 @@
         </div>
 
         <div class="rounded-lg bg-white shadow">
-            <form method="POST" action="{{ route('manager.products.store') }}" class="space-y-5 p-6">
+            <form method="POST" action="{{ route('manager.products.store') }}" data-disable-on-submit class="space-y-5 p-6">
                 @csrf
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -23,7 +23,7 @@
 
                     <div class="sm:col-span-2">
                         <label for="barcode" class="block text-sm font-medium text-gray-700">Code-barres</label>
-                        <input type="text" name="barcode" id="barcode" value="{{ old('barcode') }}" placeholder="11012035024090" pattern="\d+" inputmode="numeric" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
+                        <input type="text" name="barcode" id="barcode" value="{{ old('barcode') }}" placeholder="1101203502409" maxlength="13" pattern="\d{0,13}" inputmode="numeric" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
                         @error('barcode')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
@@ -40,7 +40,7 @@
 
                     <div>
                         <label for="alert_quantity" class="block text-sm font-medium text-gray-700">Seuil d'alerte *</label>
-                        <input type="number" name="alert_quantity" id="alert_quantity" required value="{{ old('alert_quantity', 10) }}" min="0" step="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                        <input type="number" name="alert_quantity" id="alert_quantity" required value="{{ old('alert_quantity', 5) }}" min="0" step="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('alert_quantity')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
@@ -54,14 +54,20 @@
                         <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500">
                         <label for="is_active" class="ml-2 block text-sm text-gray-900">Produit actif</label>
                     </div>
+
+                    <div class="sm:col-span-2 flex items-center">
+                        <input type="checkbox" name="is_direct_restock_eligible" id="is_direct_restock_eligible" value="1" {{ old('is_direct_restock_eligible') ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+                        <label for="is_direct_restock_eligible" class="ml-2 block text-sm text-gray-900">Éligible à l’appro direct</label>
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-gray-200 pt-5">
                     <a href="{{ route('manager.products.index') }}" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</a>
-                    <button type="submit" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Créer le produit</button>
+                    <button type="submit" data-submitting-text="Enregistrement..." class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70">Créer le produit</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+@include('manager.products._barcode-conflict-modal')
 @endsection

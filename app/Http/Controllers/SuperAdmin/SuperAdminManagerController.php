@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\PasswordSetupLinkService;
+use App\Services\UserDeletionService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
@@ -36,7 +37,7 @@ class SuperAdminManagerController extends Controller
             });
         }
 
-        $managers = $query->latest()->get();
+        $managers = $query->latest()->paginate(15)->withQueryString();
 
         return view('superadmin.managers.index', compact('managers'));
     }
@@ -188,7 +189,7 @@ class SuperAdminManagerController extends Controller
             $user->id
         );
 
-        $user->delete();
+        app(UserDeletionService::class)->delete($user);
 
         return redirect()->route('superadmin.managers.index')
             ->with('success', "Le manager {$userName} a été supprimé avec succès !");

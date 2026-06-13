@@ -4,9 +4,17 @@
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8" x-data="{ deleteModal: null }">
+    @php
+        $roleFilters = [
+            '' => ['label' => 'Tous', 'count' => $roleCounts['all'] ?? $users->total()],
+            'manager' => ['label' => 'Gerants', 'count' => $roleCounts['manager'] ?? 0],
+            'seller' => ['label' => 'Vendeurs', 'count' => $roleCounts['seller'] ?? 0],
+            'super_admin' => ['label' => 'Super Admins', 'count' => $roleCounts['super_admin'] ?? 0],
+        ];
+    @endphp
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
-            <h1 class="text-2xl font-semibold text-gray-900">Tous les Utilisateurs</h1>
+            <h1 class="text-2xl font-semibold text-gray-900">Utilisateurs</h1>
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
             <x-export-buttons
@@ -21,21 +29,33 @@
         </div>
     </div>
 
+    <div class="mt-6 flex flex-wrap gap-2">
+        @foreach($roleFilters as $role => $filter)
+            @php
+                $isActive = request('role', '') === $role;
+                $query = request()->except(['role', 'page']);
+
+                if ($role !== '') {
+                    $query['role'] = $role;
+                }
+            @endphp
+            <a href="{{ route('superadmin.users.index', $query) }}"
+               class="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition {{ $isActive ? 'border-rose-600 bg-rose-50 text-rose-700' : 'border-gray-200 bg-white text-gray-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700' }}">
+                <span>{{ $filter['label'] }}</span>
+                <span class="rounded bg-white/80 px-1.5 py-0.5 text-xs text-gray-500">{{ $filter['count'] }}</span>
+            </a>
+        @endforeach
+    </div>
+
     <!-- Filtres -->
     <div class="mt-6 bg-white shadow rounded-lg p-4">
-        <form method="GET" data-auto-filter action="{{ route('superadmin.users.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <form method="GET" data-auto-filter action="{{ route('superadmin.users.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            @if(request('role'))
+                <input type="hidden" name="role" value="{{ request('role') }}">
+            @endif
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700">Rechercher</label>
                 <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Nom ou email..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="role" class="block text-sm font-medium text-gray-700">Rôle</label>
-                <select name="role" id="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
-                    <option value="">Tous les rôles</option>
-                    <option value="super_admin" {{ request('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                    <option value="manager" {{ request('role') == 'manager' ? 'selected' : '' }}>Gérant</option>
-                    <option value="seller" {{ request('role') == 'seller' ? 'selected' : '' }}>Vendeur</option>
-                </select>
             </div>
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700">Statut</label>
@@ -60,7 +80,7 @@
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Rôle</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Statut</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Créé par</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date création</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Valeur stock</th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                     <span class="sr-only">Actions</span>
                                 </th>
@@ -117,7 +137,11 @@
                                         {{ $user->creator->name ?? 'N/A' }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {{ $user->created_at->format('d/m/Y') }}
+                                        @if($user->hasRole('manager'))
+                                            {{ number_format((float) ($user->stock_value ?? 0), 0, ',', ' ') }} FCFA
+                                        @else
+                                            -
+                                        @endif
                                     </td>
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                         <x-action-menu>
@@ -174,6 +198,7 @@
     </div>
 
     <div class="mt-6">
+        {{ $users->links() }}
     </div>
 
     <!-- Modales de confirmation de suppression (inline pour supporter le nom dynamique) -->

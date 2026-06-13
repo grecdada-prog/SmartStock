@@ -65,6 +65,9 @@
                 @endforelse
             </tbody>
         </table>
+        <div class="mt-4">
+            {{ $activities->links() }}
+        </div>
     </x-reports.panel>
 
 </div>

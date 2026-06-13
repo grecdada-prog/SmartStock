@@ -47,28 +47,21 @@
 
         <div class="money-stat-card rounded-lg border border-gray-100 bg-white p-5 shadow-sm" x-data="{ showCashCard: false }">
             <div class="money-amount-row">
-                <p class="min-w-0 flex-1 pr-2 text-sm font-medium text-gray-500">Solde Cash</p>
-                <x-money-eye-button state="showCashCard" label="le solde cash et la recette d'hier" refresh-on-show />
+                <p class="min-w-0 flex-1 pr-2 text-sm font-medium text-gray-500">Caisse Cash</p>
+                <x-money-eye-button state="showCashCard" label="le Caisse Cash" refresh-on-show />
             </div>
             <p class="mt-2 text-2xl font-semibold text-gray-900">
                 <x-money-value
                     state="showCashCard"
                     :amount="number_format($stats['total_cash_balance'], 0, ',', ' ') . ' FCFA'" />
             </p>
-            <div class="mt-2 flex items-center gap-1 text-sm text-gray-500">
-                <x-money-value
-                    state="showCashCard"
-                    class="text-sm font-semibold text-rose-600"
-                    :amount="number_format($stats['total_yesterday_revenue'], 0, ',', ' ') . ' FCFA'" />
-                <span>hier</span>
-            </div>
         </div>
 
         <x-money-stat-card
             class="border border-gray-100 shadow-sm"
-            title="Paiements mobiles"
+            title="Caisse MOMO/OM"
             :amount="number_format($stats['total_mobile_money_balance'], 0, ',', ' ') . ' FCFA'"
-            label="le solde des paiements mobiles"
+            label="le caisse MOMO/OM"
         />
     </section>
         </div>
@@ -81,11 +74,11 @@
                 <a href="{{ route('superadmin.sessions.active') }}" class="text-sm font-semibold text-rose-600 hover:text-rose-700">Sessions</a>
             </div>
             <div class="mt-5 grid grid-cols-3 gap-3">
-                <a href="{{ route('superadmin.managers.index') }}" class="rounded-md bg-rose-50 p-4">
+                <a href="{{ route('superadmin.users.index', ['role' => 'manager']) }}" class="rounded-md bg-rose-50 p-4">
                     <p class="text-xs font-medium text-gray-500">Gerants</p>
                     <p class="mt-1 text-2xl font-semibold text-rose-700">{{ $onlineUsers['managers'] }}</p>
                 </a>
-                <a href="{{ route('superadmin.sellers.index') }}" class="rounded-md bg-blue-50 p-4">
+                <a href="{{ route('superadmin.users.index', ['role' => 'seller']) }}" class="rounded-md bg-blue-50 p-4">
                     <p class="text-xs font-medium text-gray-500">Vendeurs</p>
                     <p class="mt-1 text-2xl font-semibold text-blue-700">{{ $onlineUsers['sellers'] }}</p>
                 </a>
@@ -99,12 +92,12 @@
         <div class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm lg:col-span-2">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900">Actions rapides</h2>
+                    <h2 class="text-base font-semibold text-gray-900">Pouvoirs rapides</h2>
                 </div>
             </div>
             <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">
                 <a href="{{ route('superadmin.users.create') }}" class="rounded-md border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Nouvel utilisateur</a>
-                <a href="{{ route('superadmin.managers.create') }}" class="rounded-md border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Nouveau gerant</a>
+                <a href="{{ route('superadmin.users.create', ['role' => 'manager']) }}" class="rounded-md border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Nouveau gerant</a>
                 <a href="{{ route('superadmin.anomalies') }}" class="rounded-md border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Anomalies</a>
                 <a href="{{ route('superadmin.activity-logs') }}" class="rounded-md border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Logs</a>
             </div>
@@ -119,7 +112,7 @@
                         <h2 class="text-base font-semibold text-gray-900">Supervision des gérants</h2>
                         <p class="mt-1 text-sm text-gray-500">Equipes, recettes et etat des caisses.</p>
                     </div>
-                    <a href="{{ route('superadmin.managers.index') }}" class="text-sm font-semibold text-rose-600 hover:text-rose-700">Gerer</a>
+                    <a href="{{ route('superadmin.users.index', ['role' => 'manager']) }}" class="text-sm font-semibold text-rose-600 hover:text-rose-700">Gerer</a>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -146,11 +139,10 @@
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4">
                                     <p class="font-semibold text-gray-900">{{ number_format($summary['today_revenue'], 0, ',', ' ') }} FCFA</p>
-                                    <p class="text-xs text-gray-500">Hier: {{ number_format($summary['yesterday_revenue'], 0, ',', ' ') }} FCFA</p>
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4">
                                     <p class="font-semibold text-gray-900">Cash: {{ number_format($summary['cash_balance'], 0, ',', ' ') }} FCFA</p>
-                                    <p class="text-xs text-gray-500">Mobile: {{ number_format($summary['mobile_money_balance'], 0, ',', ' ') }} FCFA</p>
+                                    <p class="text-xs text-gray-500">Caisse MOMO/OM: {{ number_format($summary['mobile_money_balance'], 0, ',', ' ') }} FCFA</p>
                                 </td>
                                 <td class="px-5 py-4">
                                     <div class="flex flex-wrap gap-2">
@@ -214,6 +206,43 @@
     <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div class="rounded-lg border border-gray-100 bg-white shadow-sm">
             <div class="border-b border-gray-100 p-5">
+                <h2 class="text-base font-semibold text-gray-900">Services recents</h2>
+                <p class="mt-1 text-sm text-gray-500">Dépôt/retrait MOMO/OM, hors ventes.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-5 py-3 text-left font-medium text-gray-500">Vendeur</th>
+                            <th class="px-5 py-3 text-left font-medium text-gray-500">Operation</th>
+                            <th class="px-5 py-3 text-left font-medium text-gray-500">Montant</th>
+                            <th class="px-5 py-3 text-left font-medium text-gray-500">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                        @forelse($recentServiceOperations as $operation)
+                            <tr>
+                                <td class="whitespace-nowrap px-5 py-4 font-medium text-gray-900">{{ $operation->seller->name ?? 'Vendeur supprime' }}</td>
+                                <td class="whitespace-nowrap px-5 py-4">
+                                    <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $operation->type === 'add' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
+                                        {{ $operation->type === 'add' ? 'Depot' : 'Retrait' }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-4 font-semibold text-gray-900">{{ number_format($operation->amount, 0, ',', ' ') }} FCFA</td>
+                                <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ $operation->created_at->format('d/m/Y H:i') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-5 py-8 text-center text-gray-500">Aucun service recent.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-100 bg-white shadow-sm">
+            <div class="border-b border-gray-100 p-5">
                 <h2 class="text-base font-semibold text-gray-900">Fermetures de caisse</h2>
                 <p class="mt-1 text-sm text-gray-500">Dernieres operations de caisse.</p>
             </div>
@@ -233,7 +262,7 @@
                                 <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ $closure->business_date->format('d/m/Y') }}</td>
                                 <td class="whitespace-nowrap px-5 py-4">
                                     @if($closure->opened_at)
-                                        <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Rouverte</span>
+                                        <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Ouverte</span>
                                     @else
                                         <span class="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">Fermee</span>
                                     @endif

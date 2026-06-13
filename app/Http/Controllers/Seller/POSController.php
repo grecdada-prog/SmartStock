@@ -9,13 +9,21 @@ use App\Models\ProductPromotion;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
+use App\Services\AvlyTextSmsService;
 use App\Services\CashRegisterService;
+use App\Services\EnergyTokenRecentSaleService;
+use App\Services\SocadelTokenService;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class POSController extends Controller
 {
+    private const SMS_FEE = 25.0;
+
     /**
      * Afficher l'interface POS (Point de Vente)
      */
@@ -25,17 +33,7 @@ class POSController extends Controller
         // Récupérer tous les produits actifs avec stock > 0
         $products = $this->availableProductsForManager($managerId)->get();
 
-        // Catégories pour le filtre
-        $categories = Product::where('is_active', true)
-            ->where('created_by', $managerId)
-            ->where('quantity', '>', 0)
-            ->with('category')
-            ->get()
-            ->pluck('category')
-            ->unique('id')
-            ->values();
-
-        return view('seller.pos.index', compact('products', 'categories'));
+        return view('seller.pos.index', compact('products'));
     }
 
     public function products()
@@ -45,6 +43,213 @@ class POSController extends Controller
         return response()->json([
             'success' => true,
             'products' => $this->availableProductsForManager($managerId)->get(),
+        ]);
+    }
+
+    public function token()
+    {
+        return view('seller.tokens.create', [
+            'addresses' => $this->tokenMeterAddresses(),
+            'rooms' => $this->tokenRooms(),
+            'ratePerKwh' => 120,
+        ]);
+    }
+
+    public function sellToken(Request $request)
+    {
+        if (! app(CashRegisterService::class)->isOpenForSeller(auth()->user())) {
+            return back()
+                ->withErrors(['cash_register' => 'La caisse n\'est pas ouverte. Ouvrez la caisse depuis le dashboard avant de vendre un token.'])
+                ->withInput();
+        }
+
+        $request->merge([
+            'room_number' => Str::upper(preg_replace('/\s+/', '', (string) $request->input('room_number'))),
+        ]);
+        $this->normalizeContactInputs($request, ['customer_phone', 'sms_phone'], []);
+
+        $validated = $request->validate([
+            'meter_address' => ['required', 'string', 'in:'.implode(',', $this->tokenMeterAddresses())],
+            'room_number' => ['required', 'string', 'in:'.implode(',', $this->tokenRooms())],
+            'amount' => ['required', 'numeric', 'min:240', $this->tokenAmountMultipleRule()],
+            'payment_method' => ['required', 'in:cash,mobile_money'],
+            'customer_phone' => ['required_if:payment_method,mobile_money', ...$this->phoneRules()],
+            'send_sms' => ['nullable', 'boolean'],
+            'sms_phone' => ['required_if:send_sms,1', ...$this->phoneRules()],
+            'confirmed_recent_token' => ['nullable', 'boolean'],
+        ], [
+            'meter_address.required' => 'Choisissez l\'adresse du compteur.',
+            'meter_address.in' => 'Adresse compteur invalide.',
+            'room_number.required' => 'Saisissez le numéro du bien.',
+            'room_number.in' => 'Numéro du bien invalide pour ce compteur.',
+            'amount.required' => 'Saisissez le montant a vendre.',
+            'amount.min' => 'Le montant minimum est 240 FCFA.',
+            'payment_method.required' => 'Choisissez le mode de paiement.',
+            'payment_method.in' => 'Mode de paiement invalide.',
+            'customer_phone.required_if' => 'Le numero de telephone est obligatoire pour un paiement mobile.',
+            'customer_phone.regex' => 'Le numero de telephone doit contenir 9 a 15 chiffres.',
+            'sms_phone.required_if' => 'Le numero SMS est obligatoire pour recevoir le token par SMS.',
+            'sms_phone.regex' => 'Le numero SMS doit contenir 9 a 15 chiffres.',
+        ]);
+        $validated['send_sms'] = $request->boolean('send_sms');
+        $validated['sms_phone'] = $validated['send_sms'] ? ($validated['sms_phone'] ?? null) : null;
+        $validated['confirmed_recent_token'] = $request->boolean('confirmed_recent_token');
+
+        if (! $validated['confirmed_recent_token']) {
+            $recentSale = app(EnergyTokenRecentSaleService::class)->find($validated['meter_address'], $validated['room_number']);
+
+            if ($recentSale) {
+                return back()
+                    ->withErrors([
+                        'token_recent' => app(EnergyTokenRecentSaleService::class)
+                            ->messageFor($recentSale, $validated['meter_address'], $validated['room_number']),
+                    ])
+                    ->withInput();
+            }
+        }
+
+        // if ($validated['payment_method'] !== 'cash' && ! $this->operatorForCameroonPhone($validated['customer_phone'] ?? null)) {
+        //     throw ValidationException::withMessages([
+        //         'customer_phone' => 'Numero non reconnu pour Orange Money ou MTN Momo Cameroun.',
+        //     ]);
+        // }
+
+        // if ($validated['payment_method'] !== 'cash') {
+        //     return back()
+        //         ->withErrors(['payment_method' => 'Le paiement mobile doit etre confirme par Monetbil avant enregistrement du token.'])
+        //         ->withInput();
+        // }
+
+        $validated['payment_method'] = $this->normalizePaymentMethod($validated['payment_method'], $validated['customer_phone'] ?? null);
+        $amount = (float) $validated['amount'];
+        $smsFee = $validated['send_sms'] ? self::SMS_FEE : 0.0;
+        $operatorFee = $this->operatorFeeForPayment($validated['payment_method'], $amount, 0.03);
+        $totalToPay = $amount + $operatorFee + $smsFee;
+        $kwh = round($amount / 120, 2);
+        $socadelTokenService = app(SocadelTokenService::class);
+        $tokenTransactionReference = $socadelTokenService->generateReference();
+
+        try {
+            $apiResponse = $socadelTokenService->sell($validated['meter_address'], $validated['room_number'], $amount, $tokenTransactionReference);
+        } catch (\Throwable $e) {
+            return back()
+                ->withErrors(['token_api' => $e->getMessage()])
+                ->withInput();
+        }
+
+        $sale = DB::transaction(function () use ($validated, $amount, $operatorFee, $smsFee, $totalToPay, $kwh, $apiResponse, $tokenTransactionReference) {
+            $smsNote = $validated['send_sms'] ? ' | SMS: '.$validated['sms_phone'].' | Frais SMS: '.number_format($smsFee, 0, ',', ' ').' FCFA' : '';
+
+            $sale = Sale::create([
+                'seller_id' => auth()->id(),
+                'invoice_number' => $this->generateInvoiceNumber(),
+                'subtotal' => $amount,
+                'total' => $totalToPay,
+                'payment_method' => $validated['payment_method'],
+                'amount_received' => $totalToPay,
+                'change_given' => 0,
+                'customer_name' => $validated['room_number'],
+                'customer_phone' => $validated['customer_phone'] ?? null,
+                'notes' => "Token Energie | Adresse: {$validated['meter_address']} | Numéro du bien: {$validated['room_number']} | Token: {$apiResponse['token']} | Frais operateur: ".number_format($operatorFee, 0, ',', ' ').' FCFA'.$smsNote,
+            ]);
+
+            SaleItem::create([
+                'sale_id' => $sale->id,
+                'product_id' => null,
+                'service_name' => 'Token Energie',
+                'service_payload' => [
+                    'meter_address' => $validated['meter_address'],
+                    'room_number' => $validated['room_number'],
+                    'kwh' => $kwh,
+                    'rate_per_kwh' => 120,
+                    'token_amount' => $amount,
+                    'token_transaction' => $tokenTransactionReference,
+                    'send_sms' => $validated['send_sms'],
+                    'sms_phone' => $validated['sms_phone'],
+                    'sms_fee' => $smsFee,
+                    'sms_status' => $validated['send_sms'] ? 'pending' : null,
+                    'operator_fee' => $operatorFee,
+                    'payment_method' => $validated['payment_method'],
+                    'total_to_pay' => $totalToPay,
+                    'token' => $apiResponse['token'],
+                    'api_status' => $apiResponse['status'],
+                    'api_provider' => $apiResponse['provider'] ?? null,
+                    'api_response' => $apiResponse['response_payload'] ?? null,
+                ],
+                'quantity' => 1,
+                'unit_price' => $amount,
+                'subtotal' => $amount,
+            ]);
+
+            ActivityLog::log(
+                'energy_token_sold',
+                "Token Energie vendu : {$validated['room_number']} - ".number_format($amount, 0, ',', ' ').' FCFA',
+                'Sale',
+                $sale->id,
+                [
+                    'invoice_number' => $sale->invoice_number,
+                    'seller_id' => auth()->id(),
+                    'meter_address' => $validated['meter_address'],
+                    'room_number' => $validated['room_number'],
+                    'kwh' => $kwh,
+                    'token' => $apiResponse['token'],
+                    'token_transaction' => $tokenTransactionReference,
+                    'subtotal' => $amount,
+                    'operator_fee' => $operatorFee,
+                    'send_sms' => $validated['send_sms'],
+                    'sms_phone' => $validated['sms_phone'],
+                    'sms_fee' => $smsFee,
+                    'total' => $totalToPay,
+                    'payment_method' => $validated['payment_method'],
+                ]
+            );
+
+            return $sale;
+        });
+
+        app(AvlyTextSmsService::class)->sendEnergyTokenSms($sale->load('items'));
+
+        return redirect()
+            ->route('seller.tokens.create')
+            ->with('token_sale', [
+                'invoice_number' => $sale->invoice_number,
+                'address' => $validated['meter_address'],
+                'room' => $validated['room_number'],
+                'amount' => $amount,
+                'operator_fee' => $operatorFee,
+                'sms_fee' => $smsFee,
+                'total' => $totalToPay,
+                'kwh' => $kwh,
+                'token' => $apiResponse['token'],
+                'send_sms' => $validated['send_sms'],
+                'sms_phone' => $validated['sms_phone'],
+                'payment_method' => $sale->payment_method_label,
+                'receipt_url' => route('seller.pos.receipt', $sale),
+            ]);
+    }
+
+    /**
+     * Vérifie si un token a déjà été vendu pour cette adresse + numéro du bien dans les 48 dernières heures.
+     * Appelé en AJAX depuis le formulaire avant soumission — protège contre les double-ventes.
+     */
+    public function checkRecentTokenSale(Request $request): JsonResponse
+    {
+        $request->validate([
+            'meter_address' => ['required', 'string'],
+            'room_number'   => ['required', 'string'],
+        ]);
+
+        $recentItem = app(EnergyTokenRecentSaleService::class)
+            ->find($request->meter_address, $request->room_number);
+
+        if (! $recentItem) {
+            return response()->json(['recent' => false]);
+        }
+
+        return response()->json([
+            'recent'  => true,
+            'message' => app(EnergyTokenRecentSaleService::class)
+                ->messageFor($recentItem, $request->meter_address, $request->room_number),
         ]);
     }
 
@@ -74,6 +279,7 @@ class POSController extends Controller
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_phone' => ['required_if:payment_method,card,mobile_money', ...$this->phoneRules()],
             'notes' => ['nullable', 'string', 'max:500'],
+            'client_sale_token' => ['nullable', 'string', 'max:100'],
         ], [
             'items.required' => 'Veuillez ajouter au moins un produit.',
             'items.min' => 'Veuillez ajouter au moins un produit.',
@@ -84,17 +290,34 @@ class POSController extends Controller
             'payment_method.in' => 'Méthode de paiement invalide.',
         ]);
 
-        if ($validated['payment_method'] !== 'cash' && ! $this->operatorForCameroonPhone($validated['customer_phone'] ?? null)) {
-            throw ValidationException::withMessages([
-                'customer_phone' => 'Numero non reconnu pour Orange Money ou MTN Momo Cameroun.',
-            ]);
-        }
+        // if ($validated['payment_method'] !== 'cash' && ! $this->operatorForCameroonPhone($validated['customer_phone'] ?? null)) {
+        //     throw ValidationException::withMessages([
+        //         'customer_phone' => 'Numero non reconnu pour Orange Money ou MTN Momo Cameroun.',
+        //     ]);
+        // }
+
+        // if ($validated['payment_method'] !== 'cash') {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Le paiement mobile doit etre confirme par Monetbil avant enregistrement de la vente.',
+        //         'requires_monetbil' => true,
+        //     ], 409);
+        // }
 
         $validated['payment_method'] = $this->normalizePaymentMethod($validated['payment_method'], $validated['customer_phone'] ?? null);
+        $clientSaleToken = $validated['client_sale_token'] ?? null;
+
+        if ($clientSaleToken) {
+            $existingSale = $this->saleForClientToken($clientSaleToken);
+
+            if ($existingSale) {
+                return $this->saleSuccessResponse($existingSale, 'Vente deja enregistree.');
+            }
+        }
 
         try {
             // Traiter la vente dans une transaction
-            $sale = DB::transaction(function () use ($validated) {
+            $sale = DB::transaction(function () use ($validated, $clientSaleToken) {
                 $totalAmount = 0;
                 $itemsData = [];
                 $requestedItems = collect($validated['items'])
@@ -142,7 +365,11 @@ class POSController extends Controller
                 }
 
                 // 2. Créer la vente
-                $amountReceived = $validated['amount_received'] ?? $totalAmount;
+                $operatorFee = $this->operatorFeeForPayment($validated['payment_method'], $totalAmount);
+                $totalToPay = $totalAmount + $operatorFee;
+                $amountReceived = $validated['payment_method'] === 'cash'
+                    ? ($validated['amount_received'] ?? $totalAmount)
+                    : $totalToPay;
 
                 if ($validated['payment_method'] === 'cash' && $amountReceived < $totalAmount) {
                     throw new \Exception('Le montant recu doit couvrir le total de la vente.');
@@ -151,11 +378,12 @@ class POSController extends Controller
                 $sale = Sale::create([
                     'seller_id' => auth()->id(),
                     'invoice_number' => $this->generateInvoiceNumber(),
+                    'client_sale_token' => $clientSaleToken,
                     'subtotal' => $totalAmount,
-                    'total' => $totalAmount,
+                    'total' => $totalToPay,
                     'payment_method' => $validated['payment_method'],
                     'amount_received' => $amountReceived,
-                    'change_given' => max(0, $amountReceived - $totalAmount),
+                    'change_given' => max(0, $amountReceived - $totalToPay),
                     'customer_name' => $validated['customer_name'] ?? null,
                     'customer_phone' => $validated['customer_phone'] ?? null,
                     'notes' => $validated['notes'] ?? null,
@@ -180,6 +408,7 @@ class POSController extends Controller
                             'sale_id' => $sale->id,
                             'product_id' => $itemData['product']->id,
                             'promotion_id' => $allocation['promotion_id'],
+                            'promotion_snapshot' => $allocation['promotion_snapshot'],
                             'quantity' => $allocation['quantity'],
                             'unit_price' => $allocation['selling_price'],
                             'original_unit_price' => $allocation['original_selling_price'],
@@ -220,7 +449,9 @@ class POSController extends Controller
                     [
                         'invoice_number' => $sale->invoice_number,
                         'seller_id' => auth()->id(),
-                        'total' => $totalAmount,
+                        'subtotal' => $totalAmount,
+                        'operator_fee' => $operatorFee,
+                        'total' => $totalToPay,
                         'items_count' => count($itemsData),
                         'payment_method' => $validated['payment_method'],
                     ]
@@ -229,21 +460,55 @@ class POSController extends Controller
                 return $sale;
             });
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Vente enregistrée avec succès !',
-                'sale_id' => $sale->id,
-                'invoice_number' => $sale->invoice_number,
-                'total' => $sale->total,
-                'change' => $sale->change_given,
-            ]);
+            return $this->saleSuccessResponse($sale, 'Vente enregistree avec succes !');
 
+        } catch (QueryException $e) {
+            if ($clientSaleToken && $this->isDuplicateClientTokenError($e)) {
+                $existingSale = $this->saleForClientToken($clientSaleToken);
+
+                if ($existingSale) {
+                    return $this->saleSuccessResponse($existingSale, 'Vente deja enregistree.');
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $this->friendlySaleError($e),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $this->friendlySaleError($e),
             ], 422);
         }
+    }
+
+    private function saleForClientToken(string $clientSaleToken): ?Sale
+    {
+        return Sale::where('seller_id', auth()->id())
+            ->where('client_sale_token', $clientSaleToken)
+            ->first();
+    }
+
+    private function isDuplicateClientTokenError(QueryException $e): bool
+    {
+        $message = $e->getMessage();
+
+        return str_contains($message, 'client_sale_token')
+            || str_contains($message, 'sales_client_sale_token_unique')
+            || (str_contains($message, 'UNIQUE') && str_contains($message, 'sales'));
+    }
+
+    private function saleSuccessResponse(Sale $sale, string $message)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'sale_id' => $sale->id,
+            'invoice_number' => $sale->invoice_number,
+            'total' => $sale->total,
+            'change' => $sale->change_given,
+        ]);
     }
 
     private function friendlySaleError(\Exception $e): string
@@ -284,6 +549,24 @@ class POSController extends Controller
             : 'mobile_money';
     }
 
+    private function operatorFeeForPayment(string $paymentMethod, float $amount, float $feeRate = 0.02): float
+    {
+        if ($paymentMethod === 'cash') {
+            return 0.0;
+        }
+
+        return (float) round($amount * $feeRate);
+    }
+
+    private function tokenAmountMultipleRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (abs(fmod((float) $value, 120.0)) > 0.00001) {
+                $fail('montant invalide. Veuillez saisir un multiple de 120.');
+            }
+        };
+    }
+
     private function operatorForCameroonPhone(?string $phone): ?string
     {
         $digits = preg_replace('/\D+/', '', (string) $phone);
@@ -309,12 +592,29 @@ class POSController extends Controller
         return null;
     }
 
+    private function tokenMeterAddresses(): array
+    {
+        return ['SMARTCITY 1', 'NKOZOA'];
+    }
+
+    private function tokenRooms(): array
+    {
+        $rooms = [];
+
+        foreach (['E' => 10, 'D' => 13, 'C' => 13, 'B' => 13, 'A' => 13] as $prefix => $max) {
+            for ($number = 1; $number <= $max; $number++) {
+                $rooms[] = $prefix.$number;
+            }
+        }
+
+        return $rooms;
+    }
+
     private function availableProductsForManager(int $managerId)
     {
         $fifoSellingPrice = StockMovement::select('selling_price')
             ->whereColumn('product_id', 'products.id')
-            ->where('type', 'in')
-            ->where('remaining_quantity', '>', 0)
+            ->sellableBatches()
             ->orderBy('created_at')
             ->orderBy('id')
             ->limit(1);
@@ -327,9 +627,9 @@ class POSController extends Controller
             ->with([
                 'category',
                 'activePromotion',
+                'activePromotions',
                 'stockMovements' => fn ($query) => $query
-                    ->where('type', 'in')
-                    ->where('remaining_quantity', '>', 0)
+                    ->sellableBatches()
                     ->orderBy('created_at')
                     ->orderBy('id'),
             ])
@@ -367,8 +667,7 @@ class POSController extends Controller
         $allocations = [];
 
         $batches = StockMovement::where('product_id', $product->id)
-            ->where('type', 'in')
-            ->where('remaining_quantity', '>', 0)
+            ->sellableBatches()
             ->orderBy('created_at')
             ->orderBy('id')
             ->lockForUpdate()
@@ -395,6 +694,14 @@ class POSController extends Controller
                 'subtotal' => $taken * $sellingPrice,
                 'discount_amount' => $discountAmount,
                 'promotion_id' => $promotion?->id,
+                'promotion_snapshot' => $promotion ? [
+                    'id' => $promotion->id,
+                    'name' => $promotion->name,
+                    'promotion_price' => $sellingPrice,
+                    'min_quantity' => $promotion->min_quantity,
+                    'original_unit_price' => $originalSellingPrice,
+                    'discount_amount' => $discountAmount,
+                ] : null,
                 'promotion_reason' => $promotion ? " | Promotion: {$promotion->name}" : '',
             ];
 
@@ -417,6 +724,14 @@ class POSController extends Controller
                 'subtotal' => $remainingToConsume * $sellingPrice,
                 'discount_amount' => $discountAmount,
                 'promotion_id' => $promotion?->id,
+                'promotion_snapshot' => $promotion ? [
+                    'id' => $promotion->id,
+                    'name' => $promotion->name,
+                    'promotion_price' => $sellingPrice,
+                    'min_quantity' => $promotion->min_quantity,
+                    'original_unit_price' => $originalSellingPrice,
+                    'discount_amount' => $discountAmount,
+                ] : null,
                 'promotion_reason' => $promotion ? " | Promotion: {$promotion->name}" : '',
             ];
         }
@@ -430,7 +745,7 @@ class POSController extends Controller
     public function salesHistory(Request $request)
     {
         $query = Sale::where('seller_id', auth()->id())
-            ->with(['items.product']);
+            ->with(['items.product', 'items.promotion', 'paymentTransactions']);
 
         // Filtres
         if ($request->filled('date_from')) {
@@ -453,7 +768,38 @@ class POSController extends Controller
             });
         }
 
-        $sales = $query->latest()->get();
+        if ($request->filled('product_id')) {
+            $query->whereHas('items.product', function ($q) use ($request) {
+                $q->where('products.id', $request->integer('product_id'))
+                    ->where('products.created_by', auth()->user()->created_by);
+            });
+        } elseif ($request->filled('product_search')) {
+            $productSearch = trim((string) $request->product_search);
+            $barcodeSearch = preg_replace('/\D+/', '', $productSearch);
+
+            $query->where(function ($saleQuery) use ($productSearch, $barcodeSearch) {
+                $saleQuery->whereHas('items.product', function ($q) use ($productSearch, $barcodeSearch) {
+                    $q->where('name', 'like', '%'.$productSearch.'%')
+                        ->orWhere('barcode', 'like', '%'.$productSearch.'%');
+
+                    if ($barcodeSearch !== '') {
+                        $q->orWhere('barcode', 'like', '%'.$barcodeSearch.'%');
+                    }
+                })->orWhereHas('items', function ($q) use ($productSearch) {
+                    $q->where('service_name', 'like', '%'.$productSearch.'%');
+                });
+            });
+        }
+
+        $sales = $query->latest()->paginate(15)->withQueryString();
+        $productSuggestions = Product::where('created_by', auth()->user()->created_by)
+            ->orderBy('name')
+            ->get(['id', 'name', 'barcode'])
+            ->push((object) [
+                'id' => '',
+                'name' => 'Token Energie',
+                'barcode' => null,
+            ]);
 
         // Statistiques
         $stats = [
@@ -471,7 +817,7 @@ class POSController extends Controller
                 ->sum('total'),
         ];
 
-        return view('seller.sales.history', compact('sales', 'stats'));
+        return view('seller.sales.history', compact('sales', 'stats', 'productSuggestions'));
     }
 
     /**
@@ -482,7 +828,7 @@ class POSController extends Controller
         // Vérifier que la vente appartient au vendeur
         $this->authorize('view', $sale);
 
-        $sale->load(['items.product', 'items.promotion', 'seller']);
+        $sale->load(['items.product', 'items.promotion', 'seller', 'paymentTransactions']);
 
         return view('seller.sales.show', compact('sale'));
     }
@@ -495,7 +841,7 @@ class POSController extends Controller
         // Vérifier que la vente appartient au vendeur
         $this->authorize('printReceipt', $sale);
 
-        $sale->load(['items.product', 'items.promotion', 'seller']);
+        $sale->load(['items.product', 'items.promotion', 'seller', 'paymentTransactions']);
 
         return view('seller.pos.receipt', compact('sale'));
     }
@@ -508,4 +854,3 @@ class POSController extends Controller
         return Sale::generateInvoiceNumber();
     }
 }
-

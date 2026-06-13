@@ -22,19 +22,10 @@ const isUserBusy = () => {
     return document.querySelector('[data-refresh-blocker]') !== null;
 };
 
-const debounce = (callback, delay = 500) => {
-    let timeoutId;
-
-    return (...args) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => callback(...args), delay);
-    };
-};
-
 const prepareFilterForm = (form) => {
     let submitting = false;
 
-    const submit = debounce(() => {
+    const submit = () => {
         if (submitting) {
             return;
         }
@@ -49,11 +40,22 @@ const prepareFilterForm = (form) => {
         } else {
             form.submit();
         }
-    }, Number(form.dataset.autoFilterDelay || 500));
+    };
 
     form.querySelectorAll('input, select, textarea').forEach((field) => {
-        const eventName = field.tagName === 'SELECT' || field.type === 'date' ? 'change' : 'input';
-        field.addEventListener(eventName, submit);
+        if (field.tagName === 'SELECT' || field.type === 'date') {
+            field.addEventListener('change', submit);
+            return;
+        }
+
+        field.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' || event.isComposing) {
+                return;
+            }
+
+            event.preventDefault();
+            submit();
+        });
     });
 };
 
@@ -97,6 +99,10 @@ const refreshScope = async (scope, options = {}) => {
         scope.innerHTML = nextScope.innerHTML;
         window.Alpine?.initTree?.(scope);
         initAutoFilters(scope);
+        window.SmartStoreBarcodeInputs?.init?.(scope);
+        window.SmartStorePhoneInputs?.init?.(scope);
+        window.SmartStoreEmailInputs?.init?.(scope);
+        window.SmartStoreSubmitGuards?.init?.(scope);
         window.scrollTo(scrollX, scrollY);
     } catch (error) {
         // Keep polling silent; transient network/server errors should not disturb the user.
@@ -106,9 +112,6 @@ const refreshScope = async (scope, options = {}) => {
 const initSilentRefresh = (root = document) => {
     root.querySelectorAll('[data-silent-refresh]:not([data-silent-refresh-ready])').forEach((scope) => {
         scope.dataset.silentRefreshReady = 'true';
-
-        const interval = Number(scope.dataset.silentRefreshInterval || 15000);
-        setInterval(() => refreshScope(scope), interval);
     });
 };
 

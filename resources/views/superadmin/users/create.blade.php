@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div class="bg-white shadow rounded-lg" x-data="{ selectedRole: @js(old('role', '')) }">
+        <div class="bg-white shadow rounded-lg" x-data="{ selectedRole: @js(old('role', $selectedRole ?? '')) }">
             <form method="POST" action="{{ route('superadmin.users.store') }}" class="space-y-6 p-6">
                 @csrf
 
@@ -70,9 +70,9 @@
                     <select name="role" id="role" required x-model="selectedRole"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('role') border-red-300 @enderror">
                         <option value="">Sélectionner un rôle</option>
-                        <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                        <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Gérant</option>
-                        <option value="seller" {{ old('role') == 'seller' ? 'selected' : '' }}>Vendeur</option>
+                        <option value="super_admin" {{ old('role', $selectedRole ?? '') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                        <option value="manager" {{ old('role', $selectedRole ?? '') == 'manager' ? 'selected' : '' }}>Gérant</option>
+                        <option value="seller" {{ old('role', $selectedRole ?? '') == 'seller' ? 'selected' : '' }}>Vendeur</option>
                     </select>
                     @error('role')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

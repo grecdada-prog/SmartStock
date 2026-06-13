@@ -137,6 +137,38 @@ class SellerManagerIntegrationTest extends TestCase
         $this->assertSame('cash', $activityLog->properties['payment_method']);
     }
 
+    public function test_manager_delete_seller_removes_user_and_sales_data(): void
+    {
+        [$manager, $seller] = $this->createManagerAndSeller();
+
+        $sale = Sale::create([
+            'seller_id' => $seller->id,
+            'invoice_number' => 'INV-DELETE-SELLER',
+            'subtotal' => 1500,
+            'total' => 1500,
+            'payment_method' => 'cash',
+            'amount_received' => 1500,
+            'change_given' => 0,
+        ]);
+
+        ActivityLog::create([
+            'user_id' => $seller->id,
+            'action' => 'sale_created',
+            'model' => 'Sale',
+            'model_id' => $sale->id,
+            'description' => 'Vente test',
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        $this->actingAs($manager)
+            ->delete(route('manager.sellers.destroy', $seller))
+            ->assertRedirect(route('manager.sellers.index'));
+
+        $this->assertDatabaseMissing('users', ['id' => $seller->id]);
+        $this->assertDatabaseMissing('sales', ['id' => $sale->id]);
+        $this->assertDatabaseMissing('activity_logs', ['user_id' => $seller->id]);
+    }
+
     private function createManagerAndSeller(): array
     {
         Role::findOrCreate('manager');

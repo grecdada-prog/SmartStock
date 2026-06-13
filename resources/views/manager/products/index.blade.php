@@ -3,27 +3,33 @@
 @section('title', 'Gestion des Produits')
 
 @section('content')
-<div id="manager-products-page" data-silent-refresh x-data="{ showCreateProduct: {{ $errors->any() ? 'true' : 'false' }} }" class="px-4 sm:px-6 lg:px-8">
+<div id="manager-products-page" data-silent-refresh x-data="{ showCreateProduct: {{ $errors->any() ? 'true' : 'false' }} }" x-cloak class="px-4 sm:px-6 lg:px-8">
     <div class="smartstore-sticky-zone -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div class="smartstore-sticky-inner">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div class="sm:flex-auto">
             <h1 class="text-2xl font-semibold text-gray-900">Mes Produits</h1>
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center space-x-3">
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap items-center gap-3">
+            <a href="{{ route('manager.products.export.excel') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
+                Excel
+            </a>
+            <a href="{{ route('manager.products.export.csv') }}" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
+                CSV
+            </a>
+            <form method="POST" action="{{ route('manager.products.import') }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                @csrf
+                <label class="inline-flex cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus-within:ring-2 focus-within:ring-rose-500 focus-within:ring-offset-2">
+                    Importer
+                    <input type="file" name="products_file" accept=".csv,.txt,.xlsx,.xls" class="sr-only" onchange="this.form.submit()">
+                </label>
+            </form>
 <a href="{{ route('manager.promotions.index') }}" class="inline-flex items-center justify-center rounded-md border border-rose-600 bg-white px-4 py-2 text-sm font-medium text-rose-600 shadow-sm hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.802 2.035a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.802-2.035a1 1 0 00-1.176 0l-2.802 2.035c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L4.97 8.719c-.783-.57-.38-1.81.588-1.81H9.02a1 1 0 00.95-.69l1.079-3.292z" />
                 </svg>
                 Promotions
             </a>
-<a href="{{ route('manager.products.low-stock') }}" class="inline-flex items-center justify-center rounded-md border border-orange-600 bg-white px-4 py-2 text-sm font-medium text-orange-600 shadow-sm hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                Stock Faible
-            </a>
-
             <button type="button" @click="showCreateProduct = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 sm:w-auto transition-colors duration-200">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -190,8 +196,11 @@
         </div>
     </div>
 
-    <div class="mt-6">
-    </div>
+    @if(method_exists($products, 'links'))
+        <div class="mt-4">
+            {{ $products->links() }}
+        </div>
+    @endif
 
     <div x-show="showCreateProduct" x-cloak class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6" style="display: none;">
         <div class="fixed inset-0 bg-gray-900/50" @click="showCreateProduct = false"></div>
@@ -206,7 +215,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('manager.products.store') }}" class="min-h-0 flex-1 overflow-y-auto space-y-5 p-6">
+            <form method="POST" action="{{ route('manager.products.store') }}" id="create-product-form" data-disable-on-submit class="min-h-0 flex-1 overflow-y-auto space-y-5 p-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="sm:col-span-2">
@@ -216,7 +225,7 @@
                     </div>
                     <div class="sm:col-span-2">
                         <label for="modal_barcode" class="block text-sm font-medium text-gray-700">Code-barres</label>
-                        <input type="text" name="barcode" id="modal_barcode" value="{{ old('barcode') }}" placeholder="11012035024090" pattern="\d+" inputmode="numeric" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
+                        <input type="text" name="barcode" id="modal_barcode" value="{{ old('barcode') }}" placeholder="1101203502409" maxlength="13" pattern="\d{0,13}" inputmode="numeric" autocomplete="off" data-barcode-format class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm @error('barcode') border-red-300 @enderror">
                         @error('barcode')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -231,7 +240,7 @@
                     </div>
                     <div>
                         <label for="modal_alert_quantity" class="block text-sm font-medium text-gray-700">Seuil d'alerte *</label>
-                        <input type="number" name="alert_quantity" id="modal_alert_quantity" required min="0" step="1" value="{{ old('alert_quantity', 10) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
+                        <input type="number" name="alert_quantity" id="modal_alert_quantity" required min="0" step="1" value="{{ old('alert_quantity', 5) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm">
                         @error('alert_quantity')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -247,10 +256,14 @@
                         <input type="checkbox" name="is_active" id="modal_is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500">
                         <label for="modal_is_active" class="ml-2 block text-sm text-gray-900">Produit actif</label>
                     </div>
+                    <div class="sm:col-span-2 flex items-center">
+                        <input type="checkbox" name="is_direct_restock_eligible" id="modal_is_direct_restock_eligible" value="1" {{ old('is_direct_restock_eligible') ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+                        <label for="modal_is_direct_restock_eligible" class="ml-2 block text-sm text-gray-900">Éligible à l’appro direct</label>
+                    </div>
                 </div>
                 <div class="sticky bottom-0 -mx-6 -mb-6 flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
                     <button type="button" @click="showCreateProduct = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="submit" class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Créer le produit</button>
+                    <button type="submit" data-submitting-text="Enregistrement..." class="rounded-md border border-transparent bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70">Créer le produit</button>
                 </div>
             </form>
         </div>
@@ -265,5 +278,7 @@
     confirmText="Supprimer"
     cancelText="Annuler"
     type="danger" />
+
+@include('manager.products._barcode-conflict-modal')
 
 @endsection

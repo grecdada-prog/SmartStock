@@ -34,13 +34,15 @@
     <div class="pointer-events-none fixed left-1/2 top-3 z-[9999] flex w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 flex-col gap-3">
         @foreach ($messages as $type => $message)
             @php($tone = $toneClasses[$type] ?? $toneClasses['info'])
+            @php($persistent = in_array($type, ['error', 'warning'], true))
 
             <div
-                x-data="{ show: true }"
+                x-data="{ show: true, persistent: @js($persistent) }"
                 x-show="show"
-                x-init="setTimeout(() => show = false, 5000)"
+                x-init="if (!persistent) setTimeout(() => show = false, 5000)"
                 x-transition
                 data-flash-message
+                data-flash-persistent="{{ $persistent ? 'true' : 'false' }}"
                 class="pointer-events-auto rounded-md border bg-white px-4 py-3 text-gray-900 shadow-lg {{ $tone['border'] }}"
                 role="alert"
             >
@@ -89,15 +91,21 @@
         document.addEventListener('click', (event) => {
             const button = event.target.closest('[data-flash-dismiss]');
 
-            if (!button) {
+            if (button) {
+                const message = button.closest('[data-flash-message]');
+
+                if (message) {
+                    message.remove();
+                }
+
                 return;
             }
 
-            const message = button.closest('[data-flash-message]');
-
-            if (message) {
-                message.remove();
-            }
+            document.querySelectorAll('[data-flash-message][data-flash-persistent="true"]').forEach((message) => {
+                if (!message.contains(event.target)) {
+                    message.remove();
+                }
+            });
         });
     </script>
 @endif
